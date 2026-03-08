@@ -1,27 +1,28 @@
-const express = require("express");
+import express from "express";
+const router = express.Router();
 
-const {
+import {
   adminCreateRequest,
   adminUpdateRequest,
   adminViewRequest,
   adminDeleteRequest,
   adminGetAllReservations,
-} = require("../controllers/AdminReservationController");
-const { Protect, allowedTo } = require("../middlewares/Auth/auth.js");
-const { Roles } = require("../utiles/Roles.js");
-const { rollback } = require("../config/db.js");
+  adminGetAllEmergencyReservations,
+} from "../controllers/AdminReservationController.js";
 
-const router = express.Router();
+import { Protect, allowedTo } from "../middlewares/Auth/auth.js";
+import { Roles } from "../utiles/Roles.js";
 
 router
   .route("/")
-  .post(Protect, allowedTo(Roles.COUNTER), adminCreateRequest)
-  .get(Protect, allowedTo(Roles.COUNTER), adminGetAllReservations);
+  .post(Protect, allowedTo(Roles.SUPER_ADMIN, Roles.COUNTER), adminCreateRequest)
+  .get(Protect,allowedTo(Roles.SUPER_ADMIN,Roles.COUNTER,Roles.OBSERVER), adminGetAllReservations);
 
+router.route("/emergency").get(Protect, allowedTo(Roles.SUPER_ADMIN, Roles.COUNTER), adminGetAllEmergencyReservations);
 router
   .route("/:emergencyUser_id")
-  .put(Protect, allowedTo(Roles.COUNTER), adminUpdateRequest)
-  .get(Protect, allowedTo(Roles.COUNTER), adminViewRequest)
-  .delete(Protect, allowedTo(Roles.COUNTER), adminDeleteRequest);
+  .put(Protect, allowedTo(Roles.SUPER_ADMIN, Roles.COUNTER), adminUpdateRequest)
+  .get(adminViewRequest)
+  .delete(Protect, allowedTo(Roles.SUPER_ADMIN, Roles.COUNTER), adminDeleteRequest);
 
-module.exports = router;
+export default router;

@@ -1,25 +1,22 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
 
-const {
+import {
   getStudentProfile,
   updateUserProfile,
   uploadUserImage,
   resizeImage,
   updateProfilePhoto,
-} = require("../controllers/userProfileController");
+} from "../controllers/userProfileController.js";
 
-const {
+import {
   updateUserProfileValidator,
-} = require("../utiles/validators/userProfileValidator");
-
-//protect method
-const { Protect } = require("../middlewares/Auth/auth");
-
+} from "../utiles/validators/userProfileValidator.js";
+import { Protect } from "../middlewares/Auth/auth.js";
 router
   .route("/:student_id")
   .get(Protect, getStudentProfile)
   .put(Protect, updateUserProfileValidator, updateUserProfile)
   .patch(Protect, uploadUserImage, resizeImage, updateProfilePhoto);
 
-module.exports = router;
+export default router;

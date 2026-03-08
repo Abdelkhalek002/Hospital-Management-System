@@ -1,38 +1,24 @@
-const express = require("express");
-
-const {
+import express from "express";
+import {
   createRequest,
   updateRequest,
   viewRequest,
   getMyReservations,
   cancelRequest,
-} = require("../controllers/UserReservationController");
+} from "../controllers/UserReservationController.js";
 
-//IMPORT VALIDATORS
-const {
-  createRequestValidator,
-  updateRequestValidator,
-} = require("../utiles/validators/ReservationValidator");
-const { Protect, allowedToUser } = require("../middlewares/Auth/auth.js");
+// IMPORT VALIDATORS
+
+import { Protect, allowedToUser } from "../middlewares/Auth/auth.js";
+import { createRequestValidator } from "../utiles/validators/ReservationValidator.js";
 
 const router = express.Router();
 
 router
   .route("/:student_id")
-  .post(Protect, allowedToUser("user"), createRequestValidator, createRequest);
+  .post(Protect, allowedToUser('user'), createRequestValidator, createRequest)
+  .get(Protect,getMyReservations);
 
-router
-  .route("/:student_id")
-  .get(Protect, allowedToUser("user"), getMyReservations);
+router.route("/:student_id/:medicEx_id").put(updateRequest).get(viewRequest).delete(cancelRequest);
 
-router.route("/:student_id/:medicEx_id").put(Protect, allowedToUser("user"), updateRequest);
-
-router
-  .route("/:student_id/:medicEx_id")
-  .get(Protect, allowedToUser("user"), viewRequest);
-
-router
-.route("/:student_id/:medicEx_id")
-.delete(Protect, allowedToUser("user"),cancelRequest);
-
-module.exports = router;
+export default router;

@@ -1,8 +1,8 @@
-//IMPORTING DEPENDENCIES
-const { check } = require("express-validator");
-const validatorMiddleware = require("../../middleWares/validatorMiddleware");
+// IMPORTING DEPENDENCIES
+import { check } from "express-validator";
+import validatorMiddleware from "../../middlewares/validatorMiddleware.js";
 
-exports.updateUserProfileValidator = [
+export const updateUserProfileValidator = [
   check("userImage_file").optional(),
   check("phoneNumber")
     .optional()

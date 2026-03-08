@@ -1,44 +1,18 @@
-const express = require("express");
-
-const {
-  createLevel,
-  GetAllLevels,
-  updateLevel,
-  DeleteLevel,
-} = require("../../controllers/systemDataControllers/levelsController");
-
-const limiter = require("../../services/limitReqsMiddleware.js");
-
-const { Protect, allowedTo } = require("../../middlewares/Auth/auth.js");
-
-//validation
-const { levelsValidator } = require("../../utiles/validators/sysDataValidator");
-const { allow } = require("joi");
-const { Roles } = require("../../utiles/Roles.js");
+import express from "express";
+import { createLevel, GetAllLevels, updateLevel, DeleteLevel } from "../../controllers/systemDataControllers/levelsController.js";
+import limiter from "../../services/limitReqsMiddleware.js";
+import { Protect, allowedTo } from "../../middlewares/Auth/auth.js";
+import { levelsValidator } from "../../utiles/validators/sysDataValidator.js";
+import { Roles } from "../../utiles/Roles.js";
 
 const router = express.Router();
 
-router
-  .route("/levels")
-  .post(
-    Protect,
-    allowedTo(Roles.SUPER_ADMIN),
-    levelsValidator,
-    limiter,
-    createLevel
-  )
-  .get(Protect, GetAllLevels);
+router.route("/levels")
+  .post( Protect,limiter, createLevel)
+  .get(GetAllLevels);
 
-router
-  .route("/levels/:level_id")
-  .delete(Protect,
-    allowedTo(Roles.SUPER_ADMIN), limiter, DeleteLevel)
-  .put(
-    Protect,
-    allowedTo(Roles.SUPER_ADMIN),
-    limiter,
-    levelsValidator,
-    updateLevel
-  );
+router.route("/levels/:level_id")
+  .delete(Protect,limiter, DeleteLevel)
+  .put(Protect,limiter, levelsValidator, updateLevel);
 
-module.exports = router;
+export default router;

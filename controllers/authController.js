@@ -1,24 +1,25 @@
-//IMPORTING DEPENDENCIES
-const asyncHandler = require("express-async-handler");
-const bcrypt = require("bcrypt");
-const db = require("../config/db");
-const jwt = require("jsonwebtoken");
-const multer = require("multer");
-const { v4: uuidv4 } = require("uuid");
-const sharp = require("sharp");
-const path = require("path");
-const fs = require("fs");
-const sanitizeFilename = require("sanitize-filename");
-const { sendActivationMail } = require("../services/avtivateUserMiddleware");
-const { sendConfirmationMail } = require("../services/confirmSuperAdmin.js");
-const {
+// IMPORTING DEPENDENCIES
+import asyncHandler from "express-async-handler";
+import bcrypt from "bcrypt";
+import db from "../config/db.js";
+import jwt from "jsonwebtoken";
+import multer from "multer";
+import { v4 as uuidv4 } from "uuid";
+import sharp from "sharp";
+import path from "path";
+import fs from "fs";
+import sanitizeFilename from "sanitize-filename";
+import { sendActivationMail } from "../services/avtivateUserMiddleware.js";
+import { sendConfirmationMail } from "../services/confirmSuperAdmin.js";
+import {
   isEmailExist,
   isNationalIdExist,
   isIDExist,
-} = require("../utiles/validators/authValidator.js");
-const { Roles } = require("../utiles/Roles.js");
-const { type } = require("os");
-const { StatusCode } = require("../utiles/statusCode");
+} from "../utiles/validators/authValidator.js";
+import { Roles } from "../utiles/Roles.js";
+import { StatusCode } from "../utiles/statusCode.js";
+import dotenv from "dotenv";
+dotenv.config({ path: "config.env" });
 
 //upload image middleware
 const multerStorage = multer.memoryStorage();
@@ -38,21 +39,21 @@ const upload = multer({
 });
 
 // Middleware to handle image and national ID upload
-uploadRegisterationFiles = upload.fields([
+const uploadRegisterationFiles = upload.fields([
   { name: "userImage_file", maxCount: 1 },
   { name: "national_id_file", maxCount: 1 },
   { name: "fees_file", maxCount: 1 },
 ]);
 
 // Middleware to resize uploaded image and save national ID
-resizeFiles = async (req, res, next) => {
+const resizeFiles = async (req, res, next) => {
   try {
     // Resize and save profile image
     if (req.files["userImage_file"] && req.files["userImage_file"][0]) {
       const userImage_file = req.files["userImage_file"][0];
       const userImage_name = `Document-${uuidv4()}-${Date.now()}.jpeg`;
       const sanitizeduserImage_Filename = sanitizeFilename(userImage_name);
-      const userImage_Directory = "uploads/student_info/profile_pic";
+      const userImage_Directory = "uploads";
 
       if (!fs.existsSync(userImage_Directory)) {
         fs.mkdirSync(userImage_Directory, { recursive: true });
@@ -79,7 +80,7 @@ resizeFiles = async (req, res, next) => {
 
       fs.writeFileSync(
         path.join(national_id_Directory, sanitizedNationalId_Filename),
-        national_id_file.buffer
+        national_id_file.buffer,
       );
 
       req.body.national_id_file = sanitizedNationalId_Filename;
@@ -97,7 +98,7 @@ resizeFiles = async (req, res, next) => {
 
       fs.writeFileSync(
         path.join(fees_Directory, sanitizedFees_Filename),
-        fees_file.buffer
+        fees_file.buffer,
       );
 
       req.body.fees_file = sanitizedFees_Filename;
@@ -110,7 +111,7 @@ resizeFiles = async (req, res, next) => {
 };
 
 //----------------------------------SIGNUP---------------------------------------
-signup = asyncHandler(async (req, res) => {
+const signup = asyncHandler(async (req, res) => {
   const {
     userName,
     email,
@@ -130,7 +131,9 @@ signup = asyncHandler(async (req, res) => {
   //1- Check if email already exists in the database:
   db.query("SELECT * FROM students WHERE email = ?", [email], (err, result) => {
     if (isEmailExist(err, result)) {
-      return res.status(400).json({ error: "الايميل موجود بالفعل" });
+      return res
+        .status(StatusCode.BAD_REQUEST)
+        .json({ error: "الايميل موجود بالفعل" });
     } else {
       //2- check if national id exists:
       db.query(
@@ -138,7 +141,9 @@ signup = asyncHandler(async (req, res) => {
         [national_id],
         (err, result) => {
           if (isNationalIdExist(err, result)) {
-            return res.status(400).json({ error: "الرقم القومي موجود بالفعل" });
+            return res
+              .status(StatusCode.BAD_REQUEST)
+              .json({ error: "الرقم القومي موجود بالفعل" });
           } else {
             //3- check if data ids entered correctly:
             //* faculty id:
@@ -148,7 +153,7 @@ signup = asyncHandler(async (req, res) => {
               (err, result) => {
                 if (isIDExist(err, result, faculty_id)) {
                   return res
-                    .status(400)
+                    .status(StatusCode.BAD_REQUEST)
                     .json({ error: "faculty entered is not in system" });
                 } else {
                   //* level id:
@@ -158,7 +163,7 @@ signup = asyncHandler(async (req, res) => {
                     (err, result) => {
                       if (isIDExist(err, result, level_id)) {
                         return res
-                          .status(400)
+                          .status(StatusCode.BAD_REQUEST)
                           .json({ error: "level entered is not in system" });
                       } else {
                         //* nationality id:
@@ -167,7 +172,7 @@ signup = asyncHandler(async (req, res) => {
                           [nationality_id],
                           (err, result) => {
                             if (isIDExist(err, result, nationality_id)) {
-                              return res.status(400).json({
+                              return res.status(StatusCode.BAD_REQUEST).json({
                                 error: "nationality entered is not in system",
                               });
                             } else {
@@ -177,16 +182,18 @@ signup = asyncHandler(async (req, res) => {
                                 [gov_id],
                                 (err, result) => {
                                   if (isIDExist(err, result, nationality_id)) {
-                                    return res.status(400).json({
-                                      error:
-                                        "governorate entered is not in system",
-                                    });
+                                    return res
+                                      .status(StatusCode.BAD_REQUEST)
+                                      .json({
+                                        error:
+                                          "governorate entered is not in system",
+                                      });
                                   }
                                   //4- insert data into database:
                                   //*hashing password:
                                   const hashedPassword = bcrypt.hashSync(
                                     password,
-                                    10
+                                    10,
                                   );
                                   db.query(
                                     "INSERT INTO students (userName, email, password, national_id, nationality_id, level_id, gov_id, faculty_id, gender, birthDay, phoneNumber, userImage_file, national_id_file, fees_file) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -205,28 +212,28 @@ signup = asyncHandler(async (req, res) => {
                                       userImage_file,
                                       national_id_file,
                                       fees_file,
-                                    ]
+                                    ],
                                   );
                                   //*sending activation mail...
                                   sendActivationMail(email, userName);
-                                  res.status(200).json({
+                                  res.status(StatusCode.CREATED).json({
                                     success: true,
                                     message:
-                                      "Account created successfully. Check your email for verification!",
+                                      "تم عمل البريد الالكتروني بنجاح برجاء تفقد البريد الالكتروني للتفعيل ",
                                   });
-                                }
+                                },
                               );
                             }
-                          }
+                          },
                         );
                       }
-                    }
+                    },
                   );
                 }
-              }
+              },
             );
           }
-        }
+        },
       );
     }
   });
@@ -344,11 +351,11 @@ signup = asyncHandler(async (req, res) => {
 //? 6-after the same time the cron job wanna update the confirmed column to be 0 or not confirmed
 
 //@desc one login function for both user and admin 👨🏻
-login = asyncHandler(async (req, res) => {
+const login = asyncHandler(async (req, res) => {
   const { password, userName, email } = req.body;
 
   //1- SuperAdmin login
-  if (email && email.includes("@gmail.com")) {
+  if (email && email.includes("@hsh.io")) {
     const sqlSuperAdmin =
       "SELECT email, name, password, superAdmin_id, confirmed FROM superadmin WHERE email = ? AND role ='hsh_2_sa_4'";
     const superAdminResult = await new Promise((resolve, reject) => {
@@ -358,7 +365,7 @@ login = asyncHandler(async (req, res) => {
       });
     });
     if (superAdminResult.length === 0) {
-      return res.status(404).json({ message: "Super Admin not found" });
+      return res.status(StatusCode.NOT_FOUND).json({ message: "غير موجود" });
     }
 
     const {
@@ -372,19 +379,19 @@ login = asyncHandler(async (req, res) => {
 
     const passwordMatch = await bcrypt.compare(
       password.trim(),
-      hashedPassword.trim()
+      hashedPassword.trim(),
     );
     if (!passwordMatch) {
       return res
-        .status(401)
-        .json({ success: false, error: "Invalid password" });
+        .status(StatusCode.UNAUTHORIZED)
+        .json({ success: false, error: "كلمة المرور غير صحيحة" });
     }
     if (!confirmed) {
       sendConfirmationMail(email, name);
-      return res.status(401).json({
+      return res.status(StatusCode.UNAUTHORIZED).json({
         success: false,
         error:
-          "Account is not activated. Please check your email for activation instructions",
+          "الايميل غير مفعل. تم ارسال رسالة تفعيل الى البريد الالكتروني الخاص بك",
       });
     }
 
@@ -408,10 +415,10 @@ login = asyncHandler(async (req, res) => {
             console.error("Error updating status and confirmed:", updateErr);
           } else {
             console.log(
-              "Status and confirmed updated to 0 for super admin after 1 hour"
+              "Status and confirmed updated to 0 for super admin after 1 hour",
             );
           }
-        }
+        },
       );
     }, 3600000);
 
@@ -420,27 +427,31 @@ login = asyncHandler(async (req, res) => {
       [superAdmin_id],
       (updateErr, updateResult) => {
         if (updateErr) {
-          return res.status(500).send(updateErr);
+          return res.status(StatusCode.INTERNAL_SERVER_ERROR).send(updateErr);
         } else {
           console.log("Super Admin Logged in successfully");
-          return res.status(200).json({ success: true, token, payLoad });
+          return res
+            .status(StatusCode.OK)
+            .json({ success: true, token, payLoad });
         }
-      }
+      },
     );
-    return; // Return to prevent further execution
+    return;
   }
 
   //2- admin login
-  if (userName) {
+  if (email && email.includes("@admin.com")) {
     const sqlAdmin =
-      "SELECT email, userName, password, user_id, type, role FROM admins WHERE userName = ?";
-    db.query(sqlAdmin, [userName], async (err, result) => {
+      "SELECT email, userName, password, user_id, type, role FROM admins WHERE email = ?";
+    db.query(sqlAdmin, [email], async (err, result) => {
       if (err) {
-        return res.status(500).send(err);
+        return res.status(StatusCode.INTERNAL_SERVER_ERROR).send(err);
       }
 
       if (result.length === 0) {
-        return res.status(404).json({ message: "Admin not found" });
+        return res
+          .status(StatusCode.NOT_FOUND)
+          .json({ message: "الادمن غير موجود" });
       }
 
       const {
@@ -454,12 +465,12 @@ login = asyncHandler(async (req, res) => {
 
       const passwordMatch = await bcrypt.compare(
         password.trim(),
-        hashedPassword.trim()
+        hashedPassword.trim(),
       );
       if (!passwordMatch) {
         return res
-          .status(401)
-          .json({ success: false, error: "Invalid password" });
+          .status(StatusCode.UNAUTHORIZED)
+          .json({ success: false, error: "كلمة المرور غير صحيحة" });
       }
 
       const payLoad = {
@@ -479,25 +490,29 @@ login = asyncHandler(async (req, res) => {
         [user_id],
         (updateErr, updateResult) => {
           if (updateErr) {
-            return res.status(500).send(updateErr);
+            return res.status(StatusCode.INTERNAL_SERVER_ERROR).send(updateErr);
           }
-          return res.status(200).json({ success: true, token, payLoad });
-        }
+          return res
+            .status(StatusCode.OK)
+            .json({ success: true, token, payLoad });
+        },
       );
     });
     return;
   }
 
   //3- User login
-  if (email && email.includes("@fci.helwan.edu.eg")) {
+  if (email && email.includes("helwan.edu.eg")) {
     const sqlUser =
       "SELECT userName, email, password, type, student_id, verified FROM students WHERE email = ?";
     db.query(sqlUser, [email], async (err, result) => {
       if (err) {
-        return res.status(500).send(err);
+        return res.status(StatusCode.INTERNAL_SERVER_ERROR).send(err);
       }
       if (result.length === 0) {
-        return res.status(404).json({ message: "User not found" });
+        return res
+          .status(StatusCode.NOT_FOUND)
+          .json({ message: "المستخدم غير موجود" });
       }
 
       const {
@@ -507,23 +522,31 @@ login = asyncHandler(async (req, res) => {
         verified,
         userName,
         type,
+        blocked,
       } = result[0];
+      console.log("blocked", blocked);
 
       const passwordMatch = await bcrypt.compare(
         password.trim(),
-        hashedPassword.trim()
+        hashedPassword.trim(),
       );
       if (!passwordMatch) {
         return res
-          .status(401)
-          .json({ success: false, error: "Invalid password" });
+          .status(StatusCode.UNAUTHORIZED)
+          .json({ success: false, error: "كلمة المرور غير صحيحة" });
       }
 
       if (!verified) {
-        return res.status(401).json({
+        return res.status(StatusCode.UNAUTHORIZED).json({
           success: false,
-          error:
-            "Account is not activated. Please check your email for activation instructions",
+          error: "الاكونت غير مفعل رجاء تفقد البريد الالكتروني لتفعيل الاكونت",
+        });
+      }
+
+      if (blocked) {
+        return res.status(StatusCode.UNAUTHORIZED).json({
+          success: false,
+          error: "الاكونت محظور تواصل مع الادمن",
         });
       }
 
@@ -531,7 +554,7 @@ login = asyncHandler(async (req, res) => {
       const nextYear = new Date(currentDate.getFullYear() + 1, 0, 1); // January 1st of next year
       const expiresInMilliseconds = nextYear - currentDate;
       const expiresInDays = Math.ceil(
-        expiresInMilliseconds / (24 * 60 * 60 * 1000)
+        expiresInMilliseconds / (24 * 60 * 60 * 1000),
       );
 
       const payLoad = {
@@ -551,22 +574,24 @@ login = asyncHandler(async (req, res) => {
         [student_id],
         (updateErr, updateResult) => {
           if (updateErr) {
-            return res.status(500).send(updateErr);
+            return res.status(StatusCode.INTERNAL_SERVER_ERROR).send(updateErr);
           }
-          return res.status(200).json({ success: true, token, payLoad });
-        }
+          return res
+            .status(StatusCode.OK)
+            .json({ success: true, token, payLoad });
+        },
       );
     });
-    return; // Return to prevent further execution
+    return;
   }
 
   return res
-    .status(400)
-    .json({ success: false, error: "Missing username or email" });
+    .status(StatusCode.BAD_REQUEST)
+    .json({ success: false, error: "برجاء كتابة الايميل وكلمة المرور" });
 });
 
 //--------------------------------------forget Password------------------------------------
-forgetPassword = asyncHandler(async (req, res, next) => {
+const forgetPassword = asyncHandler(async (req, res, next) => {
   const { email, OTP, newPassword } = req.body;
 
   const sql = "SELECT * FROM students WHERE email = ? AND OTP = ?";
@@ -593,17 +618,11 @@ forgetPassword = asyncHandler(async (req, res, next) => {
                 .status(StatusCode.OK)
                 .json({ message: "تم تغيير كلمة السر بنجاح" });
             }
-          }
+          },
         );
       }
     }
   });
 });
 
-module.exports = {
-  uploadRegisterationFiles,
-  resizeFiles,
-  signup,
-  login,
-  forgetPassword,
-};
+export { signup, login, forgetPassword, uploadRegisterationFiles, resizeFiles };

@@ -1,4 +1,4 @@
-const rateLimit = require("express-rate-limit");
+import rateLimit from "express-rate-limit";
 
 const limiter = rateLimit({
   windowMs: 10 * 60 * 1000, // Limit requests per 15 minutes
@@ -6,4 +6,4 @@ const limiter = rateLimit({
   message: { message: "!محاولات كثيرة برجاء المحاولة لاحقا" }, // Customize error message
 });
 
-module.exports = limiter;
+export default limiter;

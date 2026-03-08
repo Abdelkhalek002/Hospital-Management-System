@@ -1,10 +1,10 @@
-//IMPORTING DEPENDENCIES
-const { check } = require("express-validator");
-const validatorMiddleware = require("../../middleWares/validatorMiddleware");
-const customValidators = require("../customValidators/CustomValidators");
+// IMPORTING DEPENDENCIES
+import { check } from "express-validator";
+import validatorMiddleware from "../../middlewares/validatorMiddleware.js";
+import customValidators from "../customValidators/CustomValidators.js";
 
-//CLINICS VALIDATOR
-exports.clinicValidator = [
+// CLINICS VALIDATOR
+export const clinicValidator = [
   check("clinicName")
     .notEmpty()
     .withMessage("Clinic is Required")
@@ -12,8 +12,9 @@ exports.clinicValidator = [
     .withMessage("Clinic must be in arabic format"),
   validatorMiddleware,
 ];
-//EXTERNAL HOSPITALS VALIDATOR
-exports.hospitalValidator = [
+
+// EXTERNAL HOSPITALS VALIDATOR
+export const hospitalValidator = [
   check("hospName")
     .notEmpty()
     .withMessage("Hospital is Required")
@@ -21,8 +22,9 @@ exports.hospitalValidator = [
     .withMessage("Hospital must be in arabic format"),
   validatorMiddleware,
 ];
-//FACULTY VALIDATOR
-exports.facultyValidator = [
+
+// FACULTY VALIDATOR
+export const facultyValidator = [
   check("facultyName")
     .notEmpty()
     .withMessage("The Name of Faculty is Required")
@@ -30,10 +32,9 @@ exports.facultyValidator = [
     .withMessage("The Name of Faculty must be in arabic format"),
   validatorMiddleware,
 ];
-//NATIONALITY VALIDATOR
 
-//LEVELS VALIDATOR
-exports.levelsValidator = [
+// LEVELS VALIDATOR
+export const levelsValidator = [
   check("levelName")
     .notEmpty()
     .withMessage("level is required")

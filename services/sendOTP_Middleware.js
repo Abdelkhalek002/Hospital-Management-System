@@ -1,6 +1,6 @@
-const expressAsyncHandler = require("express-async-handler");
-const db = require("../config/db.js");
-const nodemailer = require("nodemailer");
+import expressAsyncHandler from "express-async-handler";
+import db from "../config/db.js";
+import nodemailer from "nodemailer";
 
 const generateOTP = () => {
     return Math.floor(100000 + Math.random() * 900000).toString();
@@ -122,8 +122,7 @@ const sendOTPByEmail = async (email, otp, name) => {
     await transporter.sendMail(mailOptions);
 };
 
-
-exports.sendOtp = expressAsyncHandler(async (req, res) => {
+export const sendOtp = expressAsyncHandler(async (req, res) => {
     const { email } = req.body;
 
     // Capture user's IP address and user-agent
@@ -138,7 +137,7 @@ exports.sendOtp = expressAsyncHandler(async (req, res) => {
         return res.status(400).json({ message: 'Email is required' });
     }
 
-    const sql = "SELECT * FROM students WHERE email = ?"
+    const sql = "SELECT * FROM students WHERE email = ?";
     db.query(sql, [email], (err, result) => {
         if (err) {
             res.status(500).send(err);
@@ -146,15 +145,14 @@ exports.sendOtp = expressAsyncHandler(async (req, res) => {
             if (result.length === 0) {
                 res.status(404).json({ message: "User not found" });
             } else {
-                const { email, student_id,userName } = result[0];
+                const { email, student_id, userName } = result[0];
                 console.log(email, student_id, userName);
                 const otp = generateOTP();
                 // Send OTP via email with name parameter
-                sendOTPByEmail(email, otp,userName);
+                sendOTPByEmail(email, otp, userName);
                 // Update the user record with the generated OTP
                 updatePasswordWithOTP(student_id, otp);
                 return res.status(200).json({ success: true, message: 'OTP sent successfully' });
-                res.status(200).json({ users: result[0] });
             }
         }
     });

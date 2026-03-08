@@ -1,6 +1,7 @@
-const express = require("express");
+import express from "express";
+const router = express.Router();
 
-const {
+import {
   addNewAdmin,
   getAllAdmin,
   viewAdmin,
@@ -13,164 +14,163 @@ const {
   getSpecificAdminLogs,
   clearHistory,
   clearSpecificHistory,
-  getAllProfiles,
   searchStudent,
   advancedSearch,
   filterStudents,
   transfer,
   addSuperAdmin,
   getAllUserProfiles,
-  updateUserProfile,
   deleteUserProfile,
-} = require("../controllers/adminController.js");
+  updateUserProfile,
+  blockUser,
+  unblockUser,
+  updateTransfer,
+  getStatistics,
+  getReservationsByMonth,
+  getTransfered,
+} from "../controllers/adminController.js";
 
-const {
+import {
   addNewAdminValidator,
   resetPasswordValidator,
   sendObservationValidator,
   addSuperAdminValidator,
-} = require("../utiles/validators/adminValidator");
-const { Protect, allowedTo } = require("../middlewares/Auth/auth.js");
-const limiter = require("../services/limitReqsMiddleware.js");
-const { Roles } = require("../utiles/Roles.js");
+} from "../utiles/validators/adminValidator.js";
 
-const router = express.Router();
+import { Protect, allowedTo } from "../middlewares/Auth/auth.js";
+import limiter from "../services/limitReqsMiddleware.js";
+import { Roles } from "../utiles/Roles.js";
 
-//ADMIN LOG ROUTERS:
-//1) get admin logs
+//Statistics
+router
+  .route("/statistics")
+  .get(Protect, allowedTo(Roles.SUPER_ADMIN), getStatistics);
+router
+  .route("/resbymonth")
+  .get(Protect, allowedTo(Roles.SUPER_ADMIN), getReservationsByMonth);
+
+// ADMIN LOG ROUTERS
 router
   .route("/logs")
   .get(Protect, allowedTo(Roles.SUPER_ADMIN), getAdminLogs)
-  .delete(Protect, clearHistory);
+  .delete(Protect, allowedTo(Roles.SUPER_ADMIN), clearHistory);
 
-//2) modify specific admin logs
 router
   .route("/logs/:admin_id")
-  .get(Protect, allowedTo(Roles.SUPER_ADMIN), getSpecificAdminLogs)
-  .delete(Protect, allowedTo(Roles.SUPER_ADMIN), clearSpecificHistory);
+  .get(getSpecificAdminLogs)
+  .delete(clearSpecificHistory);
 
-
-
-
-//1) get all user profiles:
+// GET ALL USER PROFILES
 router
   .route("/userProfiles")
   .get(
     Protect,
-    allowedTo(
-      Roles.COUNTER,
-      Roles.MEDICAL_CHECK_MANAGER,
-      Roles.OBSERVER,
-      Roles.SECOND_MANAGER,
-      Roles.SUPER_ADMIN
-    ),
-    getAllUserProfiles
+    allowedTo(Roles.SUPER_ADMIN, Roles.COUNTER),
+    getAllUserProfiles,
   );
 
-router.route("/userProfiles/:student_id").put(updateUserProfile).delete(deleteUserProfile);
+router
+  .route("/userProfiles/:student_id")
+  .put(updateUserProfile)
+  .delete(deleteUserProfile);
 
-//ADMIN CRUD ROUTERS:
-//1) add new admin:
+router.patch(
+  "/userProfiles/:student_id/block",
+  Protect,
+  allowedTo(Roles.SUPER_ADMIN, Roles.SECOND_MANAGER, Roles.COUNTER),
+  blockUser,
+);
+router.patch(
+  "/userProfiles/:student_id/unblock",
+  Protect,
+  allowedTo(Roles.SUPER_ADMIN, Roles.SECOND_MANAGER, Roles.COUNTER),
+  unblockUser,
+);
+
+// ADMIN CRUD ROUTERS
 router
   .route("/")
   .post(
-    limiter,
+    Protect,
+    allowedTo(Roles.SUPER_ADMIN),
     addNewAdminValidator,
-    addNewAdmin
+    addNewAdmin,
   );
-router
-  .route("/add")
-  .post(
-    limiter,
-    addSuperAdminValidator,
-    addSuperAdmin
-  );
-//2) get all admins:
-router.route("/all").get(getAllAdmin);
 
-//3) view, update, delete, and reset password for admin:
-//4) filter students:
-router.get(
-  "/filter",
-  Protect,
-  allowedTo(
-    Roles.COUNTER,
-    Roles.MEDICAL_CHECK_MANAGER,
-    Roles.OBSERVER,
-    Roles.SECOND_MANAGER,
-    Roles.SUPER_ADMIN
-  ),
-  filterStudents
-);
+router.route("/add").post(Protect, addSuperAdminValidator, addSuperAdmin);
 
+router.route("/all").get(Protect, allowedTo(Roles.SUPER_ADMIN), getAllAdmin);
 
 router
   .route("/:user_id")
   .get(viewAdmin)
-  .put(limiter, updateAdmin)
+  .put(Protect, allowedTo(Roles.SUPER_ADMIN), updateAdmin)
   .patch(
-    limiter,
     Protect,
-    allowedTo(Roles.SUPER_ADMIN),
+    allowedTo(
+      Roles.COUNTER,
+      Roles.TRANSFER_CLERK,
+      Roles.BADR_HOSPITAL_ADMIN,
+      Roles.OBSERVER,
+      Roles.SECOND_MANAGER,
+    ),
     resetPasswordValidator,
-    resetPassword
+    resetPassword,
   )
-  .delete(deleteAdmin);
+  .delete(Protect, allowedTo(Roles.SUPER_ADMIN), deleteAdmin);
 
-//SYSTEM FEATURES ROUTERS
+router.get("/filter", filterStudents);
 
+// SYSTEM FEATURES ROUTERS
+// TODO: Add allowedTo(Roles) to each route
+router.route("/search").post(Protect, searchStudent);
+router.route("/advancedSearch").post(Protect, advancedSearch);
 
-//2) search for specific student:
-router
-  .route("/search")
-  .post(
-    Protect,
-    allowedTo(
-      Roles.COUNTER,
-      Roles.MEDICAL_CHECK_MANAGER,
-      Roles.OBSERVER,
-      Roles.SECOND_MANAGER,
-      Roles.SUPER_ADMIN
-    ),
-    searchStudent
-  );
-
-//3) Advanced search:
-router
-  .route("/advancedSearch")
-  .post(
-    Protect,
-    allowedTo(
-      Roles.COUNTER,
-      Roles.MEDICAL_CHECK_MANAGER,
-      Roles.OBSERVER,
-      Roles.SECOND_MANAGER,
-      Roles.SUPER_ADMIN
-    ),
-    advancedSearch
-  );
-
-
-
-//ADMIN MAIN ROUTERS
-//1) accept or reject student requests:
+// ADMIN MAIN ROUTERS
 router
   .route("/acceptOrDecline/:id")
   .patch(Protect, allowedTo(Roles.SUPER_ADMIN, Roles.COUNTER), acceptOrDecline);
-
-//2) transfer to another hospital:
 router
   .route("/transfer")
-  .post(Protect, allowedTo(Roles.SUPER_ADMIN, Roles.TRANSFER_CLERK), transfer);
+  .post(
+    Protect,
+    allowedTo(
+      Roles.TRANSFER_CLERK,
+      Roles.SUPER_ADMIN,
+      Roles.BADR_HOSPITAL_ADMIN,
+    ),
+    transfer,
+  );
 
-//3) auditing user data:
+router
+  .route("/transferdata")
+  .post(
+    Protect,
+    allowedTo(
+      Roles.SUPER_ADMIN,
+      Roles.BADR_HOSPITAL_ADMIN,
+      Roles.TRANSFER_CLERK,
+    ),
+    getTransfered,
+  );
+router
+  .route("/transfer/:transfer_id")
+  .put(
+    Protect,
+    allowedTo(
+      Roles.TRANSFER_CLERK,
+      Roles.SUPER_ADMIN,
+      Roles.BADR_HOSPITAL_ADMIN,
+    ),
+    updateTransfer,
+  );
 router
   .route("/:student_id")
   .post(
     Protect,
     allowedTo(Roles.SUPER_ADMIN, Roles.COUNTER, Roles.OBSERVER),
     sendObservationValidator,
-    sendObservation
+    sendObservation,
   );
 
-module.exports = router;
+export default router;

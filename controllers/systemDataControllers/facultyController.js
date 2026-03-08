@@ -1,11 +1,11 @@
-const asyncHandler = require("express-async-handler");
-const db = require("../../config/db");
-const { StatusCode } = require("../../utiles/statusCode.js");
+import asyncHandler from "express-async-handler";
+import db from "../../config/db.js";
+import { StatusCode } from "../../utiles/statusCode.js";
 
 //@desc     add new faculty
 //@route    POST  /api/v1/sysdata/faculties
 //@access   private
-exports.createFaculty = asyncHandler(async (req, res) => {
+const createFaculty = asyncHandler(async (req, res) => {
   const { facultyName } = req.body;
   const isExistSql = "SELECT * FROM faculties WHERE facultyName = ?";
   db.query(isExistSql, [facultyName], (err, result) => {
@@ -32,7 +32,7 @@ exports.createFaculty = asyncHandler(async (req, res) => {
 //@desc     view list of faculties
 //@route    GET  /api/v1/sysdata/faculties
 //@access   private
-exports.getAllFaculties = asyncHandler(async (req, res) => {
+const getAllFaculties = asyncHandler(async (req, res) => {
   const sql = "SELECT * FROM faculties";
   db.query(sql, (err, results) => {
     if (err) {
@@ -47,7 +47,7 @@ exports.getAllFaculties = asyncHandler(async (req, res) => {
 //@desc     update faculty
 //@route    GET  /api/v1/sysdata/faculties
 //@access   private
-exports.updateFaculty = asyncHandler(async (req, res) => {
+const updateFaculty = asyncHandler(async (req, res) => {
   const { faculty_id } = req.params;
   const { facultyName } = req.body;
 
@@ -82,7 +82,7 @@ exports.updateFaculty = asyncHandler(async (req, res) => {
 //@desc     delete one faculty
 //@route    DELETE  /api/v1/sysdata/faculties/:id
 //@access   private
-exports.deleteFaculty = asyncHandler(async (req, res) => {
+const deleteFaculty = asyncHandler(async (req, res) => {
   const { faculty_id } = req.params;
 
   const checkSql = "SELECT * FROM faculties WHERE faculty_id = ?";
@@ -112,3 +112,10 @@ exports.deleteFaculty = asyncHandler(async (req, res) => {
     });
   });
 });
+
+export{
+    createFaculty,
+    getAllFaculties,
+    updateFaculty,
+    deleteFaculty
+}

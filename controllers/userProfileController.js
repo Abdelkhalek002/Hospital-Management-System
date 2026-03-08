@@ -1,15 +1,16 @@
-const asyncHandler = require("express-async-handler");
-const db = require("../config/db");
-const multer = require("multer");
-const { v4: uuidv4 } = require("uuid");
-const sharp = require("sharp");
-const path = require("path");
-const fs = require("fs");
+import asyncHandler from "express-async-handler";
+import db from "../config/db.js";
+import multer from "multer";
+import { v4 as uuidv4 } from "uuid";
+import sharp from "sharp";
+import path from "path";
+import fs from "fs";
+import { StatusCode } from "../utiles/statusCode.js";
 
 //@desc user access profile data
 //@route    POST  /api/v1/myProfile/:id
 //@access   public
-getStudentProfile = asyncHandler(async (req, res) => {
+const getStudentProfile = asyncHandler(async (req, res) => {
   const { student_id } = req.params;
   let sql =
     "SELECT students.*, levels.levelName AS level_name, faculties.facultyName AS faculty_name,governorates.govName AS gov_name , nationality.nationalityName AS nationality_name FROM students";
@@ -42,12 +43,12 @@ const multerFilter = function (req, file, cb) {
 };
 
 const upload = multer({ storage: multerStorage, fileFilter: multerFilter });
-uploadUserImage = upload.single("userImage_file");
+const uploadUserImage = upload.single("userImage_file");
 
-resizeImage = asyncHandler(async (req, res, next) => {
+const resizeImage = asyncHandler(async (req, res, next) => {
   const filename = `profile-${uuidv4()}-${Date.now()}.jpeg`;
 
-  const directory = "uploads/student_info/profile_pic";
+  const directory = "uploads";
   if (!fs.existsSync(directory)) {
     fs.mkdirSync(directory, { recursive: true });
   }
@@ -65,31 +66,62 @@ resizeImage = asyncHandler(async (req, res, next) => {
 //@desc user update profile data
 //@route    POST  /api/v1/myProfile/:id
 //@access   public
-updateUserProfile = asyncHandler(async (req, res) => {
+const updateUserProfile = asyncHandler(async (req, res) => {
   const { student_id } = req.params;
-  const { national_id, userImage_file, phoneNumber } = req.body;
-  const sql =
-    "UPDATE students SET national_id = ?, userImage_file = ?, phoneNumber = ? WHERE student_id = ?";
-  db.query(
-    sql,
-    [national_id, userImage_file, phoneNumber, student_id],
-    (err, result) => {
-      if (err) {
-        return res.status(400).json({ msg: err.message });
-      } else {
-        if (result.affectedRows === 0) {
-          return res
-            .status(404)
-            .json({ msg: `No student found with ID ${student_id}` });
-        } else {
-          return res.status(200).json({ message: "تم تحديث البيانات بنجاح" });
-        }
-      }
-    }
-  );
-});
+  const { userName, phoneNumber, level_id, gov_id, national_id } = req.body;
 
-getProfilePhoto = asyncHandler(async (req, res) => {
+  // First, check if the provided level_id and gov_id exist in their respective tables
+  const levelCheckSql = "SELECT COUNT(*) AS count FROM levels WHERE level_id = ?";
+  const govCheckSql = "SELECT COUNT(*) AS count FROM governorates WHERE gov_id = ?";
+  // const nationalIdSql = "SELECT COUNT(*) AS count FROM students WHERE national_id = ?";
+
+  db.query(levelCheckSql, [level_id], (err, levelResult) => {
+    if (err) {
+      return res.status(StatusCode.BAD_REQUEST).json({ msg: "Error checking level_id: " + err.message });
+    } else if (levelResult[0].count === 0) {
+      return res.status(StatusCode.BAD_REQUEST).json({ msg: `Invalid level_id: ${level_id}` });
+    } else {
+      db.query(govCheckSql, [gov_id], (err, govResult) => {
+        if (err) {
+          return res.status(StatusCode.BAD_REQUEST).json({ msg: "Error checking gov_id: " + err.message });
+        } else if (govResult[0].count === 0) {
+          return res.status(StatusCode.BAD_REQUEST).json({ msg: `Invalid gov_id: ${gov_id}` });
+        } else {
+          // db.query(nationalIdSql, [national_id], (err, nationalIdResult) => {
+          //   if (err) {
+          //     return res.status(StatusCode.BAD_REQUEST).json({ msg: "Error checking national_id: " + err.message });
+          //   } else if (nationalIdResult[0].count > 0) {
+          //     return res.status(StatusCode.CONFLICT).json({ msg: `الرقم القومي موجود بالفعل` });
+          //   } else {
+          // If both level_id and gov_id are valid and national_id does not exist, proceed to update the user profile
+          const sql =
+            "UPDATE students SET userName=?, phoneNumber=?, level_id=?, gov_id=?, national_id=? WHERE student_id=?";
+          db.query(
+            sql,
+            [userName, phoneNumber, level_id, gov_id, national_id, student_id],
+            (err, result) => {
+              if (err) {
+                return res.status(StatusCode.BAD_REQUEST).json( err.message );
+              } else {
+                if (result.affectedRows === 0) {
+                  return res
+                    .status(StatusCode.NOT_FOUND)
+                    .json({ msg: `No student found with ID ${student_id}` });
+                } else {
+                  return res.status(StatusCode.OK).json({ message: "تم تحديث البيانات بنجاح" });
+                }
+              }
+            }
+          );
+        }
+      });
+    }
+  });
+}
+);
+
+
+const getProfilePhoto = asyncHandler(async (req, res) => {
   const { student_id } = req.params;
   const { userImage_file } = req.body;
   const query = "UPDATE students SET userImage_file=? WHERE student_id=?";
@@ -109,7 +141,7 @@ getProfilePhoto = asyncHandler(async (req, res) => {
   });
 });
 
-updateProfilePhoto = asyncHandler(async (req, res) => {
+const updateProfilePhoto = asyncHandler(async (req, res) => {
   const { student_id } = req.params;
   const { userImage_file } = req.body;
   console.log(student_id);
@@ -131,11 +163,11 @@ updateProfilePhoto = asyncHandler(async (req, res) => {
   });
 });
 
-module.exports = {
+export {
   getStudentProfile,
+  updateProfilePhoto,
+  getProfilePhoto,
   uploadUserImage,
   resizeImage,
   updateUserProfile,
-  updateProfilePhoto,
-  getProfilePhoto,
 };

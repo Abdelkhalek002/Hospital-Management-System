@@ -1,4 +1,5 @@
-const { validationResult } = require("express-validator");
+import { validationResult } from "express-validator";
+
 //@desc finds the validation errors in this request and wraps them into handy functions
 const validatorMiddleware = (req, res, next) => {
   const errors = validationResult(req);
@@ -7,4 +8,5 @@ const validatorMiddleware = (req, res, next) => {
   }
   next();
 };
-module.exports = validatorMiddleware;
+
+export default validatorMiddleware;

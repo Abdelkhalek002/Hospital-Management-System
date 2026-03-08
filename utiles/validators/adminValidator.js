@@ -1,9 +1,9 @@
-//IMPORTING DEPENDENCIES
-const { check } = require("express-validator");
-const validatorMiddleware = require("../../middleWares/validatorMiddleware");
-const customValidators = require("../customValidators/CustomValidators");
+// IMPORTING DEPENDENCIES
+import { check } from "express-validator";
+import validatorMiddleware from "../../middlewares/validatorMiddleware.js";
+import customValidators from "../customValidators/CustomValidators.js"; // Ensure you have this module and it is correctly path
 
-addNewAdminValidator = [
+export const addNewAdminValidator = [
   check("userName").notEmpty().withMessage("userName is required"),
   check("email")
     .notEmpty()
@@ -19,8 +19,7 @@ addNewAdminValidator = [
   validatorMiddleware,
 ];
 
-
-addSuperAdminValidator = [
+export const addSuperAdminValidator = [
   check("name").notEmpty().withMessage("Name is required"),
   check("email")
     .notEmpty()
@@ -36,8 +35,7 @@ addSuperAdminValidator = [
   validatorMiddleware,
 ];
 
-
-updateAdminValidator = [
+export const updateAdminValidator = [
   check("userName").notEmpty().withMessage("userName is required"),
   check("email")
     .notEmpty()
@@ -48,7 +46,7 @@ updateAdminValidator = [
   validatorMiddleware,
 ];
 
-resetPasswordValidator = [
+export const resetPasswordValidator = [
   check("password")
     .notEmpty()
     .withMessage("password is required")
@@ -57,7 +55,7 @@ resetPasswordValidator = [
   validatorMiddleware,
 ];
 
-sendObservationValidator = [
+export const sendObservationValidator = [
   check("observation")
     .notEmpty()
     .withMessage("Observation is required")
@@ -65,13 +63,3 @@ sendObservationValidator = [
     .withMessage("observation must be at least 6 characters long"),
   validatorMiddleware,
 ];
-
-
-
-module.exports = {
-  addNewAdminValidator,
-  addSuperAdminValidator,
-  updateAdminValidator,
-  resetPasswordValidator,
-  sendObservationValidator,
-};

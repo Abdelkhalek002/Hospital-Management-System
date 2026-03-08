@@ -1,5 +1,5 @@
-//@desc this class is resbonsible for operational errors (errors i can predict)
-class ApiError extends Error {
+//@desc this class is responsible for operational errors (errors I can predict)
+export default class ApiError extends Error {
   constructor(message, statusCode) {
     super(message);
     this.statusCode = statusCode;
@@ -7,5 +7,3 @@ class ApiError extends Error {
     this.isOperational = true;
   }
 }
-
-module.exports = ApiError;

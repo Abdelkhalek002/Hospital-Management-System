@@ -1,31 +1,28 @@
-const express = require("express");
+import express from "express";
+const router = express.Router();
 
-const {
+import {
   uploadRegisterationFiles,
   resizeFiles,
   signup,
   login,
   forgetPassword,
-} = require("../controllers/authController");
+} from "../controllers/authController.js";
 
-const { Protect } = require("../middlewares/Auth/auth.js");
+// Import middlewares
+import { activateEmail } from "../services/avtivateUserMiddleware.js";
 
-//IMPORT MIDDLEWARES
-const { activateEmail } = require("../services/avtivateUserMiddleware.js");
-
-//IMPORT VALIDATORS
-const {
+// Import validators
+import {
   signupValidator,
   sendOtpValidator,
   forgetPasswordValidator,
-} = require("../utiles/validators/authValidator");
-const { sendOtp } = require("../services/sendOTP_Middleware.js");
-const limiter = require("../services/limitReqsMiddleware.js");
-const { confirmEmail } = require("../services/confirmSuperAdmin.js");
-
-const router = express.Router();
-
-//router.route("/login").post(loginValidator, login);
+} from "../utiles/validators/authValidator.js";
+import { sendOtp } from "../services/sendOTP_Middleware.js";
+import limiter from "../services/limitReqsMiddleware.js";
+import { confirmEmail } from "../services/confirmSuperAdmin.js";
+import { Protect, allowedTo, allowedToUser } from "../middlewares/Auth/auth.js";
+import { Roles } from "../utiles/Roles.js";
 
 router
   .route("/signUp")
@@ -38,4 +35,4 @@ router
   .post("/login", login);
 router.get("/confirmEmail", confirmEmail);
 
-module.exports = router;
+export default router;

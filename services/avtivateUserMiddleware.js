@@ -1,11 +1,11 @@
-const nodemailer = require("nodemailer");
-const jwt = require("jsonwebtoken");
-const db = require("../config/db");
+import nodemailer from "nodemailer";
+import jwt from "jsonwebtoken";
+import db from "../config/db.js";
 
-exports.sendActivationMail = async (email, name) => {
+export const sendActivationMail = async (email, name) => {
   // 1- Sign JWT token with user information and set expiration to 50 seconds
   const activationToken = jwt.sign({ email }, process.env.JWT_SECRET, {
-    expiresIn: "120s",
+    expiresIn: "5m",
   });
   //2- prepare activation mail for user
   const recipientEmail = email;
@@ -84,7 +84,7 @@ exports.sendActivationMail = async (email, name) => {
   console.log("Message sent: %s", info.messageId);
 };
 
-exports.activateEmail = async (req, res) => {
+export const activateEmail = async (req, res) => {
   try {
     const { token } = req.query;
 
@@ -101,10 +101,74 @@ exports.activateEmail = async (req, res) => {
         decoded.email,
       ]);
 
-      return res.status(200).json({
-        success: true,
-        message: "Account activated successfully!",
-      });
+      return res.status(202).send(`
+    <style>
+      body {
+        background-color: #0C2D57;
+        color: #343a40;
+        font-family: 'Tajawal', sans-serif;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+      }
+
+      .container {
+        width: 100%;
+        background-color: #004080;
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 30px;
+        text-align: center;
+        background-color: #;
+        border-radius: 10px;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+      }
+
+      .header {
+        padding: 20px 0;
+      }
+
+      h1 {
+        color: #fff;
+        margin: 0;
+        font-size: 24px;
+      }
+
+      .content {
+        padding: 20px 0;
+      }
+
+      p {
+        margin: 0;
+        font-size: 16px;
+        color: #fff;
+      }
+
+      .footer {
+        padding: 20px 0;
+      }
+
+      .branding {
+        color: #fff;
+        font-weight: bold;
+      }
+    </style>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>تم تفعيل بريدك الإلكتروني بنجاح</h1>
+        </div>
+        <div class="content">
+          <p>شكراً لك لتفعيل بريدك الإلكتروني</p>
+        </div>
+        <div class="footer">
+          <p class="branding">صحتك تهمنا</p>
+        </div>
+      </div>
+    </body>`);
     });
   } catch (error) {
     console.error("Error:", error);

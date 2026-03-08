@@ -1,10 +1,10 @@
-//IMPORTING DEPENDENCIES
-const { check } = require("express-validator");
-const validatorMiddleware = require("../../middleWares/validatorMiddleware");
-const customValidators = require("../customValidators/CustomValidators");
+// IMPORTING DEPENDENCIES
+import { check } from "express-validator";
+import validatorMiddleware from "../../middlewares/validatorMiddleware.js";
+import customValidators from "../customValidators/CustomValidators.js";
 
-////@desc   limit reservations to 50 requests per day
-exports.isLimitReached = (err, result) => {
+//@desc   limit reservations to 50 requests per day
+export const isLimitReached = (err, result) => {
   if (err) {
     console.error(`Error checking reservation limit:`, err);
   } else if (result.length >= 20) {
@@ -13,7 +13,7 @@ exports.isLimitReached = (err, result) => {
   return false;
 };
 
-exports.createRequestValidator = [
+export const createRequestValidator = [
   check("clinic_id").notEmpty().isNumeric(),
   check("date")
     .notEmpty()
@@ -21,7 +21,7 @@ exports.createRequestValidator = [
     .custom(customValidators.isValidDate),
   validatorMiddleware,
 ];
-exports.updateRequestValidator = [
+export const updateRequestValidator = [
   check("clinic_id").notEmpty().isNumeric(),
   check("date")
     .notEmpty()
@@ -34,7 +34,7 @@ exports.updateRequestValidator = [
     .optional(),
   validatorMiddleware,
 ];
-exports.deleteRequestValidator = [
+export const deleteRequestValidator = [
   check("id").isInt().withMessage("invalid student id !"),
   validatorMiddleware,
 ];

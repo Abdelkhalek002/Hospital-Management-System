@@ -1,11 +1,10 @@
-const express = require("express");
-
-const { changeUserPassword } = require("../controllers/userSecController");
-const { Protect } = require("../middlewares/Auth/auth.js");
-const limiter = require("../services/limitReqsMiddleware.js");
+import express from "express";
+import { changeUserPassword } from "../controllers/userSecController.js";
+import { Protect } from "../middlewares/Auth/auth.js";
+import limiter from "../services/limitReqsMiddleware.js";
 
 const router = express.Router();
 
-router.route("/change/:student_id").post(Protect, limiter, changeUserPassword);
+router.route("/change/:student_id").post(limiter, changeUserPassword);
 
-module.exports = router;
+export default router;

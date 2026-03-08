@@ -1,6 +1,6 @@
-const asyncHandler = require("express-async-handler");
-const db = require("../../config/db");
-const { StatusCode } = require("../../utiles/statusCode.js");
+import asyncHandler from "express-async-handler";
+import db from "../../config/db.js";
+import { StatusCode } from "../../utiles/statusCode.js";
 
 //@desc     add new hospital
 //@route    POST  /api/v1/sysdata/hospitals
@@ -120,9 +120,10 @@ const deleteHospital = asyncHandler(async (req, res) => {
   });
 });
 
-module.exports = {
+export{
   createHospital,
   getAllhospitals,
-  updateHospital,
-  deleteHospital
+  deleteHospital,
+  updateHospital
 }
+

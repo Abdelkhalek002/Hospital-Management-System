@@ -1,24 +1,25 @@
-//IOMPORTING DEPENDENCIES
-const express = require("express");
-const db = require("../../config/db");
-const ApiError = require("../apiError");
-const asyncHandler = require("express-async-handler");
-// to check if the code is in arabic or not
-exports.isArabic = (value) => {
+// Importing dependencies
+import express from "express";
+import db from "../../config/db.js";
+import ApiError from "../apiError.js";
+import asyncHandler from "express-async-handler";
+
+// To check if the code is in Arabic or not
+export const isArabic = (value) => {
   if (!/^[؀-ۿـ\s]+$/u.test(value)) {
-    throw new Error(`( ${value} ) format is not in arabic!`);
+    throw new Error(`( ${value} ) format is not in Arabic!`);
   }
   return true;
 };
 
-//to validate appointment date
-exports.isValidDate = (value) => {
+// To validate appointment date
+export const isValidDate = (value) => {
   // Parse the input value as a date
   const appointmentDate = new Date(value);
 
   // Check if the date is valid
   if (Number.isNaN(appointmentDate)) {
-    throw new Error("invalid date information");
+    throw new Error("Invalid date information");
   }
 
   // Get the current date
@@ -26,29 +27,42 @@ exports.isValidDate = (value) => {
 
   // Check if the appointment date is in the future
   if (appointmentDate <= currentDate) {
-    throw new Error("invalid date information");
+    throw new Error("Invalid date information");
   }
   return true;
 };
 
-exports.isverified = (email) => {
-  const sql = "SELECT verified FROM students WHERE email = ?";
-  db.query(sql, [email], (err, result) => {
-    if (result.verified == 0) {
-      throw new Error(
-        "account is not activated, please activate your account!",
-        400
-      );
-    }
-    return true;
+// To check if the account is verified
+export const isVerified = (email) => {
+  return new Promise((resolve, reject) => {
+    const sql = "SELECT verified FROM students WHERE email = ?";
+    db.query(sql, [email], (err, result) => {
+      if (err) {
+        reject(err);
+      } else {
+        if (result.length === 0 || result[0].verified === 0) {
+          reject(new Error("Account is not activated. Please activate your account."));
+        } else {
+          resolve(true);
+        }
+      }
+    });
   });
 };
 
-//to validate helwan univercity account
-exports.isUniEmail = (value) => {
+// To validate Helwan University account
+export const isUniEmail = (value) => {
   const domain = value.split("@")[1];
   if (!domain.endsWith(".helwan.edu.eg")) {
-    throw new Error("invalid helwan univercity account");
+    throw new Error("Invalid Helwan University account");
   }
   return true;
+};
+
+// Exporting the validators
+export default {
+  isArabic,
+  isValidDate,
+  isVerified,
+  isUniEmail,
 };

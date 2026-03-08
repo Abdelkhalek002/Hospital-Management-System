@@ -1,11 +1,11 @@
-//IMPORTING DEPENDENCIES
-const { check } = require("express-validator");
-const validatorMiddleware = require("../../middlewares/validatorMiddleware");
-const customValidators = require("../customValidators/CustomValidators");
+// IMPORTING DEPENDENCIES
+import { check } from "express-validator";
+import validatorMiddleware from "../../middlewares/validatorMiddleware.js";
+import customValidators from "../customValidators/CustomValidators.js";
 
-//SIGNUP VALIDATORS
+// SIGNUP VALIDATORS
 //@desc check if email exists:
-exports.isEmailExist = (error, results) => {
+export const isEmailExist = (error, results) => {
   if (error) {
     console.error("Error checking email existence:", error);
   } else if (results.length > 0) {
@@ -17,7 +17,7 @@ exports.isEmailExist = (error, results) => {
 };
 
 //@desc check if national id exists:
-exports.isNationalIdExist = (error, results) => {
+export const isNationalIdExist = (error, results) => {
   if (error) {
     console.error("Error checking national id existence:", error);
   } else if (results.length > 0) {
@@ -29,7 +29,7 @@ exports.isNationalIdExist = (error, results) => {
 };
 
 //@desc check if data ids entered correctly:
-exports.isIDExist = (err, results) => {
+export const isIDExist = (err, results) => {
   if (err) {
     // If there's an error, return false
     console.error(`Error checking id existence:`, err);
@@ -40,7 +40,7 @@ exports.isIDExist = (err, results) => {
   return false;
 };
 
-exports.signupValidator = [
+export const signupValidator = [
   check("userName")
     .notEmpty()
     .withMessage("user name required")
@@ -90,8 +90,8 @@ exports.signupValidator = [
   validatorMiddleware,
 ];
 
-//LOGIN VALIDATOR
-exports.loginValidator = [
+// LOGIN VALIDATOR
+export const loginValidator = [
   check("email")
     .notEmpty()
     .withMessage("email is required")
@@ -107,7 +107,7 @@ exports.loginValidator = [
 ];
 
 // SEND OTP VALIDATOR
-exports.forgetPasswordValidator = [
+export const forgetPasswordValidator = [
   check("email")
     .notEmpty()
     .withMessage("email is required")
@@ -131,8 +131,8 @@ exports.forgetPasswordValidator = [
   validatorMiddleware,
 ];
 
-//FORGOT PASSWORD VALIDATOR
-exports.sendOtpValidator = [
+// FORGOT PASSWORD VALIDATOR
+export const sendOtpValidator = [
   check("email")
     .notEmpty()
     .withMessage("email is required")

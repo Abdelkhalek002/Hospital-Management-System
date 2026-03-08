@@ -1,4 +1,4 @@
-exports.StatusCode = {
+export const StatusCode = {
     OK: 200,
     CREATED: 201,
     NO_CONTENT: 204,
@@ -8,6 +8,7 @@ exports.StatusCode = {
     NOT_FOUND: 404,
     METHOD_NOT_ALLOWED: 405,
     CONFLICT: 409,
+    TOO_MANY_REQUESTS: 429,
     INTERNAL_SERVER_ERROR: 500,
     SERVICE_UNAVAILABLE: 503
 };

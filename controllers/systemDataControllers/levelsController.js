@@ -1,12 +1,11 @@
-//IMPORTING DEPENDENCIES
-const asyncHandler = require("express-async-handler");
-const db = require("../../config/db");
-const { StatusCode } = require("../../utiles/statusCode.js");
+import asyncHandler from "express-async-handler";
+import db from "../../config/db.js";
+import { StatusCode } from "../../utiles/statusCode.js";
 
 //@desc     add new level
 //@route    POST  /api/v1/sysdata/levels
 //@access   private
-exports.createLevel = asyncHandler(async (req, res) => {
+const createLevel = asyncHandler(async (req, res) => {
   const { levelName } = req.body;
   const isExistSql = "SELECT * FROM levels WHERE levelName = ?";
   db.query(isExistSql, [levelName], (err, result) => {
@@ -33,7 +32,7 @@ exports.createLevel = asyncHandler(async (req, res) => {
 //@desc     view list of levels
 //@route    GET  /api/v1/sysdata/levels
 //@access   private
-exports.GetAllLevels = asyncHandler(async (req, res) => {
+const GetAllLevels = asyncHandler(async (req, res) => {
   const sql = "SELECT * FROM levels";
   db.query(sql, (err, results) => {
     if (err) {
@@ -48,7 +47,7 @@ exports.GetAllLevels = asyncHandler(async (req, res) => {
 //@desc     update level
 //@route    GET  /api/v1/sysdata/levels
 //@access   private
-exports.updateLevel = asyncHandler(async (req, res) => {
+const updateLevel = asyncHandler(async (req, res) => {
   const { level_id } = req.params;
   const { levelName } = req.body;
 
@@ -83,7 +82,7 @@ exports.updateLevel = asyncHandler(async (req, res) => {
 //@desc     delete one level
 //@route    DELETE  /api/v1/sysdata/levels/:id
 //@access   private
-exports.DeleteLevel = asyncHandler(async (req, res) => {
+const DeleteLevel = asyncHandler(async (req, res) => {
   const { level_id } = req.params;
 
   const checkSql = "SELECT * FROM levels WHERE level_id = ?";
@@ -113,3 +112,10 @@ exports.DeleteLevel = asyncHandler(async (req, res) => {
     });
   });
 });
+
+export{
+  createLevel,
+  GetAllLevels,
+  updateLevel,
+  DeleteLevel
+}

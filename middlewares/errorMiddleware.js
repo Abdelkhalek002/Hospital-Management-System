@@ -15,14 +15,15 @@ const sendErrorForProd = (err, res) => {
   });
   return error;
 };
+
 const globalError = (err, req, res, next) => {
   err.statusCode = err.statusCode || 500;
   err.status = err.status || "error";
   if (process.env.NODE_ENV === "development") {
-    sendErrorForDev(err, res);
+    return sendErrorForDev(err, res);
   } else {
-    sendErrorForProd(err, res);
+    return sendErrorForProd(err, res);
   }
 };
 
-module.exports = globalError;
+export default globalError;
