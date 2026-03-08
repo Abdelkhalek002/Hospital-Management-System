@@ -8,7 +8,7 @@ import path from "path";
 import fs from "fs";
 import sanitizeFilename from "sanitize-filename";
 import { StatusCode } from "../utils/statusCode.js";
-import { Roles } from "../utils/Roles.js";
+import { roles } from "../utils/roles.js";
 
 //!Emergency Reservations routes
 //@desc     submit medical examination request
@@ -44,7 +44,7 @@ const adminCreateRequest = asyncHandler(async (req, res) => {
       } else {
         console.log("Request created successfully");
         // Insert audit record
-        const isSuperAdmin = req.user[0].role === Roles.SUPER_ADMIN; // Check if the user is a super admin
+        const isSuperAdmin = req.user[0].role === roles.SUPER_ADMIN; // Check if the user is a super admin
 
         const auditData = {
           timestamp: new Date().toISOString(),
@@ -130,7 +130,7 @@ const adminUpdateRequest = asyncHandler(async (req, res) => {
             message: "تم تعديل الحجز بنجاح",
           });
 
-          const isSuperAdmin = req.user[0].role === Roles.SUPER_ADMIN; // Check if the user is a super admin
+          const isSuperAdmin = req.user[0].role === roles.SUPER_ADMIN; // Check if the user is a super admin
 
           const auditData = {
             timestamp: new Date().toISOString(),
@@ -418,7 +418,7 @@ const adminDeleteRequest = asyncHandler(async (req, res) => {
         return res.status(StatusCode.INTERNAL_SERVER_ERROR).send(err);
       }
 
-      const isSuperAdmin = req.user[0].role === Roles.SUPER_ADMIN; // Check if the user is a super admin
+      const isSuperAdmin = req.user[0].role === roles.SUPER_ADMIN; // Check if the user is a super admin
 
       const auditData = {
         timestamp: new Date().toISOString(),

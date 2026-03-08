@@ -7,7 +7,7 @@ import {
 } from "../../controllers/systemDataControllers/govsController.js";
 import limiter from "../../services/limitReqsMiddleware.js";
 import { Protect, allowedToUser } from "../../middlewares/auth.middleware.js";
-import { Roles } from "../../utils/Roles.js";
+import { roles } from "../../utils/roles.js";
 
 const router = express.Router();
 

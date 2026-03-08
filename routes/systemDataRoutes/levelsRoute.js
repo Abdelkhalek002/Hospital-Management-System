@@ -8,7 +8,7 @@ import {
 import limiter from "../../services/limitReqsMiddleware.js";
 import { Protect, allowedTo } from "../../middlewares/auth.middleware.js";
 import { levelsValidator } from "../../utils/validators/sysDataValidator.js";
-import { Roles } from "../../utils/Roles.js";
+import { roles } from "../../utils/roles.js";
 
 const router = express.Router();
 

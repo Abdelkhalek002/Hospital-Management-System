@@ -1,7 +1,7 @@
 // IMPORTING DEPENDENCIES
 import { check } from "express-validator";
 import validatorMiddleware from "../../middlewares/validatorMiddleware.js";
-import customValidators from "../customValidators/CustomValidators.js";
+import customValidators from "../custom-validators.js";
 
 //@desc   limit reservations to 50 requests per day
 export const isLimitReached = (err, result) => {

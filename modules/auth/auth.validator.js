@@ -1,7 +1,8 @@
 // IMPORTING DEPENDENCIES
 import { check } from "express-validator";
+
 import validatorMiddleware from "../../middlewares/validatorMiddleware.js";
-import customValidators from "../customValidators/CustomValidators.js";
+import customValidators from "../../utils/custom-validators.js";
 
 // SIGNUP VALIDATORS
 //@desc check if email exists:
@@ -59,7 +60,7 @@ export const signupValidator = [
     .bail()
     .matches(/^[A-Z][a-z0-9#@]{7,39}$/)
     .withMessage(
-      "Password should start with an uppercase letter and contain 8 to 40 characters with lowercase letters, numbers, or symbols #, @."
+      "Password should start with an uppercase letter and contain 8 to 40 characters with lowercase letters, numbers, or symbols #, @.",
     ),
   check("national_id")
     .notEmpty()
@@ -126,7 +127,7 @@ export const forgetPasswordValidator = [
     .bail()
     .matches(/^[A-Z][a-z0-9#@]{7,39}$/)
     .withMessage(
-      "Password should start with an uppercase letter and contain 8 to 40 characters with lowercase letters, numbers, or symbols #, @."
+      "Password should start with an uppercase letter and contain 8 to 40 characters with lowercase letters, numbers, or symbols #, @.",
     ),
   validatorMiddleware,
 ];

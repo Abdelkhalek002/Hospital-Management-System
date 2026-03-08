@@ -7,26 +7,26 @@ import {
   signup,
   login,
   forgetPassword,
-} from "../controllers/authController.js";
+} from "./auth.controller.js";
 
 // Import middlewares
-import { activateEmail } from "../services/avtivateUserMiddleware.js";
+import { activateEmail } from "../../services/avtivateUserMiddleware.js";
 
 // Import validators
 import {
   signupValidator,
   sendOtpValidator,
   forgetPasswordValidator,
-} from "../utils/validators/authValidator.js";
-import { sendOtp } from "../services/sendOTP_Middleware.js";
-import limiter from "../services/limitReqsMiddleware.js";
-import { confirmEmail } from "../services/confirmSuperAdmin.js";
+} from "./auth.validator.js";
+import { sendOtp } from "../../services/sendOTP_Middleware.js";
+import limiter from "../../services/limitReqsMiddleware.js";
+import { confirmEmail } from "../../services/confirmSuperAdmin.js";
 import {
   Protect,
   allowedTo,
   allowedToUser,
-} from "../middlewares/auth.middleware.js";
-import { Roles } from "../utils/Roles.js";
+} from "../../middlewares/auth.middleware.js";
+import { roles } from "../../utils/roles.js";
 
 router
   .route("/signUp")

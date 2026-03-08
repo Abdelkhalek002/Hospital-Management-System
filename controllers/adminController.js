@@ -3,7 +3,7 @@ import db from "../config/db.js";
 import bcrypt from "bcrypt";
 import { StatusCode } from "../utils/statusCode.js";
 import sendObservationMail from "../services/sendObservationemail.js";
-import { Roles } from "../utils/Roles.js";
+import { roles } from "../utils/roles.js";
 
 //!! SUPER ADMIN
 //? STATISTICS
@@ -641,7 +641,7 @@ const sendObservation = asyncHandler(async (req, res) => {
     const { email, userName } = result[0];
     console.log(userName, email, observation);
     sendObservationMail(email, observation, userName);
-    const isSuperAdmin = req.user[0].role === Roles.SUPER_ADMIN; // Check if the user is a super admin
+    const isSuperAdmin = req.user[0].role === roles.SUPER_ADMIN; // Check if the user is a super admin
 
     const auditData = {
       timestamp: new Date().toISOString(),
@@ -702,7 +702,7 @@ const acceptOrDecline = asyncHandler(async (req, res) => {
               return res.status(StatusCode.INTERNAL_SERVER_ERROR).send(err);
             }
 
-            const isSuperAdmin = req.user[0].role === Roles.SUPER_ADMIN; // Check if the user is a super admin
+            const isSuperAdmin = req.user[0].role === roles.SUPER_ADMIN; // Check if the user is a super admin
             const auditData = {
               timestamp: new Date().toISOString(),
               method: "قبول الكشف",
@@ -749,7 +749,7 @@ const acceptOrDecline = asyncHandler(async (req, res) => {
               console.error("Error updating medical examination status:", err);
               return res.status(StatusCode.INTERNAL_SERVER_ERROR).send(err);
             }
-            const isSuperAdmin = req.user[0].role === Roles.SUPER_ADMIN; // Check if the user is a super admin
+            const isSuperAdmin = req.user[0].role === roles.SUPER_ADMIN; // Check if the user is a super admin
             const auditData = {
               timestamp: new Date().toISOString(),
               method: "رفض الكشف",
@@ -1011,7 +1011,7 @@ const blockUser = asyncHandler(async (req, res) => {
         return res.status(StatusCode.INTERNAL_SERVER_ERROR).send(blockErr);
       }
 
-      const isSuperAdmin = req.user[0].role === Roles.SUPER_ADMIN; // Check if the user is a super admin
+      const isSuperAdmin = req.user[0].role === roles.SUPER_ADMIN; // Check if the user is a super admin
       const auditData = {
         timestamp: new Date().toISOString(),
         method: "حظر المستخدم",
@@ -1071,7 +1071,7 @@ const unblockUser = asyncHandler(async (req, res) => {
       if (blockErr) {
         return res.status(StatusCode.INTERNAL_SERVER_ERROR).send(blockErr);
       }
-      const isSuperAdmin = req.user[0].role === Roles.SUPER_ADMIN; // Check if the user is a super admin
+      const isSuperAdmin = req.user[0].role === roles.SUPER_ADMIN; // Check if the user is a super admin
       const auditData = {
         timestamp: new Date().toISOString(),
         method: "فك حظر المستخدم",
@@ -1551,7 +1551,7 @@ const transfer = asyncHandler(async (req, res) => {
       }
     });
     // Audit log
-    const isSuperAdmin = req.user[0].role === Roles.SUPER_ADMIN; // Check if the user is a super admin
+    const isSuperAdmin = req.user[0].role === roles.SUPER_ADMIN; // Check if the user is a super admin
     const auditData = {
       timestamp: new Date().toISOString(),
       method: "تحويل طالب",
@@ -1759,7 +1759,7 @@ const updateTransfer = asyncHandler(async (req, res) => {
         }
 
         // Audit log
-        const isSuperAdmin = req.user[0].role === Roles.SUPER_ADMIN; // Check if the user is a super admin
+        const isSuperAdmin = req.user[0].role === roles.SUPER_ADMIN; // Check if the user is a super admin
         const auditData = {
           timestamp: new Date().toISOString(),
           method: "تعديل تحويل طالب",

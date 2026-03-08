@@ -39,21 +39,21 @@ import {
 
 import { Protect, allowedTo } from "../middlewares/auth.middleware.js";
 import limiter from "../services/limitReqsMiddleware.js";
-import { Roles } from "../utils/Roles.js";
+import { roles } from "../utils/roles.js";
 
 //Statistics
 router
   .route("/statistics")
-  .get(Protect, allowedTo(Roles.SUPER_ADMIN), getStatistics);
+  .get(Protect, allowedTo(roles.SUPER_ADMIN), getStatistics);
 router
   .route("/resbymonth")
-  .get(Protect, allowedTo(Roles.SUPER_ADMIN), getReservationsByMonth);
+  .get(Protect, allowedTo(roles.SUPER_ADMIN), getReservationsByMonth);
 
 // ADMIN LOG ROUTERS
 router
   .route("/logs")
-  .get(Protect, allowedTo(Roles.SUPER_ADMIN), getAdminLogs)
-  .delete(Protect, allowedTo(Roles.SUPER_ADMIN), clearHistory);
+  .get(Protect, allowedTo(roles.SUPER_ADMIN), getAdminLogs)
+  .delete(Protect, allowedTo(roles.SUPER_ADMIN), clearHistory);
 
 router
   .route("/logs/:admin_id")
@@ -65,7 +65,7 @@ router
   .route("/userProfiles")
   .get(
     Protect,
-    allowedTo(Roles.SUPER_ADMIN, Roles.COUNTER),
+    allowedTo(roles.SUPER_ADMIN, roles.COUNTER),
     getAllUserProfiles,
   );
 
@@ -77,13 +77,13 @@ router
 router.patch(
   "/userProfiles/:student_id/block",
   Protect,
-  allowedTo(Roles.SUPER_ADMIN, Roles.SECOND_MANAGER, Roles.COUNTER),
+  allowedTo(roles.SUPER_ADMIN, roles.SECOND_MANAGER, roles.COUNTER),
   blockUser,
 );
 router.patch(
   "/userProfiles/:student_id/unblock",
   Protect,
-  allowedTo(Roles.SUPER_ADMIN, Roles.SECOND_MANAGER, Roles.COUNTER),
+  allowedTo(roles.SUPER_ADMIN, roles.SECOND_MANAGER, roles.COUNTER),
   unblockUser,
 );
 
@@ -92,52 +92,52 @@ router
   .route("/")
   .post(
     Protect,
-    allowedTo(Roles.SUPER_ADMIN),
+    allowedTo(roles.SUPER_ADMIN),
     addNewAdminValidator,
     addNewAdmin,
   );
 
 router.route("/add").post(Protect, addSuperAdminValidator, addSuperAdmin);
 
-router.route("/all").get(Protect, allowedTo(Roles.SUPER_ADMIN), getAllAdmin);
+router.route("/all").get(Protect, allowedTo(roles.SUPER_ADMIN), getAllAdmin);
 
 router
   .route("/:user_id")
   .get(viewAdmin)
-  .put(Protect, allowedTo(Roles.SUPER_ADMIN), updateAdmin)
+  .put(Protect, allowedTo(roles.SUPER_ADMIN), updateAdmin)
   .patch(
     Protect,
     allowedTo(
-      Roles.COUNTER,
-      Roles.TRANSFER_CLERK,
-      Roles.BADR_HOSPITAL_ADMIN,
-      Roles.OBSERVER,
-      Roles.SECOND_MANAGER,
+      roles.COUNTER,
+      roles.TRANSFER_CLERK,
+      roles.BADR_HOSPITAL_ADMIN,
+      roles.OBSERVER,
+      roles.SECOND_MANAGER,
     ),
     resetPasswordValidator,
     resetPassword,
   )
-  .delete(Protect, allowedTo(Roles.SUPER_ADMIN), deleteAdmin);
+  .delete(Protect, allowedTo(roles.SUPER_ADMIN), deleteAdmin);
 
 router.get("/filter", filterStudents);
 
 // SYSTEM FEATURES ROUTERS
-// TODO: Add allowedTo(Roles) to each route
+// TODO: Add allowedTo(roles) to each route
 router.route("/search").post(Protect, searchStudent);
 router.route("/advancedSearch").post(Protect, advancedSearch);
 
 // ADMIN MAIN ROUTERS
 router
   .route("/acceptOrDecline/:id")
-  .patch(Protect, allowedTo(Roles.SUPER_ADMIN, Roles.COUNTER), acceptOrDecline);
+  .patch(Protect, allowedTo(roles.SUPER_ADMIN, roles.COUNTER), acceptOrDecline);
 router
   .route("/transfer")
   .post(
     Protect,
     allowedTo(
-      Roles.TRANSFER_CLERK,
-      Roles.SUPER_ADMIN,
-      Roles.BADR_HOSPITAL_ADMIN,
+      roles.TRANSFER_CLERK,
+      roles.SUPER_ADMIN,
+      roles.BADR_HOSPITAL_ADMIN,
     ),
     transfer,
   );
@@ -147,9 +147,9 @@ router
   .post(
     Protect,
     allowedTo(
-      Roles.SUPER_ADMIN,
-      Roles.BADR_HOSPITAL_ADMIN,
-      Roles.TRANSFER_CLERK,
+      roles.SUPER_ADMIN,
+      roles.BADR_HOSPITAL_ADMIN,
+      roles.TRANSFER_CLERK,
     ),
     getTransfered,
   );
@@ -158,9 +158,9 @@ router
   .put(
     Protect,
     allowedTo(
-      Roles.TRANSFER_CLERK,
-      Roles.SUPER_ADMIN,
-      Roles.BADR_HOSPITAL_ADMIN,
+      roles.TRANSFER_CLERK,
+      roles.SUPER_ADMIN,
+      roles.BADR_HOSPITAL_ADMIN,
     ),
     updateTransfer,
   );
@@ -168,7 +168,7 @@ router
   .route("/:student_id")
   .post(
     Protect,
-    allowedTo(Roles.SUPER_ADMIN, Roles.COUNTER, Roles.OBSERVER),
+    allowedTo(roles.SUPER_ADMIN, roles.COUNTER, roles.OBSERVER),
     sendObservationValidator,
     sendObservation,
   );

@@ -1,7 +1,7 @@
 // IMPORTING DEPENDENCIES
 import asyncHandler from "express-async-handler";
 import bcrypt from "bcrypt";
-import db from "../config/db.js";
+import db from "../../config/db.js";
 import jwt from "jsonwebtoken";
 import multer from "multer";
 import { v4 as uuidv4 } from "uuid";
@@ -9,15 +9,16 @@ import sharp from "sharp";
 import path from "path";
 import fs from "fs";
 import sanitizeFilename from "sanitize-filename";
-import { sendActivationMail } from "../services/avtivateUserMiddleware.js";
-import { sendConfirmationMail } from "../services/confirmSuperAdmin.js";
+
+import { sendActivationMail } from "./auth.service.js";
+import { sendConfirmationMail } from "./auth.service.js";
 import {
   isEmailExist,
   isNationalIdExist,
   isIDExist,
-} from "../utils/validators/authValidator.js";
-import { Roles } from "../utils/Roles.js";
-import { StatusCode } from "../utils/statusCode.js";
+} from "./auth.validator.js";
+import { roles } from "../../utils/roles.js";
+import { StatusCode } from "../../utils/statusCode.js";
 import dotenv from "dotenv";
 dotenv.config({ path: "config.env" });
 
@@ -39,14 +40,14 @@ const upload = multer({
 });
 
 // Middleware to handle image and national ID upload
-const uploadRegisterationFiles = upload.fields([
+export const uploadRegisterationFiles = upload.fields([
   { name: "userImage_file", maxCount: 1 },
   { name: "national_id_file", maxCount: 1 },
   { name: "fees_file", maxCount: 1 },
 ]);
 
 // Middleware to resize uploaded image and save national ID
-const resizeFiles = async (req, res, next) => {
+export const resizeFiles = async (req, res, next) => {
   try {
     // Resize and save profile image
     if (req.files["userImage_file"] && req.files["userImage_file"][0]) {
@@ -111,7 +112,7 @@ const resizeFiles = async (req, res, next) => {
 };
 
 //----------------------------------SIGNUP---------------------------------------
-const signup = asyncHandler(async (req, res) => {
+export const signup = asyncHandler(async (req, res) => {
   const {
     userName,
     email,
@@ -215,7 +216,7 @@ const signup = asyncHandler(async (req, res) => {
                                     ],
                                   );
                                   //*sending activation mail...
-                                  sendActivationMail(email, userName);
+                                  //sendActivationMail(email, userName);
                                   res.status(StatusCode.CREATED).json({
                                     success: true,
                                     message:
@@ -240,118 +241,7 @@ const signup = asyncHandler(async (req, res) => {
 });
 
 //--------------------------------------LOGIN------------------------------------
-//!  Seperated
-//?🪪 Admin Login
-// exports.login = asyncHandler(async (req, res) => {
-//   const { password, userName } = req.body;
-//   if (!userName) {
-//     return res.status(400).json({ success: false, error: "Username is required" });
-//   }
-
-//   const sqlAdmin =
-//     "SELECT email, userName, password, user_id FROM admins WHERE userName = ?";
-//   db.query(sqlAdmin, [userName], async (err, result) => {
-//     if (err) {
-//       return res.status(500).send(err);
-//     }
-
-//     if (result.length === 0) {
-//       return res.status(404).json({ message: "Admin not found" });
-//     }
-
-//     const {
-//       email: adminEmail,
-//       password: hashedPassword,
-//       user_id,
-//     } = result[0];
-
-//     const passwordMatch = await bcrypt.compare(password.trim(), hashedPassword.trim());
-//     if (!passwordMatch) {
-//       return res.status(401).json({ success: false, error: "Invalid password" });
-//     }
-
-//     const token = jwt.sign({ userId: user_id, email: adminEmail }, "sherlocked", {
-//       expiresIn: "1h",
-//     });
-
-//     db.query("UPDATE admins SET status = 1 WHERE user_id = ?", [user_id], (updateErr, updateResult) => {
-//       if (updateErr) {
-//         return res.status(500).send(updateErr);
-//       }
-//       return res.status(200).json({ success: true, token });
-//     });
-//   });
-// });
-
-//?👨🏻 User Login
-// exports.login = asyncHandler(async (req, res) => {
-//   const { password, email } = req.body;
-
-//   // Check if it's a user login
-//   if (!email) {
-//     return res.status(400).json({ success: false, error: "Email is required" });
-//   }
-
-//   // User login
-//   const sqlUser =
-//     "SELECT email, password, student_id, verified FROM students WHERE email = ?";
-//   db.query(sqlUser, [email], async (err, result) => {
-//     if (err) {
-//       return res.status(500).send(err);
-//     }
-//     if (result.length === 0) {
-//       return res.status(404).json({ message: "User not found" });
-//     }
-
-//     const {
-//       email: userEmail,
-//       password: hashedPassword,
-//       student_id,
-//       verified
-//     } = result[0];
-
-//     const passwordMatch = await bcrypt.compare(password.trim(), hashedPassword.trim());
-//     if (!passwordMatch) {
-//       return res.status(401).json({ success: false, error: "Invalid password" });
-//     }
-
-//     if (!verified) {
-//       return res.status(401).json({
-//         success: false,
-//         error: "Account is not activated. Please check your email for activation instructions",
-//       });
-//     }
-
-//     const currentDate = new Date();
-//     const nextYear = new Date(currentDate.getFullYear() + 1, 0, 1); // January 1st of next year
-//     const expiresInMilliseconds = nextYear - currentDate;
-//     const expiresInDays = Math.ceil(expiresInMilliseconds / (24 * 60 * 60 * 1000));
-
-//     const token = jwt.sign(
-//       { userId: student_id, email: userEmail },
-//       "sherlocked",
-//       { expiresIn: expiresInDays + "d" }
-//     );
-
-//     // Update status to 1
-//     db.query("UPDATE students SET status = 1 WHERE student_id = ?", [student_id], (updateErr, updateResult) => {
-//       if (updateErr) {
-//         return res.status(500).send(updateErr);
-//       }
-//       return res.status(200).json({ success: true, token });
-//     });
-//   });
-// });
-
-//? 1-checkinig for the role
-//? 2-if the super admin is confirmed
-//? 3-if not an email wanna send to him
-//? 4-after confirming a token wanna be generated for him
-//? 5-token wanna expire after 1 hour
-//? 6-after the same time the cron job wanna update the confirmed column to be 0 or not confirmed
-
-//@desc one login function for both user and admin 👨🏻
-const login = asyncHandler(async (req, res) => {
+export const login = asyncHandler(async (req, res) => {
   const { password, userName, email } = req.body;
 
   //1- SuperAdmin login
@@ -399,7 +289,7 @@ const login = asyncHandler(async (req, res) => {
       userId: superAdmin_id,
       email: superAdminEmail,
       name,
-      role: `${Roles.SUPER_ADMIN}`,
+      role: `${roles.SUPER_ADMIN}`,
       confirmed: confirmed,
     };
     const token = jwt.sign(payLoad, process.env.JWT_SECRET, {
@@ -522,9 +412,7 @@ const login = asyncHandler(async (req, res) => {
         verified,
         userName,
         type,
-        blocked,
       } = result[0];
-      console.log("blocked", blocked);
 
       const passwordMatch = await bcrypt.compare(
         password.trim(),
@@ -591,7 +479,7 @@ const login = asyncHandler(async (req, res) => {
 });
 
 //--------------------------------------forget Password------------------------------------
-const forgetPassword = asyncHandler(async (req, res, next) => {
+export const forgetPassword = asyncHandler(async (req, res, next) => {
   const { email, OTP, newPassword } = req.body;
 
   const sql = "SELECT * FROM students WHERE email = ? AND OTP = ?";
@@ -624,5 +512,3 @@ const forgetPassword = asyncHandler(async (req, res, next) => {
     }
   });
 });
-
-export { signup, login, forgetPassword, uploadRegisterationFiles, resizeFiles };

@@ -119,7 +119,7 @@ Role/type checks are applied through middleware:
 
 ### Role Constants
 
-Defined in `utils/Roles.js`:
+Defined in `utils/roles.js`:
 
 - `SUPER_ADMIN`
 - `COUNTER`

@@ -7,7 +7,7 @@ import {
 } from "../../controllers/systemDataControllers/facultyController.js";
 import limiter from "../../services/limitReqsMiddleware.js";
 import { Protect, allowedTo } from "../../middlewares/auth.middleware.js";
-import { Roles } from "../../utils/Roles.js";
+import { roles } from "../../utils/roles.js";
 import { facultyValidator } from "../../utils/validators/sysDataValidator.js";
 
 const router = express.Router();

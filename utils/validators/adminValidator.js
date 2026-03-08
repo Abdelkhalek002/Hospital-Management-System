@@ -1,7 +1,7 @@
 // IMPORTING DEPENDENCIES
 import { check } from "express-validator";
 import validatorMiddleware from "../../middlewares/validatorMiddleware.js";
-import customValidators from "../customValidators/CustomValidators.js"; // Ensure you have this module and it is correctly path
+import customValidators from "../custom-validators.js"; // Ensure you have this module and it is correctly path
 
 export const addNewAdminValidator = [
   check("userName").notEmpty().withMessage("userName is required"),

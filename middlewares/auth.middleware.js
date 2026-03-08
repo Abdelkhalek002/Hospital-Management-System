@@ -2,7 +2,7 @@ import asyncHandler from "express-async-handler";
 import ApiError from "../utils/apiError.js";
 import db from "../config/db.js";
 import jwt from "jsonwebtoken";
-import { Roles } from "../utils/Roles.js";
+import { roles } from "../utils/roles.js";
 import { StatusCode } from "../utils/statusCode.js";
 
 const Protect = asyncHandler(async (req, res, next) => {
@@ -88,7 +88,7 @@ const Protect = asyncHandler(async (req, res, next) => {
       req.user = currentUser;
       next();
     });
-  } else if (decoded.role === Roles.SUPER_ADMIN) {
+  } else if (decoded.role === roles.SUPER_ADMIN) {
     console.log("superAdmin access");
     const superAdminSql = "SELECT * FROM superadmin WHERE email = ?";
     db.query(superAdminSql, [decoded.email], (err, currentUser) => {

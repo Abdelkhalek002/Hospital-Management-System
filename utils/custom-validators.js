@@ -1,7 +1,7 @@
 // Importing dependencies
 import express from "express";
-import db from "../../config/db.js";
-import ApiError from "../apiError.js";
+import db from "../config/db.js";
+import ApiError from "./apiError.js";
 import asyncHandler from "express-async-handler";
 
 // To check if the code is in Arabic or not
@@ -41,7 +41,11 @@ export const isVerified = (email) => {
         reject(err);
       } else {
         if (result.length === 0 || result[0].verified === 0) {
-          reject(new Error("Account is not activated. Please activate your account."));
+          reject(
+            new Error(
+              "Account is not activated. Please activate your account.",
+            ),
+          );
         } else {
           resolve(true);
         }
