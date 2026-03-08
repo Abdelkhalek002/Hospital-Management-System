@@ -21,7 +21,11 @@ import {
 import { sendOtp } from "../services/sendOTP_Middleware.js";
 import limiter from "../services/limitReqsMiddleware.js";
 import { confirmEmail } from "../services/confirmSuperAdmin.js";
-import { Protect, allowedTo, allowedToUser } from "../middlewares/Auth/auth.js";
+import {
+  Protect,
+  allowedTo,
+  allowedToUser,
+} from "../middlewares/auth.middleware.js";
 import { Roles } from "../utils/Roles.js";
 
 router

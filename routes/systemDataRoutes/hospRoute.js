@@ -7,7 +7,7 @@ import {
 } from "../../controllers/systemDataControllers/hospController.js";
 import { hospitalValidator } from "../../utils/validators/sysDataValidator.js";
 import limiter from "../../services/limitReqsMiddleware.js";
-import { Protect, allowedTo } from "../../middlewares/Auth/auth.js";
+import { Protect, allowedTo } from "../../middlewares/auth.middleware.js";
 
 const router = express.Router();
 

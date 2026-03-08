@@ -6,7 +6,7 @@ import {
   GetAllGovernorates,
 } from "../../controllers/systemDataControllers/govsController.js";
 import limiter from "../../services/limitReqsMiddleware.js";
-import { Protect, allowedToUser } from "../../middlewares/Auth/auth.js";
+import { Protect, allowedToUser } from "../../middlewares/auth.middleware.js";
 import { Roles } from "../../utils/Roles.js";
 
 const router = express.Router();

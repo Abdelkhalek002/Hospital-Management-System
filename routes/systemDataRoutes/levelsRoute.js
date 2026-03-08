@@ -6,7 +6,7 @@ import {
   DeleteLevel,
 } from "../../controllers/systemDataControllers/levelsController.js";
 import limiter from "../../services/limitReqsMiddleware.js";
-import { Protect, allowedTo } from "../../middlewares/Auth/auth.js";
+import { Protect, allowedTo } from "../../middlewares/auth.middleware.js";
 import { levelsValidator } from "../../utils/validators/sysDataValidator.js";
 import { Roles } from "../../utils/Roles.js";
 

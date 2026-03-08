@@ -6,7 +6,7 @@ import {
   updateFaculty,
 } from "../../controllers/systemDataControllers/facultyController.js";
 import limiter from "../../services/limitReqsMiddleware.js";
-import { Protect, allowedTo } from "../../middlewares/Auth/auth.js";
+import { Protect, allowedTo } from "../../middlewares/auth.middleware.js";
 import { Roles } from "../../utils/Roles.js";
 import { facultyValidator } from "../../utils/validators/sysDataValidator.js";
 

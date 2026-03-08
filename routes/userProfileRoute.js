@@ -10,7 +10,7 @@ import {
 } from "../controllers/userProfileController.js";
 
 import { updateUserProfileValidator } from "../utils/validators/userProfileValidator.js";
-import { Protect } from "../middlewares/Auth/auth.js";
+import { Protect } from "../middlewares/auth.middleware.js";
 router
   .route("/:student_id")
   .get(Protect, getStudentProfile)

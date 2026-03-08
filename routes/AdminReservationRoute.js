@@ -10,7 +10,7 @@ import {
   adminGetAllEmergencyReservations,
 } from "../controllers/AdminReservationController.js";
 
-import { Protect, allowedTo } from "../middlewares/Auth/auth.js";
+import { Protect, allowedTo } from "../middlewares/auth.middleware.js";
 import { Roles } from "../utils/Roles.js";
 
 router

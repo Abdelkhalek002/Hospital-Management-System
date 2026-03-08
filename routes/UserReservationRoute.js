@@ -9,7 +9,7 @@ import {
 
 // IMPORT VALIDATORS
 
-import { Protect, allowedToUser } from "../middlewares/Auth/auth.js";
+import { Protect, allowedToUser } from "../middlewares/auth.middleware.js";
 import { createRequestValidator } from "../utils/validators/ReservationValidator.js";
 
 const router = express.Router();

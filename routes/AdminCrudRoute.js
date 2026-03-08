@@ -37,7 +37,7 @@ import {
   addSuperAdminValidator,
 } from "../utils/validators/adminValidator.js";
 
-import { Protect, allowedTo } from "../middlewares/Auth/auth.js";
+import { Protect, allowedTo } from "../middlewares/auth.middleware.js";
 import limiter from "../services/limitReqsMiddleware.js";
 import { Roles } from "../utils/Roles.js";
 

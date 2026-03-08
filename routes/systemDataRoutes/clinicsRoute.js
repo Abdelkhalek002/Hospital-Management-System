@@ -10,7 +10,7 @@ import {
   Protect,
   allowedTo,
   allowedToUser,
-} from "../../middlewares/Auth/auth.js";
+} from "../../middlewares/auth.middleware.js";
 import { clinicValidator } from "../../utils/validators/sysDataValidator.js";
 import { Roles } from "../../utils/Roles.js";
 
