@@ -17,7 +17,7 @@ dbConnection.connect((err) => {
       : process.env.NODE_ENV === "testing"
         ? process.env.TEST_DB
         : process.env.PROD_DB;
-  console.log(`${dbName} DB Connected 🚀`);
+  console.log(`🚀 Connected to ( ${dbName} ) successfully! `);
 });
 
 const port =
