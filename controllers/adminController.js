@@ -1,9 +1,9 @@
 import asyncHandler from "express-async-handler";
 import db from "../config/db.js";
 import bcrypt from "bcrypt";
-import { StatusCode } from "../utiles/statusCode.js";
+import { StatusCode } from "../utils/statusCode.js";
 import sendObservationMail from "../services/sendObservationemail.js";
-import { Roles } from "../utiles/Roles.js";
+import { Roles } from "../utils/Roles.js";
 
 //!! SUPER ADMIN
 //? STATISTICS
@@ -1103,13 +1103,11 @@ const unblockUser = asyncHandler(async (req, res) => {
         },
       );
 
-      return res
-        .status(StatusCode.OK)
-        .json({
-          message: `تم فك حظر  ${userName} بنجاح`,
-          student_id,
-          userName,
-        });
+      return res.status(StatusCode.OK).json({
+        message: `تم فك حظر  ${userName} بنجاح`,
+        student_id,
+        userName,
+      });
     });
   });
 });
@@ -1154,11 +1152,9 @@ const advancedSearch = asyncHandler(async (req, res) => {
 
   // Check if any search criteria provided
   if (conditions.length === 0) {
-    return res
-      .status(StatusCode.NOT_FOUND)
-      .json({
-        message: "لا يوجد عنصر للبحث . برجاء اختيار عنصر واحد علي الاقل",
-      });
+    return res.status(StatusCode.NOT_FOUND).json({
+      message: "لا يوجد عنصر للبحث . برجاء اختيار عنصر واحد علي الاقل",
+    });
   }
   query += " " + conditions.join(" AND ");
 

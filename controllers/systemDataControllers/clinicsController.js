@@ -1,6 +1,6 @@
 import asyncHandler from "express-async-handler";
 import db from "../../config/db.js";
-import { StatusCode } from "../../utiles/statusCode.js";
+import { StatusCode } from "../../utils/statusCode.js";
 
 //@desc     add new clinic
 //@route    POST  /api/v1/sysdata/clinics
@@ -119,9 +119,4 @@ const deleteClinic = asyncHandler(async (req, res) => {
   });
 });
 
-export{
-    createClinic,
-    getAllClinics,
-    deleteClinic,
-    updateClinic
-}
+export { createClinic, getAllClinics, deleteClinic, updateClinic };

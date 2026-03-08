@@ -11,18 +11,36 @@ import {
 } from "../controllers/AdminReservationController.js";
 
 import { Protect, allowedTo } from "../middlewares/Auth/auth.js";
-import { Roles } from "../utiles/Roles.js";
+import { Roles } from "../utils/Roles.js";
 
 router
   .route("/")
-  .post(Protect, allowedTo(Roles.SUPER_ADMIN, Roles.COUNTER), adminCreateRequest)
-  .get(Protect,allowedTo(Roles.SUPER_ADMIN,Roles.COUNTER,Roles.OBSERVER), adminGetAllReservations);
+  .post(
+    Protect,
+    allowedTo(Roles.SUPER_ADMIN, Roles.COUNTER),
+    adminCreateRequest,
+  )
+  .get(
+    Protect,
+    allowedTo(Roles.SUPER_ADMIN, Roles.COUNTER, Roles.OBSERVER),
+    adminGetAllReservations,
+  );
 
-router.route("/emergency").get(Protect, allowedTo(Roles.SUPER_ADMIN, Roles.COUNTER), adminGetAllEmergencyReservations);
+router
+  .route("/emergency")
+  .get(
+    Protect,
+    allowedTo(Roles.SUPER_ADMIN, Roles.COUNTER),
+    adminGetAllEmergencyReservations,
+  );
 router
   .route("/:emergencyUser_id")
   .put(Protect, allowedTo(Roles.SUPER_ADMIN, Roles.COUNTER), adminUpdateRequest)
   .get(adminViewRequest)
-  .delete(Protect, allowedTo(Roles.SUPER_ADMIN, Roles.COUNTER), adminDeleteRequest);
+  .delete(
+    Protect,
+    allowedTo(Roles.SUPER_ADMIN, Roles.COUNTER),
+    adminDeleteRequest,
+  );
 
 export default router;

@@ -10,15 +10,19 @@ import {
 // IMPORT VALIDATORS
 
 import { Protect, allowedToUser } from "../middlewares/Auth/auth.js";
-import { createRequestValidator } from "../utiles/validators/ReservationValidator.js";
+import { createRequestValidator } from "../utils/validators/ReservationValidator.js";
 
 const router = express.Router();
 
 router
   .route("/:student_id")
-  .post(Protect, allowedToUser('user'), createRequestValidator, createRequest)
-  .get(Protect,getMyReservations);
+  .post(Protect, allowedToUser("user"), createRequestValidator, createRequest)
+  .get(Protect, getMyReservations);
 
-router.route("/:student_id/:medicEx_id").put(updateRequest).get(viewRequest).delete(cancelRequest);
+router
+  .route("/:student_id/:medicEx_id")
+  .put(updateRequest)
+  .get(viewRequest)
+  .delete(cancelRequest);
 
 export default router;

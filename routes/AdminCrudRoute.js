@@ -35,11 +35,11 @@ import {
   resetPasswordValidator,
   sendObservationValidator,
   addSuperAdminValidator,
-} from "../utiles/validators/adminValidator.js";
+} from "../utils/validators/adminValidator.js";
 
 import { Protect, allowedTo } from "../middlewares/Auth/auth.js";
 import limiter from "../services/limitReqsMiddleware.js";
-import { Roles } from "../utiles/Roles.js";
+import { Roles } from "../utils/Roles.js";
 
 //Statistics
 router

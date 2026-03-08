@@ -1,6 +1,6 @@
 import asyncHandler from "express-async-handler";
 import db from "../../config/db.js";
-import { StatusCode } from "../../utiles/statusCode.js";
+import { StatusCode } from "../../utils/statusCode.js";
 
 //@desc     add new faculty
 //@route    POST  /api/v1/sysdata/faculties
@@ -57,27 +57,34 @@ const updateFaculty = asyncHandler(async (req, res) => {
       return res.status(StatusCode.INTERNAL_SERVER_ERROR).send(checkErr);
     }
     if (checkResult.length === 0) {
-      return res.status(StatusCode.NOT_FOUND).json({ error: "لم يتم العثور على الكلية" });
+      return res
+        .status(StatusCode.NOT_FOUND)
+        .json({ error: "لم يتم العثور على الكلية" });
     }
 
-    const isExistSql = "SELECT * FROM faculties WHERE facultyName = ? AND faculty_id != ?";
+    const isExistSql =
+      "SELECT * FROM faculties WHERE facultyName = ? AND faculty_id != ?";
     db.query(isExistSql, [facultyName, faculty_id], (err, result) => {
       if (result.length > 0) {
-        return res.status(StatusCode.CONFLICT).json({ message: `الكلية ${facultyName} موجودة بالفعل` });
+        return res
+          .status(StatusCode.CONFLICT)
+          .json({ message: `الكلية ${facultyName} موجودة بالفعل` });
       }
 
-      const updateSql = "UPDATE faculties SET facultyName = ? WHERE faculty_id = ?";
+      const updateSql =
+        "UPDATE faculties SET facultyName = ? WHERE faculty_id = ?";
       db.query(updateSql, [facultyName, faculty_id], (err, result) => {
         if (err) {
           res.status(StatusCode.INTERNAL_SERVER_ERROR).send(err);
         } else {
-          res.status(StatusCode.OK).json({ message: `تم تعديل الكلية بنجاح`, facultyName });
+          res
+            .status(StatusCode.OK)
+            .json({ message: `تم تعديل الكلية بنجاح`, facultyName });
         }
       });
     });
   });
 });
-
 
 //@desc     delete one faculty
 //@route    DELETE  /api/v1/sysdata/faculties/:id
@@ -113,9 +120,4 @@ const deleteFaculty = asyncHandler(async (req, res) => {
   });
 });
 
-export{
-    createFaculty,
-    getAllFaculties,
-    updateFaculty,
-    deleteFaculty
-}
+export { createFaculty, getAllFaculties, updateFaculty, deleteFaculty };

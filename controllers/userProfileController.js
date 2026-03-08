@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from "uuid";
 import sharp from "sharp";
 import path from "path";
 import fs from "fs";
-import { StatusCode } from "../utiles/statusCode.js";
+import { StatusCode } from "../utils/statusCode.js";
 
 //@desc user access profile data
 //@route    POST  /api/v1/myProfile/:id
@@ -71,21 +71,31 @@ const updateUserProfile = asyncHandler(async (req, res) => {
   const { userName, phoneNumber, level_id, gov_id, national_id } = req.body;
 
   // First, check if the provided level_id and gov_id exist in their respective tables
-  const levelCheckSql = "SELECT COUNT(*) AS count FROM levels WHERE level_id = ?";
-  const govCheckSql = "SELECT COUNT(*) AS count FROM governorates WHERE gov_id = ?";
+  const levelCheckSql =
+    "SELECT COUNT(*) AS count FROM levels WHERE level_id = ?";
+  const govCheckSql =
+    "SELECT COUNT(*) AS count FROM governorates WHERE gov_id = ?";
   // const nationalIdSql = "SELECT COUNT(*) AS count FROM students WHERE national_id = ?";
 
   db.query(levelCheckSql, [level_id], (err, levelResult) => {
     if (err) {
-      return res.status(StatusCode.BAD_REQUEST).json({ msg: "Error checking level_id: " + err.message });
+      return res
+        .status(StatusCode.BAD_REQUEST)
+        .json({ msg: "Error checking level_id: " + err.message });
     } else if (levelResult[0].count === 0) {
-      return res.status(StatusCode.BAD_REQUEST).json({ msg: `Invalid level_id: ${level_id}` });
+      return res
+        .status(StatusCode.BAD_REQUEST)
+        .json({ msg: `Invalid level_id: ${level_id}` });
     } else {
       db.query(govCheckSql, [gov_id], (err, govResult) => {
         if (err) {
-          return res.status(StatusCode.BAD_REQUEST).json({ msg: "Error checking gov_id: " + err.message });
+          return res
+            .status(StatusCode.BAD_REQUEST)
+            .json({ msg: "Error checking gov_id: " + err.message });
         } else if (govResult[0].count === 0) {
-          return res.status(StatusCode.BAD_REQUEST).json({ msg: `Invalid gov_id: ${gov_id}` });
+          return res
+            .status(StatusCode.BAD_REQUEST)
+            .json({ msg: `Invalid gov_id: ${gov_id}` });
         } else {
           // db.query(nationalIdSql, [national_id], (err, nationalIdResult) => {
           //   if (err) {
@@ -101,25 +111,25 @@ const updateUserProfile = asyncHandler(async (req, res) => {
             [userName, phoneNumber, level_id, gov_id, national_id, student_id],
             (err, result) => {
               if (err) {
-                return res.status(StatusCode.BAD_REQUEST).json( err.message );
+                return res.status(StatusCode.BAD_REQUEST).json(err.message);
               } else {
                 if (result.affectedRows === 0) {
                   return res
                     .status(StatusCode.NOT_FOUND)
                     .json({ msg: `No student found with ID ${student_id}` });
                 } else {
-                  return res.status(StatusCode.OK).json({ message: "تم تحديث البيانات بنجاح" });
+                  return res
+                    .status(StatusCode.OK)
+                    .json({ message: "تم تحديث البيانات بنجاح" });
                 }
               }
-            }
+            },
           );
         }
       });
     }
   });
-}
-);
-
+});
 
 const getProfilePhoto = asyncHandler(async (req, res) => {
   const { student_id } = req.params;

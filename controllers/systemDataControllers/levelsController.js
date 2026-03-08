@@ -1,6 +1,6 @@
 import asyncHandler from "express-async-handler";
 import db from "../../config/db.js";
-import { StatusCode } from "../../utiles/statusCode.js";
+import { StatusCode } from "../../utils/statusCode.js";
 
 //@desc     add new level
 //@route    POST  /api/v1/sysdata/levels
@@ -57,13 +57,18 @@ const updateLevel = asyncHandler(async (req, res) => {
       return res.status(StatusCode.INTERNAL_SERVER_ERROR).send(checkErr);
     }
     if (checkResult.length === 0) {
-      return res.status(StatusCode.NOT_FOUND).json({ error: "لم يتم العثور على الفرقة" });
+      return res
+        .status(StatusCode.NOT_FOUND)
+        .json({ error: "لم يتم العثور على الفرقة" });
     }
 
-    const isExistSql = "SELECT * FROM levels WHERE levelName = ? AND level_id != ?";
+    const isExistSql =
+      "SELECT * FROM levels WHERE levelName = ? AND level_id != ?";
     db.query(isExistSql, [levelName, level_id], (err, result) => {
       if (result.length > 0) {
-        return res.status(StatusCode.CONFLICT).json({ message: `الفرقة ${levelName} موجودة بالفعل` });
+        return res
+          .status(StatusCode.CONFLICT)
+          .json({ message: `الفرقة ${levelName} موجودة بالفعل` });
       }
 
       const updateSql = "UPDATE levels SET levelName = ? WHERE level_id = ?";
@@ -71,13 +76,14 @@ const updateLevel = asyncHandler(async (req, res) => {
         if (err) {
           res.status(StatusCode.INTERNAL_SERVER_ERROR).send(err);
         } else {
-          res.status(StatusCode.OK).json({ message: `تم تعديل الفرقة بنجاح`, levelName });
+          res
+            .status(StatusCode.OK)
+            .json({ message: `تم تعديل الفرقة بنجاح`, levelName });
         }
       });
     });
   });
 });
-
 
 //@desc     delete one level
 //@route    DELETE  /api/v1/sysdata/levels/:id
@@ -113,9 +119,4 @@ const DeleteLevel = asyncHandler(async (req, res) => {
   });
 });
 
-export{
-  createLevel,
-  GetAllLevels,
-  updateLevel,
-  DeleteLevel
-}
+export { createLevel, GetAllLevels, updateLevel, DeleteLevel };

@@ -9,9 +9,7 @@ import {
   updateProfilePhoto,
 } from "../controllers/userProfileController.js";
 
-import {
-  updateUserProfileValidator,
-} from "../utiles/validators/userProfileValidator.js";
+import { updateUserProfileValidator } from "../utils/validators/userProfileValidator.js";
 import { Protect } from "../middlewares/Auth/auth.js";
 router
   .route("/:student_id")

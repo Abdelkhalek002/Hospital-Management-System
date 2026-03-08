@@ -1,6 +1,6 @@
 import asyncHandler from "express-async-handler";
 import db from "../../config/db.js";
-import { StatusCode } from "../../utiles/statusCode.js";
+import { StatusCode } from "../../utils/statusCode.js";
 
 //@desc     add new governorate
 //@route    POST  /api/v1/sysdata/governorates
@@ -115,10 +115,9 @@ const deleteGovernorate = asyncHandler(async (req, res) => {
   });
 });
 
-export{
+export {
   createGovernorate,
   GetAllGovernorates,
   updateGovernorate,
-  deleteGovernorate
-}
-
+  deleteGovernorate,
+};

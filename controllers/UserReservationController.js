@@ -1,7 +1,7 @@
 import asyncHandler from "express-async-handler";
 import db from "../config/db.js";
-import { isLimitReached } from "../utiles/validators/ReservationValidator.js";
-import { StatusCode } from "../utiles/statusCode.js";
+import { isLimitReached } from "../utils/validators/ReservationValidator.js";
+import { StatusCode } from "../utils/statusCode.js";
 
 //@desc     submit medical examination request
 //@route    POST  /api/v1/myreservations
@@ -26,13 +26,16 @@ const createRequest = asyncHandler(async (req, res) => {
         (err, result) => {
           if (err) {
             console.error("Error checking user reservations:", err);
-            return res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ error: "Internal Server Error" });
+            return res
+              .status(StatusCode.INTERNAL_SERVER_ERROR)
+              .json({ error: "Internal Server Error" });
           }
 
           if (result[0].count >= 1) {
-            return res.status(StatusCode.TOO_MANY_REQUESTS).json({ error: "تجاوزت الحد الاقصى للحجوزات اليومية" });
-          }
-          else {
+            return res
+              .status(StatusCode.TOO_MANY_REQUESTS)
+              .json({ error: "تجاوزت الحد الاقصى للحجوزات اليومية" });
+          } else {
             //2- check if user exists...
             db.query(
               "SELECT * FROM students WHERE student_id = ?",
@@ -64,14 +67,15 @@ const createRequest = asyncHandler(async (req, res) => {
                         .status(StatusCode.CREATED)
                         .json({ message: "تم حجز الكشف بنجاح" });
                     }
-                  }
+                  },
                 );
-              }
+              },
             );
           }
-        }
+        },
       );
-    })
+    },
+  );
 });
 
 //@desc     modify medical examination request
@@ -108,7 +112,7 @@ const updateRequest = asyncHandler(async (req, res) => {
             .json({ message: "تم تعديل الحجز بنجاح", medicEx_id });
         }
       });
-    }
+    },
   );
 });
 
@@ -132,7 +136,9 @@ const viewRequest = asyncHandler(async (req, res) => {
   db.query(sql, [medicEx_id], (error, results) => {
     if (error) {
       console.error("Error checking examination existence:", error);
-      return res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ error: "Internal Server Error" });
+      return res
+        .status(StatusCode.INTERNAL_SERVER_ERROR)
+        .json({ error: "Internal Server Error" });
     } else if (results.length === 0) {
       // Medical examination not found, return error response
       return res.status(StatusCode.NOT_FOUND).json({
@@ -145,7 +151,6 @@ const viewRequest = asyncHandler(async (req, res) => {
   });
 });
 
-
 //@desc     view all my medical examinations
 //@route    GET  /api/v1/myreservations
 //@access   public
@@ -156,11 +161,14 @@ const getMyReservations = asyncHandler(async (req, res) => {
   const offset = (page - 1) * limit;
 
   // Query to get the total count of medical examinations for the student
-  const countSql = 'SELECT COUNT(*) AS count FROM medical_examinations WHERE student_id = ?';
+  const countSql =
+    "SELECT COUNT(*) AS count FROM medical_examinations WHERE student_id = ?";
   db.query(countSql, [student_id], (err, countResults) => {
     if (err) {
       console.error("Error fetching count of examinations:", err);
-      return res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ error: "Internal Server Error" });
+      return res
+        .status(StatusCode.INTERNAL_SERVER_ERROR)
+        .json({ error: "Internal Server Error" });
     }
     const totalCount = countResults[0].count;
     const totalPages = Math.ceil(totalCount / limit);
@@ -189,13 +197,19 @@ const getMyReservations = asyncHandler(async (req, res) => {
     db.query(sql, [student_id, limit, offset], (error, results) => {
       if (error) {
         console.error("Error fetching examinations data:", error);
-        return res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ error: "Internal Server Error" });
+        return res
+          .status(StatusCode.INTERNAL_SERVER_ERROR)
+          .json({ error: "Internal Server Error" });
       } else if (results.length === 0) {
         // No examination records found for the student
-        return res.status(StatusCode.BAD_REQUEST).json({ error: "Student has no examination record!" });
+        return res
+          .status(StatusCode.BAD_REQUEST)
+          .json({ error: "Student has no examination record!" });
       } else {
-        results.map(result => {
-          result.date = new Date(result.date).toLocaleString('en-US', { timeZone: 'Africa/Cairo' });
+        results.map((result) => {
+          result.date = new Date(result.date).toLocaleString("en-US", {
+            timeZone: "Africa/Cairo",
+          });
           return result;
         });
         // Examinations found, return them along with pagination info
@@ -209,7 +223,6 @@ const getMyReservations = asyncHandler(async (req, res) => {
   });
 });
 
-
 //! Cancel req only if its not already accepted🥰
 const cancelRequest = asyncHandler(async (req, res) => {
   const { medicEx_id } = req.params;
@@ -219,19 +232,26 @@ const cancelRequest = asyncHandler(async (req, res) => {
     if (err) {
       return res.status(StatusCode.INTERNAL_SERVER_ERROR).send(err);
     } else if (result.length === 0) {
-      return res.status(StatusCode.NOT_FOUND).json({ error: "الكشف غير موجود" });
+      return res
+        .status(StatusCode.NOT_FOUND)
+        .json({ error: "الكشف غير موجود" });
     } else {
       // Check if the examination has been accepted
       if (result[0].status === "مقبول") {
-        return res.status(StatusCode.BAD_REQUEST).json({ error: "لا يمكن الغاء الكشف لانه تم قبوله" });
+        return res
+          .status(StatusCode.BAD_REQUEST)
+          .json({ error: "لا يمكن الغاء الكشف لانه تم قبوله" });
       } else {
         // Delete the medical examination
-        const deleteQuery = "DELETE FROM medical_examinations WHERE medicEx_id=?";
+        const deleteQuery =
+          "DELETE FROM medical_examinations WHERE medicEx_id=?";
         db.query(deleteQuery, [medicEx_id], (err, result) => {
           if (err) {
             return res.status(StatusCode.INTERNAL_SERVER_ERROR).send(err);
           } else {
-            return res.status(StatusCode.OK).json({ message: "تم الغاء الكشف بنجاح" });
+            return res
+              .status(StatusCode.OK)
+              .json({ message: "تم الغاء الكشف بنجاح" });
           }
         });
       }
@@ -244,6 +264,5 @@ export {
   updateRequest,
   viewRequest,
   getMyReservations,
-  cancelRequest
-}
-
+  cancelRequest,
+};

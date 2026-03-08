@@ -1,6 +1,6 @@
 import asyncHandler from "express-async-handler";
 import db from "../../config/db.js";
-import { StatusCode } from "../../utiles/statusCode.js";
+import { StatusCode } from "../../utils/statusCode.js";
 
 //@desc     add new hospital
 //@route    POST  /api/v1/sysdata/hospitals
@@ -29,7 +29,6 @@ const createHospital = asyncHandler(async (req, res) => {
   });
 });
 
-
 //@desc     view list of hospitals
 //@route    GET  /api/v1/sysdata/hospitals
 //@access   private
@@ -44,7 +43,6 @@ const getAllhospitals = asyncHandler(async (req, res) => {
     }
   });
 });
-
 
 //@desc     update hospital
 //@route    GET  /api/v1/sysdata/hospitals
@@ -71,7 +69,8 @@ const updateHospital = asyncHandler(async (req, res) => {
           .json({ message: `مستشفى ${hospName} موجود بالفعل` });
       }
 
-      const updateSql = "UPDATE external_hospitals SET hospName = ? WHERE exHosp_id = ?";
+      const updateSql =
+        "UPDATE external_hospitals SET hospName = ? WHERE exHosp_id = ?";
       db.query(updateSql, [hospName, exHosp_id], (err, result) => {
         if (err) {
           res.status(StatusCode.INTERNAL_SERVER_ERROR).send(err);
@@ -84,8 +83,6 @@ const updateHospital = asyncHandler(async (req, res) => {
     });
   });
 });
-
-
 
 //@desc     delete one hospital
 //@route    DELETE  /api/v1/sysdata/hospitals/:id
@@ -120,10 +117,4 @@ const deleteHospital = asyncHandler(async (req, res) => {
   });
 });
 
-export{
-  createHospital,
-  getAllhospitals,
-  deleteHospital,
-  updateHospital
-}
-
+export { createHospital, getAllhospitals, deleteHospital, updateHospital };

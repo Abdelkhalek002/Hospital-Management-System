@@ -10,29 +10,29 @@ import cors from "cors";
 // Load environment variables
 dotenv.config({ path: "config.env" });
 
-import ApiError from "./utiles/apiError.js";
+import ApiError from "./utils/apiError.js";
 import globalError from "./middlewares/errorMiddleware.js";
 
 // ROUTES
-import userReservationRoute from "./APIs/UserReservationRoute.js";
-import adminReservationRoute from "./APIs/AdminReservationRoute.js";
-import authRoute from "./APIs/authRoute.js";
-import adminCrudRoute from "./APIs/AdminCrudRoute.js";
-import userProfileRoute from "./APIs/userProfileRoute.js";
+import userReservationRoute from "./routes/UserReservationRoute.js";
+import adminReservationRoute from "./routes/AdminReservationRoute.js";
+import authRoute from "./routes/authRoute.js";
+import adminCrudRoute from "./routes/AdminCrudRoute.js";
+import userProfileRoute from "./routes/userProfileRoute.js";
 
 // System data routes
-import levelsRoute from "./APIs/systemDataApis/levelsRoute.js";
-import govsRoute from "./APIs/systemDataApis/govsRoute.js";
-import clinicsRoute from "./APIs/systemDataApis/clinicsRoute.js";
-import facultyRoute from "./APIs/systemDataApis/facultyRoute.js";
-import hospRoute from "./APIs/systemDataApis/hospRoute.js";
+import levelsRoute from "./routes/systemDataRoutes/levelsRoute.js";
+import govsRoute from "./routes/systemDataRoutes/govsRoute.js";
+import clinicsRoute from "./routes/systemDataRoutes/clinicsRoute.js";
+import facultyRoute from "./routes/systemDataRoutes/facultyRoute.js";
+import hospRoute from "./routes/systemDataRoutes/hospRoute.js";
 
-import userSecRoute from "./APIs/userSecRoute.js";
+import userSecRoute from "./routes/userSecRoute.js";
 
 // Express app
 const app = express();
 app.use(cors());
-app.use('/api/v1/uploads', express.static(path.join(process.cwd(), 'uploads')));
+app.use("/api/v1/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 // DATABASE CONNECTION
 import dbConnection from "./config/db.js";
@@ -44,7 +44,12 @@ dbConnection.connect((err) => {
     return;
   }
 
-  const dbName = process.env.NODE_ENV === 'development' ? process.env.DEV_DB : process.env.NODE_ENV === 'testing' ? process.env.TEST_DB : process.env.PROD_DB;
+  const dbName =
+    process.env.NODE_ENV === "development"
+      ? process.env.DEV_DB
+      : process.env.NODE_ENV === "testing"
+        ? process.env.TEST_DB
+        : process.env.PROD_DB;
   console.log(`${dbName} DB Connected 🚀`);
 });
 
@@ -74,7 +79,7 @@ app.use(
   govsRoute,
   clinicsRoute,
   facultyRoute,
-  hospRoute
+  hospRoute,
 );
 
 app.all("*", (req, res, next) => {
@@ -85,7 +90,8 @@ app.all("*", (req, res, next) => {
 app.use(globalError);
 
 // Start the server and store the result in a variable
-const port = process.env.NODE_ENV === 'testing' ? process.env.TEST_PORT : process.env.PORT;
+const port =
+  process.env.NODE_ENV === "testing" ? process.env.TEST_PORT : process.env.PORT;
 const server = app.listen(port, () => {
   console.log(`Server is running on port ${port} `);
 });

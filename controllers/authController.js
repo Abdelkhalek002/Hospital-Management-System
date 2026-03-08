@@ -15,9 +15,9 @@ import {
   isEmailExist,
   isNationalIdExist,
   isIDExist,
-} from "../utiles/validators/authValidator.js";
-import { Roles } from "../utiles/Roles.js";
-import { StatusCode } from "../utiles/statusCode.js";
+} from "../utils/validators/authValidator.js";
+import { Roles } from "../utils/Roles.js";
+import { StatusCode } from "../utils/statusCode.js";
 import dotenv from "dotenv";
 dotenv.config({ path: "config.env" });
 

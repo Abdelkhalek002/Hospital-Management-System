@@ -2,8 +2,7 @@
 import asyncHandler from "express-async-handler";
 import db from "../config/db.js";
 import bcrypt from "bcrypt";
-import { StatusCode } from "../utiles/statusCode.js";
-
+import { StatusCode } from "../utils/statusCode.js";
 
 export const changeUserPassword = asyncHandler(async (req, res, next) => {
   const { currentPassword, newPassword } = req.body;
@@ -23,7 +22,7 @@ export const changeUserPassword = asyncHandler(async (req, res, next) => {
     const user = result[0];
     const currentPasswordMatch = await bcrypt.compare(
       currentPassword,
-      user.password
+      user.password,
     );
     console.log(currentPasswordMatch);
 
@@ -47,7 +46,7 @@ export const changeUserPassword = asyncHandler(async (req, res, next) => {
               .status(StatusCode.OK)
               .json({ message: "تم تغيير كلمة السر بنجاح" });
           }
-        }
+        },
       );
     } else {
       // Current password doesn't match

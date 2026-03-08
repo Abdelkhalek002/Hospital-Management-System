@@ -17,12 +17,12 @@ import {
   signupValidator,
   sendOtpValidator,
   forgetPasswordValidator,
-} from "../utiles/validators/authValidator.js";
+} from "../utils/validators/authValidator.js";
 import { sendOtp } from "../services/sendOTP_Middleware.js";
 import limiter from "../services/limitReqsMiddleware.js";
 import { confirmEmail } from "../services/confirmSuperAdmin.js";
 import { Protect, allowedTo, allowedToUser } from "../middlewares/Auth/auth.js";
-import { Roles } from "../utiles/Roles.js";
+import { Roles } from "../utils/Roles.js";
 
 router
   .route("/signUp")

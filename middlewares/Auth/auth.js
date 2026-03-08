@@ -1,9 +1,9 @@
 import asyncHandler from "express-async-handler";
-import ApiError from "../../utiles/apiError.js";
+import ApiError from "../../utils/apiError.js";
 import db from "../../config/db.js";
 import jwt from "jsonwebtoken";
-import { Roles } from "../../utiles/Roles.js";
-import { StatusCode } from "../../utiles/statusCode.js";
+import { Roles } from "../../utils/Roles.js";
+import { StatusCode } from "../../utils/statusCode.js";
 
 const Protect = asyncHandler(async (req, res, next) => {
   let token;
@@ -15,9 +15,7 @@ const Protect = asyncHandler(async (req, res, next) => {
   }
   if (!token) {
     return next(
-      new Error(
-        "You are not logged in. Please login to access this route !"
-      )
+      new Error("You are not logged in. Please login to access this route !"),
     );
   }
   const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -31,13 +29,13 @@ const Protect = asyncHandler(async (req, res, next) => {
         return next(
           new ApiError(
             "The admin that belongs to this token no longer exists",
-            401
-          )
+            401,
+          ),
         );
       }
       if (currentUser[0].password_changed_at) {
         const passChangedTimestamp = Math.floor(
-          new Date(currentUser[0].password_changed_at).getTime() / 1000
+          new Date(currentUser[0].password_changed_at).getTime() / 1000,
         );
         if (passChangedTimestamp > decoded.iat) {
           return res.status(401).json({
@@ -60,13 +58,13 @@ const Protect = asyncHandler(async (req, res, next) => {
         return next(
           new ApiError(
             "The user that belongs to this token no longer exists",
-            401
-          )
+            401,
+          ),
         );
       }
       if (currentUser[0].password_changed_at) {
         const passChangedTimestamp = Math.floor(
-          new Date(currentUser[0].password_changed_at).getTime() / 1000
+          new Date(currentUser[0].password_changed_at).getTime() / 1000,
         );
         if (passChangedTimestamp > decoded.iat) {
           return res.status(401).json({
@@ -78,13 +76,13 @@ const Protect = asyncHandler(async (req, res, next) => {
       }
       if (decoded.userId != req.params.student_id) {
         console.log(
-          "user access denied" + decoded.userId + req.params.student_id
+          "user access denied" + decoded.userId + req.params.student_id,
         );
         return next(
           new ApiError(
             "you are allowed to access your profile routes only 🤬",
-            401
-          )
+            401,
+          ),
         );
       }
       req.user = currentUser;
@@ -100,13 +98,13 @@ const Protect = asyncHandler(async (req, res, next) => {
         return next(
           new ApiError(
             "The superAdmin that belongs to this token no longer exists",
-            401
-          )
+            401,
+          ),
         );
       }
       if (currentUser[0].password_changed_at) {
         const passChangedTimestamp = Math.floor(
-          new Date(currentUser[0].password_changed_at).getTime() / 1000
+          new Date(currentUser[0].password_changed_at).getTime() / 1000,
         );
         if (passChangedTimestamp > decoded.iat) {
           return res.status(401).json({
@@ -126,7 +124,10 @@ const allowedTo = (...roles) =>
   asyncHandler(async (req, res, next) => {
     if (!roles.includes(req.user[0].role)) {
       return next(
-        new ApiError("You are not authorized to access this route!", StatusCode.FORBIDDEN)
+        new ApiError(
+          "You are not authorized to access this route!",
+          StatusCode.FORBIDDEN,
+        ),
       );
     }
     next();
@@ -138,8 +139,8 @@ const allowedToUser = (...type) =>
       return next(
         new ApiError(
           "You are not authorized to access this route!",
-          StatusCode.FORBIDDEN
-        )
+          StatusCode.FORBIDDEN,
+        ),
       );
     }
     next();

@@ -7,57 +7,75 @@ import sharp from "sharp";
 import path from "path";
 import fs from "fs";
 import sanitizeFilename from "sanitize-filename";
-import { StatusCode } from "../utiles/statusCode.js";
-import { Roles } from "../utiles/Roles.js";
+import { StatusCode } from "../utils/statusCode.js";
+import { Roles } from "../utils/Roles.js";
 
-
-//!Emergency Reservations APIs
+//!Emergency Reservations routes
 //@desc     submit medical examination request
 //@route    POST  /api/v1/Reservations
 //@access   private
 const adminCreateRequest = asyncHandler(async (req, res) => {
-  const { Name, national_id, level_id, clinic_id, gov_id, faculty_id, nationality_id } = req.body;
+  const {
+    Name,
+    national_id,
+    level_id,
+    clinic_id,
+    gov_id,
+    faculty_id,
+    nationality_id,
+  } = req.body;
 
   const sql =
     "INSERT INTO emergency_reservations (Name,national_id,level_id,clinic_id,gov_id,faculty_id,nationality_id) VALUES (?, ?,?,?,?,?,?)";
-  db.query(sql, [Name, national_id, level_id, clinic_id, gov_id, faculty_id, nationality_id], (err, result) => {
-    if (err) {
-      res.status(StatusCode.INTERNAL_SERVER_ERROR).send(err);
-    } else {
-      console.log("Request created successfully");
-      // Insert audit record
-      const isSuperAdmin = req.user[0].role === Roles.SUPER_ADMIN; // Check if the user is a super admin
+  db.query(
+    sql,
+    [
+      Name,
+      national_id,
+      level_id,
+      clinic_id,
+      gov_id,
+      faculty_id,
+      nationality_id,
+    ],
+    (err, result) => {
+      if (err) {
+        res.status(StatusCode.INTERNAL_SERVER_ERROR).send(err);
+      } else {
+        console.log("Request created successfully");
+        // Insert audit record
+        const isSuperAdmin = req.user[0].role === Roles.SUPER_ADMIN; // Check if the user is a super admin
 
-      const auditData = {
-        timestamp: new Date().toISOString(),
-        method: "حجز كشف عاجل",
-        body: {
-          Name,
-          national_id,
-          level_id,
-          clinic_id,
-          gov_id,
-          faculty_id,
-          nationality_id
-        },
-        admin_id: isSuperAdmin ? req.user[0].superAdmin_id : req.user[0].user_id,
-        adminName: isSuperAdmin ? req.user[0].name : req.user[0].userName,
-      };
-      const auditSql =
-        "INSERT INTO admin_log (admin_id, admin_name, timestamp, method, body) VALUES (?, ?, ?, ?, ?)";
-      db.query(
-        auditSql,
-        [
+        const auditData = {
+          timestamp: new Date().toISOString(),
+          method: "حجز كشف عاجل",
+          body: {
+            Name,
+            national_id,
+            level_id,
+            clinic_id,
+            gov_id,
+            faculty_id,
+            nationality_id,
+          },
+          admin_id: isSuperAdmin
+            ? req.user[0].superAdmin_id
+            : req.user[0].user_id,
+          adminName: isSuperAdmin ? req.user[0].name : req.user[0].userName,
+        };
+        const auditSql =
+          "INSERT INTO admin_log (admin_id, admin_name, timestamp, method, body) VALUES (?, ?, ?, ?, ?)";
+        db.query(auditSql, [
           auditData.admin_id,
           auditData.adminName,
           auditData.timestamp,
           auditData.method,
           JSON.stringify(auditData.body),
-        ],
-      );
-      res.status(StatusCode.OK).json({ message: "تم الحجز بنجاح" });
-    }
-  });
+        ]);
+        res.status(StatusCode.OK).json({ message: "تم الحجز بنجاح" });
+      }
+    },
+  );
 });
 
 //@desc     modify medical examination request
@@ -65,9 +83,18 @@ const adminCreateRequest = asyncHandler(async (req, res) => {
 //@access   private
 const adminUpdateRequest = asyncHandler(async (req, res) => {
   const { emergencyUser_id } = req.params;
-  const { Name, national_id, level_id, clinic_id, gov_id, faculty_id, nationality_id } = req.body;
+  const {
+    Name,
+    national_id,
+    level_id,
+    clinic_id,
+    gov_id,
+    faculty_id,
+    nationality_id,
+  } = req.body;
 
-  const checkSql = "SELECT * FROM emergency_reservations WHERE emergencyUser_id = ?";
+  const checkSql =
+    "SELECT * FROM emergency_reservations WHERE emergencyUser_id = ?";
   db.query(checkSql, [emergencyUser_id], (checkErr, checkResult) => {
     if (checkErr) {
       return res.status(StatusCode.INTERNAL_SERVER_ERROR).send(checkErr);
@@ -85,7 +112,16 @@ const adminUpdateRequest = asyncHandler(async (req, res) => {
     `;
     db.query(
       updateSql,
-      [Name, national_id, level_id, clinic_id, gov_id, faculty_id, nationality_id, emergencyUser_id],
+      [
+        Name,
+        national_id,
+        level_id,
+        clinic_id,
+        gov_id,
+        faculty_id,
+        nationality_id,
+        emergencyUser_id,
+      ],
       (err, result) => {
         if (err) {
           return res.status(StatusCode.INTERNAL_SERVER_ERROR).send(err);
@@ -99,8 +135,19 @@ const adminUpdateRequest = asyncHandler(async (req, res) => {
           const auditData = {
             timestamp: new Date().toISOString(),
             method: "تعديل حجز كشف عاجل",
-            body: { emergencyUser_id, Name, national_id, level_id, clinic_id, gov_id, faculty_id, nationality_id },
-            admin_id: isSuperAdmin ? req.user[0].superAdmin_id : req.user[0].user_id,
+            body: {
+              emergencyUser_id,
+              Name,
+              national_id,
+              level_id,
+              clinic_id,
+              gov_id,
+              faculty_id,
+              nationality_id,
+            },
+            admin_id: isSuperAdmin
+              ? req.user[0].superAdmin_id
+              : req.user[0].user_id,
             adminName: isSuperAdmin ? req.user[0].name : req.user[0].userName,
           };
           const auditSql = `
@@ -119,13 +166,15 @@ const adminUpdateRequest = asyncHandler(async (req, res) => {
             (auditErr, auditResult) => {
               if (auditErr) {
                 console.error("Error creating audit record:", auditErr);
-                return res.status(StatusCode.SERVICE_UNAVAILABLE).send(auditErr);
+                return res
+                  .status(StatusCode.SERVICE_UNAVAILABLE)
+                  .send(auditErr);
               }
               console.log("Audit record created successfully:", auditResult);
-            }
+            },
           );
         }
-      }
+      },
     );
   });
 });
@@ -151,7 +200,7 @@ const adminViewRequest = asyncHandler(async (req, res) => {
 const adminGetAllReservations = asyncHandler(async (req, res) => {
   const page = parseInt(req.query.page, 10) || 1;
   const limit = parseInt(req.query.limit, 10) || 10;
-  const searchKey = req.query.searchKey || '';
+  const searchKey = req.query.searchKey || "";
   const offset = (page - 1) * limit;
 
   const searchParam = `%${searchKey}%`;
@@ -215,34 +264,69 @@ const adminGetAllReservations = asyncHandler(async (req, res) => {
       LIMIT ? OFFSET ?
   `;
   // Get the total count of records matching the search criteria
-  db.query(countSql, [searchParam, searchParam, searchParam, searchParam, searchParam, searchParam, searchParam, searchParam, searchParam, searchParam], (err, countResults) => {
-    if (err) {
-      console.error("Error fetching count of examinations:", err);
-      return res.status(500).json({ error: "Internal Server Error" });
-    }
-    const totalCount = countResults[0].count;
-    const totalPages = Math.ceil(totalCount / limit);
-    // Get the paginated results with search criteria
-    db.query(sql, [searchParam, searchParam, searchParam, searchParam, searchParam, searchParam, searchParam, searchParam, searchParam, searchParam, searchParam, searchParam, limit, offset], (error, results) => {
-      if (error) {
-        console.error("Error fetching examinations data:", error);
+  db.query(
+    countSql,
+    [
+      searchParam,
+      searchParam,
+      searchParam,
+      searchParam,
+      searchParam,
+      searchParam,
+      searchParam,
+      searchParam,
+      searchParam,
+      searchParam,
+    ],
+    (err, countResults) => {
+      if (err) {
+        console.error("Error fetching count of examinations:", err);
         return res.status(500).json({ error: "Internal Server Error" });
       }
-      //converting the time-zone to Cairo time-zone
-      results.map(result => {
-        result.date = new Date(result.date).toLocaleString('en-US', { timeZone: 'Africa/Cairo' });
-        return result;
-      });
-      // Examinations found, return them
-      res.status(200).json({
-        totalPages,
-        currentPage: page,
-        results
-      });
-    });
-  });
+      const totalCount = countResults[0].count;
+      const totalPages = Math.ceil(totalCount / limit);
+      // Get the paginated results with search criteria
+      db.query(
+        sql,
+        [
+          searchParam,
+          searchParam,
+          searchParam,
+          searchParam,
+          searchParam,
+          searchParam,
+          searchParam,
+          searchParam,
+          searchParam,
+          searchParam,
+          searchParam,
+          searchParam,
+          limit,
+          offset,
+        ],
+        (error, results) => {
+          if (error) {
+            console.error("Error fetching examinations data:", error);
+            return res.status(500).json({ error: "Internal Server Error" });
+          }
+          //converting the time-zone to Cairo time-zone
+          results.map((result) => {
+            result.date = new Date(result.date).toLocaleString("en-US", {
+              timeZone: "Africa/Cairo",
+            });
+            return result;
+          });
+          // Examinations found, return them
+          res.status(200).json({
+            totalPages,
+            currentPage: page,
+            results,
+          });
+        },
+      );
+    },
+  );
 });
-
 
 //@desc     view list of emergency medical examinations
 //@route    GET  /api/v1/EmergencyReservations
@@ -253,11 +337,13 @@ const adminGetAllEmergencyReservations = asyncHandler(async (req, res) => {
   const offset = (page - 1) * limit; // Calculate offset based on page and limit
 
   // Query to get the total count of medical examinations
-  const countSql = 'SELECT COUNT(*) AS count FROM emergency_reservations';
+  const countSql = "SELECT COUNT(*) AS count FROM emergency_reservations";
   db.query(countSql, (err, results) => {
     if (err) {
       console.error("Error fetching count of emergency examinations:", err);
-      return res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ error: "Internal Server Error" });
+      return res
+        .status(StatusCode.INTERNAL_SERVER_ERROR)
+        .json({ error: "Internal Server Error" });
     }
     const countResults = results;
     const totalCount = countResults[0].count;
@@ -286,23 +372,26 @@ const adminGetAllEmergencyReservations = asyncHandler(async (req, res) => {
     db.query(sql, [limit, offset], (error, results) => {
       if (error) {
         console.error("Error fetching emergency examinations data:", error);
-        return res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ error: "Internal Server Error" });
+        return res
+          .status(StatusCode.INTERNAL_SERVER_ERROR)
+          .json({ error: "Internal Server Error" });
       } else {
-        results.map(result => {
-          result.time = new Date(result.time).toLocaleString('en-US', { timeZone: 'Africa/Cairo' });
+        results.map((result) => {
+          result.time = new Date(result.time).toLocaleString("en-US", {
+            timeZone: "Africa/Cairo",
+          });
           return result;
         });
         // Examinations found, return them
         res.status(StatusCode.OK).json({
           totalPages,
           currentPage: page,
-          results
+          results,
         });
       }
     });
   });
 });
-
 
 //@desc     delete medical examination request
 //@route    DELETE  /api/v1/Reservations/:emergencyUser_id
@@ -338,7 +427,9 @@ const adminDeleteRequest = asyncHandler(async (req, res) => {
           emergencyUser_id: emergencyUser_id,
           deletedCount: result.affectedRows,
         },
-        admin_id: isSuperAdmin ? req.user[0].superAdmin_id : req.user[0].user_id,
+        admin_id: isSuperAdmin
+          ? req.user[0].superAdmin_id
+          : req.user[0].user_id,
         adminName: isSuperAdmin ? req.user[0].name : req.user[0].userName,
       };
 
@@ -360,14 +451,11 @@ const adminDeleteRequest = asyncHandler(async (req, res) => {
           }
           console.log("Audit record created successfully:", auditResult);
           res.status(StatusCode.OK).json({ message: "تم حذف الحجز بنجاح" });
-        }
+        },
       );
-    }
-    );
-  }
-  );
-}
-);
+    });
+  });
+});
 
 export {
   adminCreateRequest,
@@ -375,5 +463,5 @@ export {
   adminViewRequest,
   adminGetAllReservations,
   adminGetAllEmergencyReservations,
-  adminDeleteRequest
-}
+  adminDeleteRequest,
+};
