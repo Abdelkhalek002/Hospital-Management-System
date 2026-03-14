@@ -2,7 +2,7 @@ import nodemailer from "nodemailer";
 import jwt from "jsonwebtoken";
 import db from "../config/db.js";
 import dotenv from "dotenv";
-dotenv.config({ path: "config.env" });
+dotenv.config();
 
 export const sendConfirmationMail = async (email, name) => {
   // 1- Sign JWT token with user information and set expiration to 1 hour
@@ -52,11 +52,15 @@ export const confirmEmail = (req, res) => {
   // Verify JWT token
   jwt.verify(token, process.env.JWT_SECRET, async (err, decoded) => {
     if (err) {
-      return res.status(400).json({ success: false, error: "Invalid JWT token." });
+      return res
+        .status(400)
+        .json({ success: false, error: "Invalid JWT token." });
     }
 
     // Update the user's confirmation status
-    db.query("UPDATE superadmin SET confirmed = 1 WHERE email = ?", [decoded.email]);
+    db.query("UPDATE superadmin SET confirmed = 1 WHERE email = ?", [
+      decoded.email,
+    ]);
 
     return res.status(202).send(`
     <style>

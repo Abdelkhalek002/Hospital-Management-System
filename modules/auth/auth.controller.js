@@ -20,7 +20,7 @@ import {
 import { roles } from "../../utils/roles.js";
 import { StatusCode } from "../../utils/statusCode.js";
 import dotenv from "dotenv";
-dotenv.config({ path: "config.env" });
+dotenv.config();
 
 //upload image middleware
 const multerStorage = multer.memoryStorage();

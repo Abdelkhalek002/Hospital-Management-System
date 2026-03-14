@@ -2,7 +2,7 @@ import nodemailer from "nodemailer";
 import jwt from "jsonwebtoken";
 import db from "../../config/db.js";
 import dotenv from "dotenv";
-dotenv.config({ path: "config.env" });
+dotenv.config();
 
 export const sendActivationMail = async (email, name) => {
   // 1- Sign JWT token with user information and set expiration to 50 seconds

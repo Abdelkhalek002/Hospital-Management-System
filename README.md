@@ -38,7 +38,7 @@ Hospital-Management-System/
 |- utils/                    # Validators, helpers, enums, API errors
 |- uploads/                   # Uploaded files (served statically)
 |- server.js                  # Application entry point
-|- config.env                 # Environment variables (local)
+|- .env                 # Environment variables (local)
 ```
 
 ## Prerequisites
@@ -55,7 +55,7 @@ Hospital-Management-System/
 npm install
 ```
 
-2. Configure environment variables in `config.env`.
+2. Configure environment variables in `.env`.
 
 Recommended template:
 
