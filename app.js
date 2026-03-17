@@ -46,7 +46,7 @@ app.use("/api/v1/password/", userSecRoute);
 app.use("/api/v1/myProfile/", userProfileRoute);
 app.use("/api/v1/sysdata/", systemDataRoutes);
 
-app.all("*", (req, res, next) => {
+app.use((req, res, next) => {
   next(new ApiError(`Can't find this route: ${req.originalUrl}`, 400));
 });
 

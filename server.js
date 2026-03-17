@@ -1,30 +1,28 @@
 import dotenv from "dotenv";
-import dbConnection from "./config/db.js";
+import dbPool from "./config/db.js";
 import { deActivateUser } from "./services/scheduler.service.js";
 
 dotenv.config();
 const { default: app } = await import("./app.js"); // es modules are hoisted (did this to solve .env load before app.js)
 
-dbConnection.connect((err) => {
-  if (err) {
-    console.error("Unable to connect to MySQL:", err);
-    return;
-  }
-
-  const dbName =
-    process.env.NODE_ENV === "development"
-      ? process.env.DEV_DB
-      : process.env.NODE_ENV === "testing"
+dbPool
+  .getConnection()
+  .then((connection) => {
+    const dbName =
+      process.env.NODE_ENV === "development"
         ? process.env.TEST_DB
         : process.env.PROD_DB;
-  console.log(`🚀 Connected to ( ${dbName} ) successfully! `);
-});
+    console.log(`(${dbName}) Database Connected!`);
+    connection.release();
+  })
+  .catch((err) => {
+    console.error("⚠️ Error connecting to the database: ", err.message);
+  });
 
-const port =
-  process.env.NODE_ENV === "testing" ? process.env.TEST_PORT : process.env.PORT;
+const port = process.env.PORT;
 
 const server = app.listen(port, () => {
-  console.log(`Server is running on port ${port}... `);
+  console.log(`🚀 Server is running on port ${port}... `);
 });
 
 // DEACTIVATE ACCOUNTS
