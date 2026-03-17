@@ -1,6 +1,6 @@
 // IMPORTING DEPENDENCIES
 import { check } from "express-validator";
-import validatorMiddleware from "../../middlewares/validatorMiddleware.js";
+import validatorMiddleware from "../../middlewares/validator.middleware.js";
 
 export const updateUserProfileValidator = [
   check("userImage_file").optional(),

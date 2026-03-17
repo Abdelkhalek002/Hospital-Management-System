@@ -6,7 +6,7 @@ import morgan from "morgan";
 import cors from "cors";
 
 import ApiError from "./utils/api-error.js";
-import globalError from "./middlewares/errorMiddleware.js";
+import globalError from "./middlewares/error.middleware.js";
 
 // ROUTES
 import userReservationRoute from "./modules/reservations/reservation-user.routes.js";

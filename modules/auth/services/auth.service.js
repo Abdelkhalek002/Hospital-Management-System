@@ -1,6 +1,6 @@
 import nodemailer from "nodemailer";
 import jwt from "jsonwebtoken";
-import db from "../../config/db.js";
+import db from "../../../config/db.js";
 import dotenv from "dotenv";
 dotenv.config();
 

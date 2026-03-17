@@ -10,8 +10,8 @@ import path from "path";
 import fs from "fs";
 import sanitizeFilename from "sanitize-filename";
 
-import { sendActivationMail } from "./auth.service.js";
-import { sendConfirmationMail } from "./auth.service.js";
+import { sendActivationMail } from "./services/auth.service.js";
+import { sendConfirmationMail } from "./services/auth.service.js";
 import {
   isEmailExist,
   isNationalIdExist,

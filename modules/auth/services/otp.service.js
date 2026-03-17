@@ -1,32 +1,35 @@
 import expressAsyncHandler from "express-async-handler";
-import db from "../config/db.js";
+import db from "../../../config/db.js";
 import nodemailer from "nodemailer";
 
 const generateOTP = () => {
-    return Math.floor(100000 + Math.random() * 900000).toString();
+  return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
 const updatePasswordWithOTP = async (student_id, otp) => {
-    // Update the user record with the generated OTP
-    db.query('UPDATE students SET otp = ? WHERE student_id = ?', [otp, student_id]);
+  // Update the user record with the generated OTP
+  db.query("UPDATE students SET otp = ? WHERE student_id = ?", [
+    otp,
+    student_id,
+  ]);
 };
 
 const sendOTPByEmail = async (email, otp, name) => {
-    // Create a Nodemailer transporter
-    const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-            user: 'inkozeks@gmail.com',
-            pass: 'tvwxgyrfnzfvrxia'
-        }
-    });
+  // Create a Nodemailer transporter
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: "inkozeks@gmail.com",
+      pass: "tvwxgyrfnzfvrxia",
+    },
+  });
 
-    // Define the email options
-    const mailOptions = {
-        from: 'HelwanHospital@gmail.com',
-        to: email,
-        subject: 'OTP for Password Reset',
-        html: ` <style>
+  // Define the email options
+  const mailOptions = {
+    from: "HelwanHospital@gmail.com",
+    to: email,
+    subject: "OTP for Password Reset",
+    html: ` <style>
         body {
             background-color: #F3F8FF;
             color: #fff;
@@ -115,45 +118,47 @@ const sendOTPByEmail = async (email, otp, name) => {
         </div>
     </div>
   </body>
-  `
-    };
+  `,
+  };
 
-    // Send the email
-    await transporter.sendMail(mailOptions);
+  // Send the email
+  await transporter.sendMail(mailOptions);
 };
 
 export const sendOtp = expressAsyncHandler(async (req, res) => {
-    const { email } = req.body;
+  const { email } = req.body;
 
-    // Capture user's IP address and user-agent
-    const ip = req.ip || req.connection.remoteAddress;
-    const userAgent = req.headers['user-agent'];
+  // Capture user's IP address and user-agent
+  const ip = req.ip || req.connection.remoteAddress;
+  const userAgent = req.headers["user-agent"];
 
-    // Log IP and user-agent to the console
-    console.log('IP Address:', ip);
-    console.log('User Agent:', userAgent);
+  // Log IP and user-agent to the console
+  console.log("IP Address:", ip);
+  console.log("User Agent:", userAgent);
 
-    if (!email) {
-        return res.status(400).json({ message: 'Email is required' });
+  if (!email) {
+    return res.status(400).json({ message: "Email is required" });
+  }
+
+  const sql = "SELECT * FROM students WHERE email = ?";
+  db.query(sql, [email], (err, result) => {
+    if (err) {
+      res.status(500).send(err);
+    } else {
+      if (result.length === 0) {
+        res.status(404).json({ message: "User not found" });
+      } else {
+        const { email, student_id, userName } = result[0];
+        console.log(email, student_id, userName);
+        const otp = generateOTP();
+        // Send OTP via email with name parameter
+        sendOTPByEmail(email, otp, userName);
+        // Update the user record with the generated OTP
+        updatePasswordWithOTP(student_id, otp);
+        return res
+          .status(200)
+          .json({ success: true, message: "OTP sent successfully" });
+      }
     }
-
-    const sql = "SELECT * FROM students WHERE email = ?";
-    db.query(sql, [email], (err, result) => {
-        if (err) {
-            res.status(500).send(err);
-        } else {
-            if (result.length === 0) {
-                res.status(404).json({ message: "User not found" });
-            } else {
-                const { email, student_id, userName } = result[0];
-                console.log(email, student_id, userName);
-                const otp = generateOTP();
-                // Send OTP via email with name parameter
-                sendOTPByEmail(email, otp, userName);
-                // Update the user record with the generated OTP
-                updatePasswordWithOTP(student_id, otp);
-                return res.status(200).json({ success: true, message: 'OTP sent successfully' });
-            }
-        }
-    });
+  });
 });

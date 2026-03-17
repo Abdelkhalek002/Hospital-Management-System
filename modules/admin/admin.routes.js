@@ -8,7 +8,7 @@ import {
   resetPasswordValidator,
   sendObservationValidator,
   addSuperAdminValidator,
-} from "../../utils/validators/adminValidator.js";
+} from "./admin.validator.js";
 
 import { Protect, allowedTo } from "../../middlewares/auth.middleware.js";
 import limiter from "../../services/rate-limit.service.js";
