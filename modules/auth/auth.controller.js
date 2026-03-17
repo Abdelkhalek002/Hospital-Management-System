@@ -18,7 +18,7 @@ import {
   isIDExist,
 } from "./auth.validator.js";
 import { roles } from "../../utils/roles.js";
-import { StatusCode } from "../../utils/statusCode.js";
+import { StatusCode } from "../../utils/status-codes.js";
 import dotenv from "dotenv";
 dotenv.config();
 

@@ -5,7 +5,7 @@ import morgan from "morgan";
 //import redis from "redis";
 import cors from "cors";
 
-import ApiError from "./utils/apiError.js";
+import ApiError from "./utils/api-error.js";
 import globalError from "./middlewares/errorMiddleware.js";
 
 // ROUTES

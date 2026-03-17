@@ -1,7 +1,7 @@
 import asyncHandler from "express-async-handler";
 import db from "../../config/db.js";
 import bcrypt from "bcrypt";
-import { StatusCode } from "../../utils/statusCode.js";
+import { StatusCode } from "../../utils/status-codes.js";
 import sendObservationMail from "./admin.service.js";
 import { roles } from "../../utils/roles.js";
 

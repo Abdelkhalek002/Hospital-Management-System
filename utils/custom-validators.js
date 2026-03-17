@@ -1,7 +1,7 @@
 // Importing dependencies
 import express from "express";
 import db from "../config/db.js";
-import ApiError from "./apiError.js";
+import ApiError from "./api-error.js";
 import asyncHandler from "express-async-handler";
 
 // To check if the code is in Arabic or not

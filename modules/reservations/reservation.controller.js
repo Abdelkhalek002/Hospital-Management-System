@@ -8,7 +8,7 @@ import path from "path";
 import fs from "fs";
 import sanitizeFilename from "sanitize-filename";
 import { isLimitReached } from "./reservation.validator.js";
-import { StatusCode } from "../../utils/statusCode.js";
+import { StatusCode } from "../../utils/status-codes.js";
 import { roles } from "../../utils/roles.js";
 
 //!Emergency Reservations routes

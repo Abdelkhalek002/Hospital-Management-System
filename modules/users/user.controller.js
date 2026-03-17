@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from "uuid";
 import sharp from "sharp";
 import path from "path";
 import fs from "fs";
-import { StatusCode } from "../../utils/statusCode.js";
+import { StatusCode } from "../../utils/status-codes.js";
 
 //@desc user access profile data
 //@route    POST  /api/v1/myProfile/:id

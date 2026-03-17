@@ -18,9 +18,9 @@ import {
   sendOtpValidator,
   forgetPasswordValidator,
 } from "./auth.validator.js";
-import { sendOtp } from "../../services/sendOTP_Middleware.js";
+import { sendOtp } from "../../services/otp.service.js";
 import limiter from "../../services/limitReqsMiddleware.js";
-import { confirmEmail } from "../../services/confirmSuperAdmin.js";
+import { confirmEmail } from "../../services/super-admin-email.service.js";
 import {
   Protect,
   allowedTo,

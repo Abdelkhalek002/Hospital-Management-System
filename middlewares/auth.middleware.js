@@ -1,9 +1,9 @@
 import asyncHandler from "express-async-handler";
-import ApiError from "../utils/apiError.js";
+import ApiError from "../utils/api-error.js";
 import db from "../config/db.js";
 import jwt from "jsonwebtoken";
 import { roles } from "../utils/roles.js";
-import { StatusCode } from "../utils/statusCode.js";
+import { StatusCode } from "../utils/status-codes.js";
 
 const Protect = asyncHandler(async (req, res, next) => {
   let token;

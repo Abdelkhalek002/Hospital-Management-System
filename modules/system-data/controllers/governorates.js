@@ -1,6 +1,6 @@
 import asyncHandler from "express-async-handler";
 import db from "../../../config/db.js";
-import { StatusCode } from "../../../utils/statusCode.js";
+import { StatusCode } from "../../../utils/status-codes.js";
 
 //@desc     add new governorate
 //@route    POST  /api/v1/sysdata/governorates
