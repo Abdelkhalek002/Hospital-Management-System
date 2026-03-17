@@ -1,11 +1,11 @@
 import asyncHandler from "express-async-handler";
-import db from "../../config/db.js";
-import { StatusCode } from "../../utils/statusCode.js";
+import db from "../../../config/db.js";
+import { StatusCode } from "../../../utils/statusCode.js";
 
 //@desc     add new hospital
 //@route    POST  /api/v1/sysdata/hospitals
 //@access   private
-const createHospital = asyncHandler(async (req, res) => {
+export const createHospital = asyncHandler(async (req, res) => {
   const { hospName } = req.body;
   const isExistSql = "SELECT * FROM external_hospitals WHERE hospName = ?";
   db.query(isExistSql, [hospName], (err, result) => {
@@ -32,7 +32,7 @@ const createHospital = asyncHandler(async (req, res) => {
 //@desc     view list of hospitals
 //@route    GET  /api/v1/sysdata/hospitals
 //@access   private
-const getAllhospitals = asyncHandler(async (req, res) => {
+export const getAllhospitals = asyncHandler(async (req, res) => {
   const sql = "SELECT * FROM external_hospitals";
   db.query(sql, (err, results) => {
     if (err) {
@@ -47,7 +47,7 @@ const getAllhospitals = asyncHandler(async (req, res) => {
 //@desc     update hospital
 //@route    GET  /api/v1/sysdata/hospitals
 //@access   private
-const updateHospital = asyncHandler(async (req, res) => {
+export const updateHospital = asyncHandler(async (req, res) => {
   const { exHosp_id } = req.params;
   const { hospName } = req.body;
 
@@ -87,7 +87,7 @@ const updateHospital = asyncHandler(async (req, res) => {
 //@desc     delete one hospital
 //@route    DELETE  /api/v1/sysdata/hospitals/:id
 //@access   private
-const deleteHospital = asyncHandler(async (req, res) => {
+export const deleteHospital = asyncHandler(async (req, res) => {
   const { exHosp_id } = req.params;
 
   const checkSql = "SELECT * FROM external_hospitals WHERE exHosp_id = ?";
@@ -116,5 +116,3 @@ const deleteHospital = asyncHandler(async (req, res) => {
     });
   });
 });
-
-export { createHospital, getAllhospitals, deleteHospital, updateHospital };

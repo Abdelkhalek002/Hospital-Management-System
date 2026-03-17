@@ -1,13 +1,13 @@
 import asyncHandler from "express-async-handler";
-import db from "../config/db.js";
+import db from "../../config/db.js";
 import bcrypt from "bcrypt";
-import { StatusCode } from "../utils/statusCode.js";
-import sendObservationMail from "../services/sendObservationemail.js";
-import { roles } from "../utils/roles.js";
+import { StatusCode } from "../../utils/statusCode.js";
+import sendObservationMail from "./admin.service.js";
+import { roles } from "../../utils/roles.js";
 
 //!! SUPER ADMIN
 //? STATISTICS
-const getStatistics = asyncHandler(async (req, res) => {
+export const getStatistics = asyncHandler(async (req, res) => {
   try {
     const queries = {
       usersCount: "SELECT COUNT(*) AS value FROM students",
@@ -81,7 +81,7 @@ const getStatistics = asyncHandler(async (req, res) => {
 });
 
 //? get the number of reservations by each month from the beginning of the year
-const getReservationsByMonth = asyncHandler(async (req, res) => {
+export const getReservationsByMonth = asyncHandler(async (req, res) => {
   const sql = `
     WITH RECURSIVE Months AS (
       SELECT 1 AS month
@@ -130,7 +130,7 @@ const getReservationsByMonth = asyncHandler(async (req, res) => {
 });
 
 //! Get Admin Logs For
-const getAdminLogs = asyncHandler(async (req, res) => {
+export const getAdminLogs = asyncHandler(async (req, res) => {
   // Parse query parameters for pagination
   const page = parseInt(req.query.page, 10) || 1;
   const limit = parseInt(req.query.limit, 10) || 10;
@@ -169,7 +169,7 @@ const getAdminLogs = asyncHandler(async (req, res) => {
 });
 
 //! Get Specific Admin Logs
-const getSpecificAdminLogs = asyncHandler(async (req, res) => {
+export const getSpecificAdminLogs = asyncHandler(async (req, res) => {
   const { admin_id } = req.params;
   const sql = "SELECT * FROM admin_log WHERE admin_id = ?";
   db.query(sql, [admin_id], (err, result) => {
@@ -183,7 +183,7 @@ const getSpecificAdminLogs = asyncHandler(async (req, res) => {
 });
 
 //! Clear History
-const clearHistory = asyncHandler(async (req, res) => {
+export const clearHistory = asyncHandler(async (req, res) => {
   const sql = "DELETE FROM admin_log";
   db.query(sql, (err, result) => {
     if (err) {
@@ -196,7 +196,7 @@ const clearHistory = asyncHandler(async (req, res) => {
 });
 
 //! Clear Specific Admin History
-const clearSpecificHistory = asyncHandler(async (req, res) => {
+export const clearSpecificHistory = asyncHandler(async (req, res) => {
   const { admin_id } = req.params;
 
   const isExist = `SELECT * FROM admin_log WHERE admin_id = ?`;
@@ -231,7 +231,7 @@ const clearSpecificHistory = asyncHandler(async (req, res) => {
 //@desc     add new admin
 //@route    POST  /api/v1/admin
 //@access   private
-const addNewAdmin = asyncHandler(async (req, res) => {
+export const addNewAdmin = asyncHandler(async (req, res) => {
   const { userName, email, password, role } = req.body;
   const hashedPassword = await bcrypt.hash(password, 10);
   const selectSql = "SELECT userName, email, role FROM admins WHERE email = ?";
@@ -296,7 +296,7 @@ const addNewAdmin = asyncHandler(async (req, res) => {
 });
 
 // !!
-const addSuperAdmin = asyncHandler(async (req, res) => {
+export const addSuperAdmin = asyncHandler(async (req, res) => {
   const { name, email, password, role } = req.body;
   const hashedPassword = await bcrypt.hash(password, 10);
   const selectSql = "SELECT name, email, role FROM superadmin WHERE email = ?";
@@ -329,7 +329,7 @@ const addSuperAdmin = asyncHandler(async (req, res) => {
   });
 });
 
-const updateAdmin = asyncHandler(async (req, res) => {
+export const updateAdmin = asyncHandler(async (req, res) => {
   const user_id = req.params.user_id;
   const { userName, email, role } = req.body;
 
@@ -390,7 +390,7 @@ const updateAdmin = asyncHandler(async (req, res) => {
 //@desc     reset admin password
 //@route    PATCH  /api/v1/admin/:user_id
 //@access   private
-const resetPassword = asyncHandler(async (req, res) => {
+export const resetPassword = asyncHandler(async (req, res) => {
   const { user_id } = req.params;
   const { password } = req.body;
   const hashedPassword = await bcrypt.hash(password, 8);
@@ -458,7 +458,7 @@ const resetPassword = asyncHandler(async (req, res) => {
 //@desc    view specific admin
 //@route   GET /api/v1/admin/:user_id
 //@access  private
-const viewAdmin = asyncHandler(async (req, res) => {
+export const viewAdmin = asyncHandler(async (req, res) => {
   const { user_id } = req.params;
   const sql = "SELECT * FROM admins WHERE user_id = ?";
 
@@ -479,7 +479,7 @@ const viewAdmin = asyncHandler(async (req, res) => {
 //@desc     view all admins
 //@route    GET  /api/v1/admin
 //@access   private
-const getAllAdmin = asyncHandler(async (req, res) => {
+export const getAllAdmin = asyncHandler(async (req, res) => {
   const sql = "SELECT * FROM admins";
   db.query(sql, (err, result) => {
     if (err) {
@@ -552,7 +552,7 @@ const deleteAdmin = asyncHandler(async (req, res) => {
 //@desc     send observation to a user
 //@route    PUT  /api/v1/admin/sendObservation/:id
 //@access   private
-const sendObservation = asyncHandler(async (req, res) => {
+export const sendObservation = asyncHandler(async (req, res) => {
   const { student_id } = req.params;
   const { observation } = req.body;
   const sql = "SELECT email, userName FROM students WHERE student_id = ?";
@@ -603,7 +603,7 @@ const sendObservation = asyncHandler(async (req, res) => {
   });
 });
 
-const acceptOrDecline = asyncHandler(async (req, res) => {
+export const acceptOrDecline = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { operation } = req.body;
   db.query(
@@ -723,7 +723,7 @@ const acceptOrDecline = asyncHandler(async (req, res) => {
 //@desc     view all user profiles
 //@route    GET  /api/v1/admin
 //@access   private
-const getAllUserProfiles = asyncHandler(async (req, res) => {
+export const getAllUserProfiles = asyncHandler(async (req, res) => {
   //pagination
   const page = parseInt(req.query.page, 10) || 1;
   const limit = parseInt(req.query.limit, 10) || 10;
@@ -766,7 +766,7 @@ const getAllUserProfiles = asyncHandler(async (req, res) => {
 //@desc     add students
 //@route    POST  /api/v1/admin
 //@access   private
-const addStudent = asyncHandler(async (req, res) => {
+export const addStudent = asyncHandler(async (req, res) => {
   const {
     userName,
     email,
@@ -818,7 +818,7 @@ const addStudent = asyncHandler(async (req, res) => {
 //@desc     update user profiles
 //@route    GET  /api/v1/admin
 //@access   private
-const updateUserProfile = asyncHandler(async (req, res) => {
+export const updateUserProfile = asyncHandler(async (req, res) => {
   const { student_id } = req.params;
   //check if user already exists
   const checkSql = "SELECT * FROM students WHERE student_id = ?";
@@ -889,7 +889,7 @@ const updateUserProfile = asyncHandler(async (req, res) => {
 //@desc     delete user profiles
 //@route    GET  /api/v1/admin
 //@access   private
-const deleteUserProfile = asyncHandler(async (req, res) => {
+export const deleteUserProfile = asyncHandler(async (req, res) => {
   const { student_id } = req.params;
   const checkSql = "SELECT * FROM students WHERE student_id = ?";
   db.query(checkSql, [student_id], (checkErr, checkResult) => {
@@ -917,7 +917,7 @@ const deleteUserProfile = asyncHandler(async (req, res) => {
 //!@desc PLUS    block the user from entering the system
 //@route    GET  /api/v1/admin
 //@access   private
-const blockUser = asyncHandler(async (req, res) => {
+export const blockUser = asyncHandler(async (req, res) => {
   const { student_id } = req.params;
   const checkSql = "SELECT * FROM students WHERE student_id = ?";
 
@@ -981,7 +981,7 @@ const blockUser = asyncHandler(async (req, res) => {
 //!@desc PLUS    unblock the user from entering the system
 //@route    GET  /api/v1/admin
 //@access   private
-const unblockUser = asyncHandler(async (req, res) => {
+export const unblockUser = asyncHandler(async (req, res) => {
   const { student_id } = req.params;
   const checkSql = "SELECT * FROM students WHERE student_id = ?";
   db.query(checkSql, [student_id], (checkErr, checkResult) => {
@@ -1041,7 +1041,7 @@ const unblockUser = asyncHandler(async (req, res) => {
 });
 
 //search for students method
-const searchStudent = asyncHandler(async (req, res) => {
+export const searchStudent = asyncHandler(async (req, res) => {
   const { searchKey } = req.query;
   const sql =
     "SELECT * FROM students WHERE userName LIKE ? OR national_id LIKE ?";
@@ -1059,7 +1059,7 @@ const searchStudent = asyncHandler(async (req, res) => {
 });
 
 //advanced search method
-const advancedSearch = asyncHandler(async (req, res) => {
+export const advancedSearch = asyncHandler(async (req, res) => {
   const queryParams = [];
   let query = `
   SELECT students.*, medical_examinations.*, clinics.clinicName AS clinic_name
@@ -1153,10 +1153,8 @@ const advancedSearch = asyncHandler(async (req, res) => {
   });
 });
 
-export default advancedSearch;
-
 //filter students method
-const filterStudents = asyncHandler(async (req, res) => {
+export const filterStudents = asyncHandler(async (req, res) => {
   const filters = req.query;
   const values = [];
   const conditions = [];
@@ -1315,7 +1313,7 @@ async function insertAuditLog(auditData) {
   });
 }
 //transfer to external hospital
-const transfer = asyncHandler(async (req, res) => {
+export const transfer = asyncHandler(async (req, res) => {
   const {
     student_id,
     transferReason,
@@ -1398,7 +1396,7 @@ const transfer = asyncHandler(async (req, res) => {
 });
 
 // get all transfered
-const getTransfered = asyncHandler(async (req, res) => {
+export const getTransfered = asyncHandler(async (req, res) => {
   const page = parseInt(req.query.page, 10) || 1;
   const limit = parseInt(req.query.limit, 10) || 10;
   const searchKey = req.query.searchKey || "";
@@ -1559,7 +1557,7 @@ const getTransfered = asyncHandler(async (req, res) => {
 });
 
 // update transfer
-const updateTransfer = asyncHandler(async (req, res) => {
+export const updateTransfer = asyncHandler(async (req, res) => {
   const { transfer_id } = req.params;
   const { student_id, transferReason, notes, exHosp_id } = req.body;
   const checkSql = "SELECT * FROM transfers WHERE transfer_id=?";
@@ -1609,7 +1607,7 @@ const updateTransfer = asyncHandler(async (req, res) => {
 });
 
 // Search with multiple fields
-const reservationSearch = asyncHandler(async (req, res) => {
+export const reservationSearch = asyncHandler(async (req, res) => {
   const { searchKey } = req.query;
   const sql =
     "SELECT * FROM medical_examinations WHERE examType LIKE ? OR status LIKE ? OR transfered LIKE ? ";
@@ -1631,7 +1629,7 @@ const reservationSearch = asyncHandler(async (req, res) => {
 });
 
 // Search students with multiple fields
-const studentSearch = asyncHandler(async (req, res) => {
+export const studentSearch = asyncHandler(async (req, res) => {
   const { searchKey } = req.query;
   const sql = `
   SELECT 
@@ -1673,35 +1671,3 @@ const studentSearch = asyncHandler(async (req, res) => {
     },
   );
 });
-
-export {
-  resetPassword,
-  viewAdmin,
-  getAllAdmin,
-  deleteAdmin,
-  sendObservation,
-  acceptOrDecline,
-  getAllUserProfiles,
-  addStudent,
-  updateUserProfile,
-  deleteUserProfile,
-  blockUser,
-  unblockUser,
-  searchStudent,
-  advancedSearch,
-  filterStudents,
-  transfer,
-  updateTransfer,
-  reservationSearch,
-  studentSearch,
-  getAdminLogs,
-  getSpecificAdminLogs,
-  clearHistory,
-  clearSpecificHistory,
-  addNewAdmin,
-  addSuperAdmin,
-  updateAdmin,
-  getStatistics,
-  getReservationsByMonth,
-  getTransfered,
-};

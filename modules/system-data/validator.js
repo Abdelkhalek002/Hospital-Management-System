@@ -1,7 +1,7 @@
 // IMPORTING DEPENDENCIES
 import { check } from "express-validator";
 import validatorMiddleware from "../../middlewares/validatorMiddleware.js";
-import customValidators from "../custom-validators.js";
+import customValidators from "../../utils/custom-validators.js";
 
 // CLINICS VALIDATOR
 export const clinicValidator = [

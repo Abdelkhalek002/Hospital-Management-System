@@ -12,15 +12,9 @@ import globalError from "./middlewares/errorMiddleware.js";
 import userReservationRoute from "./modules/reservations/reservation-user.routes.js";
 import adminReservationRoute from "./modules/reservations/reservation-admin.routes.js";
 import authRoute from "./modules/auth/auth.routes.js";
-import adminCrudRoute from "./routes/AdminCrudRoute.js";
+import adminRoute from "./modules/admin/admin.routes.js";
 import userProfileRoute from "./modules/users/user.routes.js";
-
-// System data routes
-import levelsRoute from "./routes/systemDataRoutes/levelsRoute.js";
-import govsRoute from "./routes/systemDataRoutes/govsRoute.js";
-import clinicsRoute from "./routes/systemDataRoutes/clinicsRoute.js";
-import facultyRoute from "./routes/systemDataRoutes/facultyRoute.js";
-import hospRoute from "./routes/systemDataRoutes/hospRoute.js";
+import systemDataRoutes from "./modules/system-data/routes/index.js";
 
 import userSecRoute from "./modules/users/user-security.routes.js";
 
@@ -47,17 +41,10 @@ if (process.env.NODE_ENV === "development") {
 app.use("/api/v1/auth/", authRoute); // DONE
 app.use("/api/v1/Myreservations/", userReservationRoute);
 app.use("/api/v1/reservations/", adminReservationRoute);
-app.use("/api/v1/admin/", adminCrudRoute);
+app.use("/api/v1/admin/", adminRoute);
 app.use("/api/v1/password/", userSecRoute);
 app.use("/api/v1/myProfile/", userProfileRoute);
-app.use(
-  "/api/v1/sysdata/",
-  levelsRoute,
-  govsRoute,
-  clinicsRoute,
-  facultyRoute,
-  hospRoute,
-);
+app.use("/api/v1/sysdata/", systemDataRoutes);
 
 app.all("*", (req, res, next) => {
   next(new ApiError(`Can't find this route: ${req.originalUrl}`, 400));

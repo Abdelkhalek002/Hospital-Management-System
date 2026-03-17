@@ -1,11 +1,11 @@
 import asyncHandler from "express-async-handler";
-import db from "../../config/db.js";
-import { StatusCode } from "../../utils/statusCode.js";
+import db from "../../../config/db.js";
+import { StatusCode } from "../../../utils/statusCode.js";
 
 //@desc     add new faculty
 //@route    POST  /api/v1/sysdata/faculties
 //@access   private
-const createFaculty = asyncHandler(async (req, res) => {
+export const createFaculty = asyncHandler(async (req, res) => {
   const { facultyName } = req.body;
   const isExistSql = "SELECT * FROM faculties WHERE facultyName = ?";
   db.query(isExistSql, [facultyName], (err, result) => {
@@ -32,7 +32,7 @@ const createFaculty = asyncHandler(async (req, res) => {
 //@desc     view list of faculties
 //@route    GET  /api/v1/sysdata/faculties
 //@access   private
-const getAllFaculties = asyncHandler(async (req, res) => {
+export const getAllFaculties = asyncHandler(async (req, res) => {
   const sql = "SELECT * FROM faculties";
   db.query(sql, (err, results) => {
     if (err) {
@@ -47,7 +47,7 @@ const getAllFaculties = asyncHandler(async (req, res) => {
 //@desc     update faculty
 //@route    GET  /api/v1/sysdata/faculties
 //@access   private
-const updateFaculty = asyncHandler(async (req, res) => {
+export const updateFaculty = asyncHandler(async (req, res) => {
   const { faculty_id } = req.params;
   const { facultyName } = req.body;
 
@@ -89,7 +89,7 @@ const updateFaculty = asyncHandler(async (req, res) => {
 //@desc     delete one faculty
 //@route    DELETE  /api/v1/sysdata/faculties/:id
 //@access   private
-const deleteFaculty = asyncHandler(async (req, res) => {
+export const deleteFaculty = asyncHandler(async (req, res) => {
   const { faculty_id } = req.params;
 
   const checkSql = "SELECT * FROM faculties WHERE faculty_id = ?";
@@ -119,5 +119,3 @@ const deleteFaculty = asyncHandler(async (req, res) => {
     });
   });
 });
-
-export { createFaculty, getAllFaculties, updateFaculty, deleteFaculty };

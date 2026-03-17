@@ -1,11 +1,11 @@
 import asyncHandler from "express-async-handler";
-import db from "../../config/db.js";
-import { StatusCode } from "../../utils/statusCode.js";
+import db from "../../../config/db.js";
+import { StatusCode } from "../../../utils/statusCode.js";
 
 //@desc     add new governorate
 //@route    POST  /api/v1/sysdata/governorates
 //@access   private
-const createGovernorate = asyncHandler(async (req, res) => {
+export const createGovernorate = asyncHandler(async (req, res) => {
   const { govName } = req.body;
   const isExistSql = "SELECT * FROM governorates WHERE govName = ?";
   db.query(isExistSql, [govName], (err, result) => {
@@ -32,7 +32,7 @@ const createGovernorate = asyncHandler(async (req, res) => {
 //@desc     view list of governorates
 //@route    GET  /api/v1/sysdata/governorates
 //@access   private
-const GetAllGovernorates = asyncHandler(async (req, res) => {
+export const GetAllGovernorates = asyncHandler(async (req, res) => {
   const sql = "SELECT * FROM governorates";
   db.query(sql, (err, results) => {
     if (err) {
@@ -46,7 +46,7 @@ const GetAllGovernorates = asyncHandler(async (req, res) => {
 //@desc     update governorate
 //@route    GET  /api/v1/sysdata/governorates
 //@access   private
-const updateGovernorate = asyncHandler(async (req, res) => {
+export const updateGovernorate = asyncHandler(async (req, res) => {
   const { gov_id } = req.params;
   const { govName } = req.body;
   const checkSql = "SELECT * FROM governorates WHERE gov_id = ?";
@@ -85,7 +85,7 @@ const updateGovernorate = asyncHandler(async (req, res) => {
 //@desc     delete one governorate
 //@route    DELETE  /api/v1/sysdata/governorates/:id
 //@access   private
-const deleteGovernorate = asyncHandler(async (req, res) => {
+export const deleteGovernorate = asyncHandler(async (req, res) => {
   const { gov_id } = req.params;
 
   const checkSql = "SELECT * FROM governorates WHERE gov_id = ?";
@@ -114,10 +114,3 @@ const deleteGovernorate = asyncHandler(async (req, res) => {
     });
   });
 });
-
-export {
-  createGovernorate,
-  GetAllGovernorates,
-  updateGovernorate,
-  deleteGovernorate,
-};

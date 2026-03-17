@@ -1,9 +1,9 @@
 import nodemailer from "nodemailer";
 
 const sendObservationMail = async (email, observation, name) => {
-    try {
-        const recipientEmail = email;
-        const emailBody = `<style>
+  try {
+    const recipientEmail = email;
+    const emailBody = `<style>
         body {
             background-color: #F3F8FF;
             color: #fff;
@@ -90,25 +90,25 @@ const sendObservationMail = async (email, observation, name) => {
     </div>
     </body>`;
 
-        const transporter = nodemailer.createTransport({
-            service: "gmail",
-            auth: {
-                user: "inkozeks@gmail.com",
-                pass: "tvwxgyrfnzfvrxia",
-            },
-        });
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: "inkozeks@gmail.com",
+        pass: "tvwxgyrfnzfvrxia",
+      },
+    });
 
-        const info = await transporter.sendMail({
-            from: "مستشفي جامعة حلوان",
-            to: recipientEmail,
-            subject: "observation",
-            html: emailBody,
-        });
+    const info = await transporter.sendMail({
+      from: "مستشفي جامعة حلوان",
+      to: recipientEmail,
+      subject: "observation",
+      html: emailBody,
+    });
 
-        console.log("Message sent: %s", info.messageId);
-    } catch (error) {
-        console.error("Error sending observation email:", error);
-    }
+    console.log("Message sent: %s", info.messageId);
+  } catch (error) {
+    console.error("Error sending observation email:", error);
+  }
 };
 
 export default sendObservationMail;
