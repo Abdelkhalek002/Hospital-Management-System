@@ -3,12 +3,6 @@ import asyncHandler from "express-async-handler";
 import bcrypt from "bcrypt";
 import db from "../../config/db.js";
 import jwt from "jsonwebtoken";
-import multer from "multer";
-import { v4 as uuidv4 } from "uuid";
-import sharp from "sharp";
-import path from "path";
-import fs from "fs";
-import sanitizeFilename from "sanitize-filename";
 
 import { sendActivationMail } from "./services/auth.service.js";
 import { sendConfirmationMail } from "./services/auth.service.js";
@@ -22,99 +16,10 @@ import { StatusCode } from "../../utils/status-codes.js";
 import dotenv from "dotenv";
 dotenv.config();
 
-//upload image middleware
-const multerStorage = multer.memoryStorage();
-const allowedMimeTypes = ["image/jpeg", "image/png", "image/jpg"];
-const multerFilter = (req, file, cb) => {
-  if (allowedMimeTypes.includes(file.mimetype)) {
-    cb(null, true);
-  } else {
-    cb(new Error("Only JPEG and PNG images are allowed"), false);
-  }
-};
-
-const upload = multer({
-  storage: multerStorage,
-  fileFilter: multerFilter,
-  limits: { fileSize: 5 * 1024 * 1024 },
-});
-
-// Middleware to handle image and national ID upload
-export const uploadRegisterationFiles = upload.fields([
-  { name: "userImage_file", maxCount: 1 },
-  { name: "national_id_file", maxCount: 1 },
-  { name: "fees_file", maxCount: 1 },
-]);
-
-// Middleware to resize uploaded image and save national ID
-export const resizeFiles = async (req, res, next) => {
-  try {
-    // Resize and save profile image
-    if (req.files["userImage_file"] && req.files["userImage_file"][0]) {
-      const userImage_file = req.files["userImage_file"][0];
-      const userImage_name = `Document-${uuidv4()}-${Date.now()}.jpeg`;
-      const sanitizeduserImage_Filename = sanitizeFilename(userImage_name);
-      const userImage_Directory = "uploads";
-
-      if (!fs.existsSync(userImage_Directory)) {
-        fs.mkdirSync(userImage_Directory, { recursive: true });
-      }
-
-      await sharp(userImage_file.buffer)
-        .resize(500, 500)
-        .toFormat("jpeg")
-        .jpeg({ quality: 95 })
-        .toFile(path.join(userImage_Directory, sanitizeduserImage_Filename));
-
-      req.body.userImage_file = sanitizeduserImage_Filename;
-    }
-    // Save national ID
-    if (req.files["national_id_file"] && req.files["national_id_file"][0]) {
-      const national_id_file = req.files["national_id_file"][0];
-      const national_id_name = `Document-${uuidv4()}-${Date.now()}.jpeg`;
-      const sanitizedNationalId_Filename = sanitizeFilename(national_id_name);
-      const national_id_Directory = "uploads/student_info/national_id";
-
-      if (!fs.existsSync(national_id_Directory)) {
-        fs.mkdirSync(national_id_Directory, { recursive: true });
-      }
-
-      fs.writeFileSync(
-        path.join(national_id_Directory, sanitizedNationalId_Filename),
-        national_id_file.buffer,
-      );
-
-      req.body.national_id_file = sanitizedNationalId_Filename;
-    }
-    // Save fees
-    if (req.files["fees_file"] && req.files["fees_file"][0]) {
-      const fees_file = req.files["fees_file"][0];
-      const fessFile_name = `Document-${uuidv4()}-${Date.now()}.jpeg`;
-      const sanitizedFees_Filename = sanitizeFilename(fessFile_name);
-      const fees_Directory = "uploads/student_info/fees";
-
-      if (!fs.existsSync(fees_Directory)) {
-        fs.mkdirSync(fees_Directory, { recursive: true });
-      }
-
-      fs.writeFileSync(
-        path.join(fees_Directory, sanitizedFees_Filename),
-        fees_file.buffer,
-      );
-
-      req.body.fees_file = sanitizedFees_Filename;
-    }
-
-    next();
-  } catch (error) {
-    return next(error);
-  }
-};
-
 //----------------------------------SIGNUP---------------------------------------
 export const signup = asyncHandler(async (req, res) => {
   const {
-    userName,
+    username,
     email,
     password,
     national_id,
@@ -123,9 +28,9 @@ export const signup = asyncHandler(async (req, res) => {
     gov_id,
     faculty_id,
     gender,
-    birthDay,
-    phoneNumber,
-    userImage_file,
+    birth_date,
+    phone_number,
+    user_image_file,
     national_id_file,
     fees_file,
   } = req.body;
@@ -182,7 +87,7 @@ export const signup = asyncHandler(async (req, res) => {
                                 "SELECT * FROM governorates WHERE gov_id = ?",
                                 [gov_id],
                                 (err, result) => {
-                                  if (isIDExist(err, result, nationality_id)) {
+                                  if (isIDExist(err, result, gov_id)) {
                                     return res
                                       .status(StatusCode.BAD_REQUEST)
                                       .json({
@@ -197,9 +102,9 @@ export const signup = asyncHandler(async (req, res) => {
                                     10,
                                   );
                                   db.query(
-                                    "INSERT INTO students (userName, email, password, national_id, nationality_id, level_id, gov_id, faculty_id, gender, birthDay, phoneNumber, userImage_file, national_id_file, fees_file) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                                    "INSERT INTO students (username, email, password, national_id, nationality_id, level_id, gov_id, faculty_id, gender, birth_date, phone_number, user_image_file, national_id_file, fees_file) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                                     [
-                                      userName,
+                                      username,
                                       email,
                                       hashedPassword,
                                       national_id,
@@ -208,15 +113,15 @@ export const signup = asyncHandler(async (req, res) => {
                                       gov_id,
                                       faculty_id,
                                       gender,
-                                      birthDay,
-                                      phoneNumber,
-                                      userImage_file,
+                                      birth_date,
+                                      phone_number,
+                                      user_image_file,
                                       national_id_file,
                                       fees_file,
                                     ],
                                   );
                                   //*sending activation mail...
-                                  //sendActivationMail(email, userName);
+                                  //sendActivationMail(email, username);
                                   res.status(StatusCode.CREATED).json({
                                     success: true,
                                     message:
@@ -242,7 +147,7 @@ export const signup = asyncHandler(async (req, res) => {
 
 //--------------------------------------LOGIN------------------------------------
 export const login = asyncHandler(async (req, res) => {
-  const { password, userName, email } = req.body;
+  const { password, username, email } = req.body;
 
   //1- SuperAdmin login
   if (email && email.includes("@hsh.io")) {
@@ -332,7 +237,7 @@ export const login = asyncHandler(async (req, res) => {
   //2- admin login
   if (email && email.includes("@admin.com")) {
     const sqlAdmin =
-      "SELECT email, userName, password, user_id, type, role FROM admins WHERE email = ?";
+      "SELECT email, username, password, user_id, type, role FROM admins WHERE email = ?";
     db.query(sqlAdmin, [email], async (err, result) => {
       if (err) {
         return res.status(StatusCode.INTERNAL_SERVER_ERROR).send(err);
@@ -348,7 +253,7 @@ export const login = asyncHandler(async (req, res) => {
         email: adminEmail,
         password: hashedPassword,
         user_id,
-        userName,
+        username,
         type,
         role,
       } = result[0];
@@ -366,7 +271,7 @@ export const login = asyncHandler(async (req, res) => {
       const payLoad = {
         userId: user_id,
         email: adminEmail,
-        name: userName,
+        name: username,
         type,
         role,
       };
@@ -394,7 +299,7 @@ export const login = asyncHandler(async (req, res) => {
   //3- User login
   if (email && email.includes("helwan.edu.eg")) {
     const sqlUser =
-      "SELECT userName, email, password, type, student_id, verified FROM students WHERE email = ?";
+      "SELECT username, email, password, type, student_id, verified FROM students WHERE email = ?";
     db.query(sqlUser, [email], async (err, result) => {
       if (err) {
         return res.status(StatusCode.INTERNAL_SERVER_ERROR).send(err);
@@ -410,7 +315,7 @@ export const login = asyncHandler(async (req, res) => {
         password: hashedPassword,
         student_id,
         verified,
-        userName,
+        username,
         type,
       } = result[0];
 
@@ -448,7 +353,7 @@ export const login = asyncHandler(async (req, res) => {
       const payLoad = {
         userId: student_id,
         email: userEmail,
-        name: userName,
+        name: username,
         type,
       };
 
@@ -478,7 +383,7 @@ export const login = asyncHandler(async (req, res) => {
     .json({ success: false, error: "برجاء كتابة الايميل وكلمة المرور" });
 });
 
-//--------------------------------------forget Password------------------------------------
+//--------------------------------------forget Password--------------------------
 export const forgetPassword = asyncHandler(async (req, res, next) => {
   const { email, OTP, newPassword } = req.body;
 

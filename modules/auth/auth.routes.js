@@ -1,16 +1,14 @@
 import express from "express";
 const router = express.Router();
 
+import * as authController from "./auth.controller.js";
+
+// Import services
+import { activateEmail } from "./services/activate-user-email.service.js";
 import {
   uploadRegisterationFiles,
   resizeFiles,
-  signup,
-  login,
-  forgetPassword,
-} from "./auth.controller.js";
-
-// Import middlewares
-import { activateEmail } from "./services/activate-user-email.service.js";
+} from "./services/file-upload.service.js";
 
 // Import validators
 import {
@@ -30,13 +28,22 @@ import { roles } from "../../utils/roles.js";
 
 router
   .route("/signUp")
-  .post(uploadRegisterationFiles, resizeFiles, signupValidator, signup);
+  .post(
+    uploadRegisterationFiles,
+    resizeFiles,
+    signupValidator,
+    authController.signup,
+  );
 router.get("/activate", activateEmail);
 
 router
   .post("/sendOtp", sendOtpValidator, limiter, sendOtp)
-  .post("/forgetPassword", forgetPasswordValidator, forgetPassword)
-  .post("/login", login);
+  .post(
+    "/forgetPassword",
+    forgetPasswordValidator,
+    authController.forgetPassword,
+  )
+  .post("/login", authController.login);
 router.get("/confirmEmail", confirmEmail);
 
 export default router;
