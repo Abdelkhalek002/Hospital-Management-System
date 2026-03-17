@@ -329,78 +329,6 @@ const addSuperAdmin = asyncHandler(async (req, res) => {
   });
 });
 
-//@desc     update admin
-//@route    PUT  /api/v1/admin/:user_id
-//@access   private
-// updateAdmin = asyncHandler(async (req, res) => {
-//   const { user_id } = req.params;
-//   const updateData = req.body;
-//   let updateSet = "";
-//   const updateValues = [];
-//   // Build the SET clause for the update query
-//   Object.entries(updateData).forEach(([field, value]) => {
-//     updateSet += `${field} = ?, `;
-//     updateValues.push(value);
-//   });
-//   // Remove the trailing comma from the SET clause
-//   updateSet = updateSet.slice(0, -2);
-//   // Update the admin in the database
-//   const query = `UPDATE admins SET ${updateSet} WHERE user_id = ?`;
-//   db.query(query, [...updateValues, user_id], (err, result) => {
-//     if (err) {
-//       return res.status(500).send(err);
-//     }
-//     if (result.affectedRows === 0) {
-//       return res.status(404).json({ message: "Admin not found" });
-//     }
-//     const selectSql =
-//       "SELECT userName, email, role FROM admins WHERE user_id = ?";
-//     db.query(selectSql, [user_id], (selectErr, selectResult) => {
-//       if (selectErr) {
-//         console.error("Error fetching updated admin details:", selectErr);
-//         return res.status(500).send(selectErr);
-//       }
-//       if (selectResult.length === 0) {
-//         return res.status(404).json({ message: "Admin not found" });
-//       }
-//       const { userName, email, role } = selectResult[0];
-//       const auditData = {
-//         timestamp: new Date().toISOString(),
-//         method: "Update Admin",
-//         body: {
-//           updatedFields: updateData,
-//           userName,
-//           email,
-//           role,
-//         },
-//         admin_id: req.user[0].user_id,
-//         adminName: req.user[0].userName,
-//       };
-//       const auditSql =
-//         "INSERT INTO admin_log (admin_id, admin_name, timestamp, method, body) VALUES (?, ?, ?, ?, ?)";
-//       db.query(
-//         auditSql,
-//         [
-//           auditData.admin_id,
-//           auditData.adminName,
-//           auditData.timestamp,
-//           auditData.method,
-//           JSON.stringify(auditData.body),
-//         ],
-//         (auditErr, auditResult) => {
-//           if (auditErr) {
-//             console.error("Error creating audit record:", auditErr);
-//             return res.status(500).send(auditErr);
-//           }
-//           console.log("Audit record created successfully:", auditResult);
-//           return res
-//             .status(StatusCode.OK)
-//             .json({ message: "Admin updated successfully", auditData });
-//         }
-//       );
-//     });
-//   });
-// });
 const updateAdmin = asyncHandler(async (req, res) => {
   const user_id = req.params.user_id;
   const { userName, email, role } = req.body;
@@ -1227,97 +1155,6 @@ const advancedSearch = asyncHandler(async (req, res) => {
 
 export default advancedSearch;
 
-// advancecSearch with column mapping
-// const advancedSearch = asyncHandler(async (req, res) => {
-//   const queryParams = [];
-//   let query = `
-//   SELECT students.*, medical_examinations.*
-//   FROM students
-//   LEFT JOIN medical_examinations ON students.student_id = medical_examinations.student_id
-//   WHERE`;
-//   let conditions = [];
-
-//   // Mapping to specify the table for each searchable column
-//   const columnMapping = {
-//     student_id: 'students',
-//     name: 'students',
-//     birthDay: 'students',
-//     // Add all columns from students table
-//     examType: 'medical_examinations',
-//     status: 'medical_examinations',
-//     date: 'medical_examinations',
-//     // Add all columns from medical_examinations table
-//   };
-
-//   // Build the WHERE clause for the search query
-//   for (const [key, value] of Object.entries(req.query)) {
-//     if (key !== 'page' && key !== 'limit' && value) { // Skip pagination params
-//       const tableAlias = columnMapping[key];
-//       if (tableAlias) {
-//         conditions.push(`${tableAlias}.${key} LIKE ?`);
-//         queryParams.push(`%${value}%`);
-//       }
-//     }
-//   }
-
-//   // Check if any search criteria provided
-//   if (conditions.length === 0) {
-//     return res.status(400).json({ message: "لا يوجد عنصر للبحث . برجاء اختيار عنصر واحد علي الاقل" });
-//   }
-//   query += " " + conditions.join(" AND ");
-
-//   // Pagination
-//   const page = parseInt(req.query.page, 10) || 1;
-//   const limit = parseInt(req.query.limit, 10) || 10;
-//   const offset = (page - 1) * limit;
-
-//   // Query to get the total count of results matching the search criteria
-//   const countQuery = `
-//   SELECT COUNT(*) AS count
-//   FROM students
-//   LEFT JOIN medical_examinations ON students.student_id = medical_examinations.student_id
-//   WHERE ${conditions.join(" AND ")}`;
-
-//   db.query(countQuery, queryParams, (err, countResults) => {
-//     if (err) {
-//       return res.status(500).json({ message: "Database error", error: err });
-//     }
-
-//     const totalCount = countResults[0].count;
-//     const totalPages = Math.ceil(totalCount / limit);
-
-//     // Add pagination to the main query
-//     query += " LIMIT ? OFFSET ?";
-//     queryParams.push(limit, offset);
-
-//     // Execute the search query with pagination
-//     db.query(query, queryParams, (err, search) => {
-//       if (err) {
-//         return res.status(500).json({ message: "Database error", error: err });
-//       }
-
-//       // Handle the response
-//       if (search.length === 0) {
-//         return res.status(404).json({ msg: "لا يوجد نتائج بحث" });
-//       } else {
-//         // Format the dates
-//         const formattedResults = search.map(result => {
-//           if (result.date) {
-//             result.date = new Date(result.date).toLocaleString('en-US', { timeZone: 'Africa/Cairo' });
-//           }
-//           if (result.birthDay) {
-//             result.birthDay = new Date(result.birthDay).toLocaleString('en-US', { timeZone: 'Africa/Cairo' });
-//           }
-//           return result;
-//         });
-
-//         // Send the response
-//         return res.status(200).json({ totalPages, currentPage: page, data: formattedResults });
-//       }
-//     });
-//   });
-// });
-
 //filter students method
 const filterStudents = asyncHandler(async (req, res) => {
   const filters = req.query;
@@ -1422,19 +1259,6 @@ async function checkExHospExist(exHosp_id) {
     );
   });
 }
-
-// Function to check for existing transfers
-// async function checkExistingTransfer(medicEx_id) {
-//   return new Promise((resolve, reject) => {
-//     db.query("SELECT * FROM transfers WHERE medicEx_id = ?", [medicEx_id], (error, results) => {
-//       if (error) {
-//         reject(error);
-//       } else {
-//         resolve(results);
-//       }
-//     });
-//   });
-// }
 
 // Function to insert transfer records
 async function insertTransferRecord(

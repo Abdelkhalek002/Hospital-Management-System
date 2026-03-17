@@ -9,11 +9,11 @@ import ApiError from "./utils/apiError.js";
 import globalError from "./middlewares/errorMiddleware.js";
 
 // ROUTES
-import userReservationRoute from "./routes/UserReservationRoute.js";
-import adminReservationRoute from "./routes/AdminReservationRoute.js";
+import userReservationRoute from "./modules/reservations/reservation-user.routes.js";
+import adminReservationRoute from "./modules/reservations/reservation-admin.routes.js";
 import authRoute from "./modules/auth/auth.routes.js";
 import adminCrudRoute from "./routes/AdminCrudRoute.js";
-import userProfileRoute from "./routes/userProfileRoute.js";
+import userProfileRoute from "./modules/users/user.routes.js";
 
 // System data routes
 import levelsRoute from "./routes/systemDataRoutes/levelsRoute.js";
@@ -22,7 +22,7 @@ import clinicsRoute from "./routes/systemDataRoutes/clinicsRoute.js";
 import facultyRoute from "./routes/systemDataRoutes/facultyRoute.js";
 import hospRoute from "./routes/systemDataRoutes/hospRoute.js";
 
-import userSecRoute from "./routes/userSecRoute.js";
+import userSecRoute from "./modules/users/user-security.routes.js";
 
 // Start Express App
 const app = express();

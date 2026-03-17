@@ -1,8 +1,8 @@
 //IMPORTING DEPENDENCIES
 import asyncHandler from "express-async-handler";
-import db from "../config/db.js";
+import db from "../../config/db.js";
 import bcrypt from "bcrypt";
-import { StatusCode } from "../utils/statusCode.js";
+import { StatusCode } from "../../utils/statusCode.js";
 
 export const changeUserPassword = asyncHandler(async (req, res, next) => {
   const { currentPassword, newPassword } = req.body;

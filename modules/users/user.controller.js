@@ -1,16 +1,16 @@
 import asyncHandler from "express-async-handler";
-import db from "../config/db.js";
+import db from "../../config/db.js";
 import multer from "multer";
 import { v4 as uuidv4 } from "uuid";
 import sharp from "sharp";
 import path from "path";
 import fs from "fs";
-import { StatusCode } from "../utils/statusCode.js";
+import { StatusCode } from "../../utils/statusCode.js";
 
 //@desc user access profile data
 //@route    POST  /api/v1/myProfile/:id
 //@access   public
-const getStudentProfile = asyncHandler(async (req, res) => {
+export const getUserProfile = asyncHandler(async (req, res) => {
   const { student_id } = req.params;
   let sql =
     "SELECT students.*, levels.levelName AS level_name, faculties.facultyName AS faculty_name,governorates.govName AS gov_name , nationality.nationalityName AS nationality_name FROM students";
@@ -43,9 +43,9 @@ const multerFilter = function (req, file, cb) {
 };
 
 const upload = multer({ storage: multerStorage, fileFilter: multerFilter });
-const uploadUserImage = upload.single("userImage_file");
+export const uploadUserImage = upload.single("userImage_file");
 
-const resizeImage = asyncHandler(async (req, res, next) => {
+export const resizeImage = asyncHandler(async (req, res, next) => {
   const filename = `profile-${uuidv4()}-${Date.now()}.jpeg`;
 
   const directory = "uploads";
@@ -66,7 +66,7 @@ const resizeImage = asyncHandler(async (req, res, next) => {
 //@desc user update profile data
 //@route    POST  /api/v1/myProfile/:id
 //@access   public
-const updateUserProfile = asyncHandler(async (req, res) => {
+export const updateUserProfile = asyncHandler(async (req, res) => {
   const { student_id } = req.params;
   const { userName, phoneNumber, level_id, gov_id, national_id } = req.body;
 
@@ -131,7 +131,7 @@ const updateUserProfile = asyncHandler(async (req, res) => {
   });
 });
 
-const getProfilePhoto = asyncHandler(async (req, res) => {
+export const getProfilePhoto = asyncHandler(async (req, res) => {
   const { student_id } = req.params;
   const { userImage_file } = req.body;
   const query = "UPDATE students SET userImage_file=? WHERE student_id=?";
@@ -151,7 +151,7 @@ const getProfilePhoto = asyncHandler(async (req, res) => {
   });
 });
 
-const updateProfilePhoto = asyncHandler(async (req, res) => {
+export const updateProfilePhoto = asyncHandler(async (req, res) => {
   const { student_id } = req.params;
   const { userImage_file } = req.body;
   console.log(student_id);
@@ -172,12 +172,3 @@ const updateProfilePhoto = asyncHandler(async (req, res) => {
       .json({ message: "User profile photo updated successfully", result });
   });
 });
-
-export {
-  getStudentProfile,
-  updateProfilePhoto,
-  getProfilePhoto,
-  uploadUserImage,
-  resizeImage,
-  updateUserProfile,
-};
