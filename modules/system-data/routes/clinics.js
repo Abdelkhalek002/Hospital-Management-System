@@ -1,6 +1,6 @@
 import express from "express";
 import * as controller from "../controllers/clinics.js";
-import limiter from "../../../services/limitReqsMiddleware.js";
+import limiter from "../../../services/rate-limit.service.js";
 import {
   Protect,
   allowedTo,

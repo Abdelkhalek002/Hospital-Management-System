@@ -1,6 +1,6 @@
 import express from "express";
 import { changeUserPassword } from "./user-security.controller.js";
-import limiter from "../../services/limitReqsMiddleware.js";
+import limiter from "../../services/rate-limit.service.js";
 
 const router = express.Router();
 

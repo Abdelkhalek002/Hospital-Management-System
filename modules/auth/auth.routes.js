@@ -10,7 +10,7 @@ import {
 } from "./auth.controller.js";
 
 // Import middlewares
-import { activateEmail } from "../../services/avtivateUserMiddleware.js";
+import { activateEmail } from "../../services/activate-user-email.service.js";
 
 // Import validators
 import {
@@ -19,7 +19,7 @@ import {
   forgetPasswordValidator,
 } from "./auth.validator.js";
 import { sendOtp } from "../../services/otp.service.js";
-import limiter from "../../services/limitReqsMiddleware.js";
+import limiter from "../../services/rate-limit.service.js";
 import { confirmEmail } from "../../services/super-admin-email.service.js";
 import {
   Protect,
