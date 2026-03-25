@@ -1,11 +1,9 @@
 // IMPORTING DEPENDENCIES
 import asyncHandler from "express-async-handler";
-import bcrypt from "bcrypt";
-import db from "../../config/db.js";
 import jwt from "jsonwebtoken";
 
-import { sendActivationMail } from "./services/auth.service.js";
-import { sendConfirmationMail } from "./services/auth.service.js";
+import pool from "../../config/db.js";
+import * as authService from "./services/auth.service.js";
 import {
   isEmailExist,
   isNationalIdExist,
@@ -34,114 +32,27 @@ export const signup = asyncHandler(async (req, res) => {
     national_id_file,
     fees_file,
   } = req.body;
-  //1- Check if email already exists in the database:
-  db.query("SELECT * FROM students WHERE email = ?", [email], (err, result) => {
-    if (isEmailExist(err, result)) {
-      return res
-        .status(StatusCode.BAD_REQUEST)
-        .json({ error: "الايميل موجود بالفعل" });
-    } else {
-      //2- check if national id exists:
-      db.query(
-        "SELECT * FROM students WHERE national_id = ?",
-        [national_id],
-        (err, result) => {
-          if (isNationalIdExist(err, result)) {
-            return res
-              .status(StatusCode.BAD_REQUEST)
-              .json({ error: "الرقم القومي موجود بالفعل" });
-          } else {
-            //3- check if data ids entered correctly:
-            //* faculty id:
-            db.query(
-              "SELECT * FROM faculties WHERE faculty_id = ?",
-              [faculty_id],
-              (err, result) => {
-                if (isIDExist(err, result, faculty_id)) {
-                  return res
-                    .status(StatusCode.BAD_REQUEST)
-                    .json({ error: "faculty entered is not in system" });
-                } else {
-                  //* level id:
-                  db.query(
-                    "SELECT * FROM levels WHERE level_id = ?",
-                    [level_id],
-                    (err, result) => {
-                      if (isIDExist(err, result, level_id)) {
-                        return res
-                          .status(StatusCode.BAD_REQUEST)
-                          .json({ error: "level entered is not in system" });
-                      } else {
-                        //* nationality id:
-                        db.query(
-                          "SELECT * FROM nationality WHERE nationality_id = ?",
-                          [nationality_id],
-                          (err, result) => {
-                            if (isIDExist(err, result, nationality_id)) {
-                              return res.status(StatusCode.BAD_REQUEST).json({
-                                error: "nationality entered is not in system",
-                              });
-                            } else {
-                              //* gov id:
-                              db.query(
-                                "SELECT * FROM governorates WHERE gov_id = ?",
-                                [gov_id],
-                                (err, result) => {
-                                  if (isIDExist(err, result, gov_id)) {
-                                    return res
-                                      .status(StatusCode.BAD_REQUEST)
-                                      .json({
-                                        error:
-                                          "governorate entered is not in system",
-                                      });
-                                  }
-                                  //4- insert data into database:
-                                  //*hashing password:
-                                  const hashedPassword = bcrypt.hashSync(
-                                    password,
-                                    10,
-                                  );
-                                  db.query(
-                                    "INSERT INTO students (username, email, password, national_id, nationality_id, level_id, gov_id, faculty_id, gender, birth_date, phone_number, user_image_file, national_id_file, fees_file) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                                    [
-                                      username,
-                                      email,
-                                      hashedPassword,
-                                      national_id,
-                                      nationality_id,
-                                      level_id,
-                                      gov_id,
-                                      faculty_id,
-                                      gender,
-                                      birth_date,
-                                      phone_number,
-                                      user_image_file,
-                                      national_id_file,
-                                      fees_file,
-                                    ],
-                                  );
-                                  //*sending activation mail...
-                                  //sendActivationMail(email, username);
-                                  res.status(StatusCode.CREATED).json({
-                                    success: true,
-                                    message:
-                                      "تم عمل البريد الالكتروني بنجاح برجاء تفقد البريد الالكتروني للتفعيل ",
-                                  });
-                                },
-                              );
-                            }
-                          },
-                        );
-                      }
-                    },
-                  );
-                }
-              },
-            );
-          }
-        },
-      );
-    }
+  const studentData = {
+    username,
+    email,
+    password,
+    national_id,
+    nationality_id,
+    level_id,
+    gov_id,
+    faculty_id,
+    gender,
+    birth_date,
+    phone_number,
+    user_image_file,
+    national_id_file,
+    fees_file,
+  };
+  await authService.signup(studentData);
+  res.status(201).json({
+    status: "success",
+    message:
+      "تم عمل البريد الالكتروني بنجاح برجاء تفقد البريد الالكتروني للتفعيل",
   });
 });
 
@@ -154,7 +65,7 @@ export const login = asyncHandler(async (req, res) => {
     const sqlSuperAdmin =
       "SELECT email, name, password, superAdmin_id, confirmed FROM superadmin WHERE email = ? AND role ='hsh_2_sa_4'";
     const superAdminResult = await new Promise((resolve, reject) => {
-      db.query(sqlSuperAdmin, [email], (err, result) => {
+      pool.query(sqlSuperAdmin, [email], (err, result) => {
         if (err) reject(err);
         else resolve(result);
       });
@@ -182,7 +93,7 @@ export const login = asyncHandler(async (req, res) => {
         .json({ success: false, error: "كلمة المرور غير صحيحة" });
     }
     if (!confirmed) {
-      sendConfirmationMail(email, name);
+      authService.sendConfirmationMail(email, name);
       return res.status(StatusCode.UNAUTHORIZED).json({
         success: false,
         error:
@@ -202,7 +113,7 @@ export const login = asyncHandler(async (req, res) => {
     });
 
     setTimeout(() => {
-      db.query(
+      pool.query(
         "UPDATE superadmin SET status = 0, confirmed = 0 WHERE superAdmin_id = ?",
         [superAdmin_id],
         (updateErr, updateResult) => {
@@ -217,7 +128,7 @@ export const login = asyncHandler(async (req, res) => {
       );
     }, 3600000);
 
-    db.query(
+    pool.query(
       "UPDATE superadmin SET status=1 WHERE superAdmin_id = ?",
       [superAdmin_id],
       (updateErr, updateResult) => {
@@ -238,7 +149,7 @@ export const login = asyncHandler(async (req, res) => {
   if (email && email.includes("@admin.com")) {
     const sqlAdmin =
       "SELECT email, username, password, user_id, type, role FROM admins WHERE email = ?";
-    db.query(sqlAdmin, [email], async (err, result) => {
+    pool.query(sqlAdmin, [email], async (err, result) => {
       if (err) {
         return res.status(StatusCode.INTERNAL_SERVER_ERROR).send(err);
       }
@@ -280,7 +191,7 @@ export const login = asyncHandler(async (req, res) => {
         expiresIn: process.env.JWT_EXPIRE_TIME,
       });
 
-      db.query(
+      pool.query(
         "UPDATE admins SET status = 1 WHERE user_id = ?",
         [user_id],
         (updateErr, updateResult) => {
@@ -300,7 +211,7 @@ export const login = asyncHandler(async (req, res) => {
   if (email && email.includes("helwan.edu.eg")) {
     const sqlUser =
       "SELECT username, email, password, type, student_id, verified FROM students WHERE email = ?";
-    db.query(sqlUser, [email], async (err, result) => {
+    pool.query(sqlUser, [email], async (err, result) => {
       if (err) {
         return res.status(StatusCode.INTERNAL_SERVER_ERROR).send(err);
       }
@@ -362,7 +273,7 @@ export const login = asyncHandler(async (req, res) => {
       });
 
       // Update status to 1
-      db.query(
+      pool.query(
         "UPDATE students SET status = 1 WHERE student_id = ?",
         [student_id],
         (updateErr, updateResult) => {
@@ -388,7 +299,7 @@ export const forgetPassword = asyncHandler(async (req, res, next) => {
   const { email, OTP, newPassword } = req.body;
 
   const sql = "SELECT * FROM students WHERE email = ? AND OTP = ?";
-  db.query(sql, [email, OTP], async (err, result) => {
+  pool.query(sql, [email, OTP], async (err, result) => {
     if (err) {
       return res.status(StatusCode.INTERNAL_SERVER_ERROR).send(err);
     } else {
@@ -400,7 +311,7 @@ export const forgetPassword = asyncHandler(async (req, res, next) => {
         const { email } = result[0];
         const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-        db.query(
+        pool.query(
           "UPDATE students SET password = ?, OTP = NULL WHERE email = ?",
           [hashedPassword, email],
           (err, result) => {

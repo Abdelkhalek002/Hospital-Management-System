@@ -43,7 +43,7 @@ const multerFilter = function (req, file, cb) {
 };
 
 const upload = multer({ storage: multerStorage, fileFilter: multerFilter });
-export const uploadUserImage = upload.single("userImage_file");
+export const uploadUserImage = upload.single("user_image_file");
 
 export const resizeImage = asyncHandler(async (req, res, next) => {
   const filename = `profile-${uuidv4()}-${Date.now()}.jpeg`;
@@ -59,7 +59,7 @@ export const resizeImage = asyncHandler(async (req, res, next) => {
     .jpeg({ quality: 95 })
     .toFile(path.join(directory, filename));
 
-  req.body.userImage_file = filename;
+  req.body.user_image_file = filename;
   next();
 });
 
@@ -68,7 +68,7 @@ export const resizeImage = asyncHandler(async (req, res, next) => {
 //@access   public
 export const updateUserProfile = asyncHandler(async (req, res) => {
   const { student_id } = req.params;
-  const { userName, phoneNumber, level_id, gov_id, national_id } = req.body;
+  const { userName, phone_number, level_id, gov_id, national_id } = req.body;
 
   // First, check if the provided level_id and gov_id exist in their respective tables
   const levelCheckSql =
@@ -105,10 +105,10 @@ export const updateUserProfile = asyncHandler(async (req, res) => {
           //   } else {
           // If both level_id and gov_id are valid and national_id does not exist, proceed to update the user profile
           const sql =
-            "UPDATE students SET userName=?, phoneNumber=?, level_id=?, gov_id=?, national_id=? WHERE student_id=?";
+            "UPDATE students SET userName=?, phone_number=?, level_id=?, gov_id=?, national_id=? WHERE student_id=?";
           db.query(
             sql,
-            [userName, phoneNumber, level_id, gov_id, national_id, student_id],
+            [userName, phone_number, level_id, gov_id, national_id, student_id],
             (err, result) => {
               if (err) {
                 return res.status(StatusCode.BAD_REQUEST).json(err.message);
@@ -133,9 +133,9 @@ export const updateUserProfile = asyncHandler(async (req, res) => {
 
 export const getProfilePhoto = asyncHandler(async (req, res) => {
   const { student_id } = req.params;
-  const { userImage_file } = req.body;
-  const query = "UPDATE students SET userImage_file=? WHERE student_id=?";
-  db.query(query, [userImage_file, student_id], (err, result) => {
+  const { user_image_file } = req.body;
+  const query = "UPDATE students SET user_image_file=? WHERE student_id=?";
+  db.query(query, [user_image_file, student_id], (err, result) => {
     if (err) {
       console.error("Error updating user profile photo:", err);
       return res
@@ -153,11 +153,11 @@ export const getProfilePhoto = asyncHandler(async (req, res) => {
 
 export const updateProfilePhoto = asyncHandler(async (req, res) => {
   const { student_id } = req.params;
-  const { userImage_file } = req.body;
+  const { user_image_file } = req.body;
   console.log(student_id);
-  console.log(userImage_file);
-  const query = "UPDATE students SET userImage_file=? WHERE student_id=?";
-  db.query(query, [userImage_file, student_id], (err, result) => {
+  console.log(user_image_file);
+  const query = "UPDATE students SET user_image_file=? WHERE student_id=?";
+  db.query(query, [user_image_file, student_id], (err, result) => {
     if (err) {
       console.error("Error updating user profile photo:", err);
       return res

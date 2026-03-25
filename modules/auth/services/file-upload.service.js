@@ -24,7 +24,7 @@ const upload = multer({
 
 // Middleware to handle image and national ID upload
 export const uploadRegisterationFiles = upload.fields([
-  { name: "userImage_file", maxCount: 1 },
+  { name: "user_image_file", maxCount: 1 },
   { name: "national_id_file", maxCount: 1 },
   { name: "fees_file", maxCount: 1 },
 ]);
@@ -33,23 +33,23 @@ export const uploadRegisterationFiles = upload.fields([
 export const resizeFiles = async (req, res, next) => {
   try {
     // Resize and save profile image
-    if (req.files["userImage_file"] && req.files["userImage_file"][0]) {
-      const userImage_file = req.files["userImage_file"][0];
+    if (req.files["user_image_file"] && req.files["user_image_file"][0]) {
+      const user_image_file = req.files["user_image_file"][0];
       const userImage_name = `Document-${uuidv4()}-${Date.now()}.jpeg`;
-      const sanitizeduserImage_Filename = sanitizeFilename(userImage_name);
+      const sanitizeduser_image_filename = sanitizeFilename(userImage_name);
       const userImage_Directory = "uploads";
 
       if (!fs.existsSync(userImage_Directory)) {
         fs.mkdirSync(userImage_Directory, { recursive: true });
       }
 
-      await sharp(userImage_file.buffer)
+      await sharp(user_image_file.buffer)
         .resize(500, 500)
         .toFormat("jpeg")
         .jpeg({ quality: 95 })
-        .toFile(path.join(userImage_Directory, sanitizeduserImage_Filename));
+        .toFile(path.join(userImage_Directory, sanitizeduser_image_filename));
 
-      req.body.userImage_file = sanitizeduserImage_Filename;
+      req.body.user_image_file = sanitizeduser_image_filename;
     }
     // Save national ID
     if (req.files["national_id_file"] && req.files["national_id_file"][0]) {

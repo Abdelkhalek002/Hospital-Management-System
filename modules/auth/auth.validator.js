@@ -42,7 +42,7 @@ export const isIDExist = (err, results) => {
 };
 
 export const signupValidator = [
-  check("userName")
+  check("username")
     .notEmpty()
     .withMessage("user name required")
     .isLength({ min: 3 }),
@@ -76,12 +76,12 @@ export const signupValidator = [
     .withMessage("gender required")
     .custom(customValidators.isArabic)
     .isIn("ذكر", "أنثي"),
-  check("birthDay").isDate(),
-  check("phoneNumber")
+  check("birth_date").isDate(),
+  check("phone_number")
     .notEmpty()
     .withMessage("phone number required")
     .isMobilePhone("ar-EG"),
-  check("userImage_file")
+  check("user_image_file")
     .notEmpty()
     .withMessage("user profile photo is required"),
   check("national_id_file")

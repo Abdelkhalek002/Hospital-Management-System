@@ -1135,8 +1135,8 @@ export const advancedSearch = asyncHandler(async (req, res) => {
               timeZone: "Africa/Cairo",
             });
           }
-          if (result.birthDay) {
-            result.birthDay = new Date(result.birthDay).toLocaleString(
+          if (result.birth_date) {
+            result.birth_date = new Date(result.birth_date).toLocaleString(
               "en-US",
               { timeZone: "Africa/Cairo" },
             );
@@ -1422,7 +1422,7 @@ export const getTransfered = asyncHandler(async (req, res) => {
         students.level_id LIKE ? OR 
         students.gov_id LIKE ? OR 
         students.faculty_id LIKE ? OR 
-        students.phoneNumber LIKE ? OR
+        students.phone_number LIKE ? OR
         clinics.clinicName LIKE ? OR
         levels.levelName LIKE ? OR
         transfers.transferReason LIKE ? OR
@@ -1437,7 +1437,7 @@ export const getTransfered = asyncHandler(async (req, res) => {
       clinics.clinicName AS clinic_name, 
       levels.levelName AS level_name,
       students.userName AS student_name,
-      students.userImage_file,
+      students.user_image_file,
       students.national_id_file AS national_id_img,
       students.fees_file AS fees_file,
       students.email AS student_email,
@@ -1463,7 +1463,7 @@ export const getTransfered = asyncHandler(async (req, res) => {
         students.level_id LIKE ? OR 
         students.gov_id LIKE ? OR 
         students.faculty_id LIKE ? OR 
-        students.phoneNumber LIKE ? OR
+        students.phone_number LIKE ? OR
         clinics.clinicName LIKE ? OR
         levels.levelName LIKE ? OR
         transfers.transferReason LIKE ? OR
@@ -1644,7 +1644,7 @@ export const studentSearch = asyncHandler(async (req, res) => {
       OR level_id LIKE ? 
       OR gov_id LIKE ? 
       OR faculty_id LIKE ? 
-      OR phoneNumber LIKE ?
+      OR phone_number LIKE ?
 `;
   db.query(
     sql,

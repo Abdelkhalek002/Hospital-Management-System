@@ -3,8 +3,8 @@ import { check } from "express-validator";
 import validatorMiddleware from "../../middlewares/validator.middleware.js";
 
 export const updateUserProfileValidator = [
-  check("userImage_file").optional(),
-  check("phoneNumber")
+  check("user_image_file").optional(),
+  check("phone_number")
     .optional()
     .isNumeric()
     .withMessage("phone number should contain numerical values")
