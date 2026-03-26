@@ -1,58 +1,22 @@
 // IMPORTING DEPENDENCIES
-import { check } from "express-validator";
+import { body } from "express-validator";
+import handleValidationErrors from "../../middlewares/validator.middleware.js";
+import * as customValidators from "../../utils/custom-validators.js";
 
-import validatorMiddleware from "../../middlewares/validator.middleware.js";
-import customValidators from "../../utils/custom-validators.js";
-
-// SIGNUP VALIDATORS
-//@desc check if email exists:
-export const isEmailExist = (error, results) => {
-  if (error) {
-    console.error("Error checking email existence:", error);
-  } else if (results.length > 0) {
-    // Email already exists, return error response
-    console.error("Email already exists");
-    return true;
-  }
-  return false;
-};
-
-//@desc check if national id exists:
-export const isNationalIdExist = (error, results) => {
-  if (error) {
-    console.error("Error checking national id existence:", error);
-  } else if (results.length > 0) {
-    //*national id already exists, return error response
-    console.error("national id already exists");
-    return true;
-  }
-  return false;
-};
-
-//@desc check if data ids entered correctly:
-export const isIDExist = (err, results) => {
-  if (err) {
-    // If there's an error, return false
-    console.error(`Error checking id existence:`, err);
-  } else if (results.length === 0) {
-    // If the ID doesn't exist in the results, return true
-    return true;
-  }
-  return false;
-};
-
-export const signupValidator = [
-  check("username")
+export const validateSignup = [
+  body("username")
     .notEmpty()
     .withMessage("user name required")
-    .isLength({ min: 3 }),
-  check("email")
+    .bail()
+    .isLength({ min: 3 })
+    .withMessage("Username must be at least 3 characters"),
+  body("email")
     .notEmpty()
     .withMessage("email required")
     .isEmail()
     .custom(customValidators.isUniEmail)
     .withMessage("email should end with .helwan.edu.eg"),
-  check("password")
+  body("password")
     .notEmpty()
     .withMessage("password required")
     .isLength({ min: 8 })
@@ -62,66 +26,67 @@ export const signupValidator = [
     .withMessage(
       "Password should start with an uppercase letter and contain 8 to 40 characters with lowercase letters, numbers, or symbols #, @.",
     ),
-  check("national_id")
+  body("national_id")
     .notEmpty()
     .withMessage("national id required")
     .isLength({ min: 14, max: 14 })
     .withMessage("national id should contain exactly 14 characters"),
-  check("nationality_id").notEmpty().isNumeric(),
-  check("level_id").notEmpty().isNumeric(),
-  check("gov_id").notEmpty().isNumeric(),
-  check("faculty_id").notEmpty().isNumeric(),
-  check("gender")
+  body("nationality_id").notEmpty().isNumeric(),
+  body("level_id").notEmpty().isNumeric(),
+  body("gov_id").notEmpty().isNumeric(),
+  body("faculty_id").notEmpty().isNumeric(),
+  body("gender")
     .notEmpty()
     .withMessage("gender required")
     .custom(customValidators.isArabic)
+    .withMessage(`Gender format is not in Arabic!`)
     .isIn("ذكر", "أنثي"),
-  check("birth_date").isDate(),
-  check("phone_number")
+  body("birth_date").isDate(),
+  body("phone_number")
     .notEmpty()
     .withMessage("phone number required")
     .isMobilePhone("ar-EG"),
-  check("user_image_file")
+
+  body("user_image_file")
     .notEmpty()
     .withMessage("user profile photo is required"),
-  check("national_id_file")
+  body("national_id_file")
     .notEmpty()
     .withMessage("national id file is required"),
-  check("fees_file").notEmpty().withMessage("fees file is required"),
-  validatorMiddleware,
+  body("fees_file").notEmpty().withMessage("fees file is required"),
+
+  handleValidationErrors,
 ];
 
 // LOGIN VALIDATOR
-export const loginValidator = [
-  check("email")
+export const validateLogin = [
+  body("email")
     .notEmpty()
     .withMessage("email is required")
     .bail()
     .isEmail()
-    .withMessage("invalid email"),
-  check("password")
-    .notEmpty()
-    .withMessage("password is required")
-    .bail()
-    .isLength({ min: 8 }),
-  validatorMiddleware,
+    .withMessage("invalid email")
+    .custom(customValidators.isUniEmail)
+    .withMessage("Invalid Helwan University Email"),
+  body("password").notEmpty().withMessage("password is required").bail(),
+  handleValidationErrors,
 ];
 
 // SEND OTP VALIDATOR
 export const forgetPasswordValidator = [
-  check("email")
+  body("email")
     .notEmpty()
     .withMessage("email is required")
     .bail()
     .isEmail()
     .withMessage("invalid email"),
-  check("OTP")
+  body("OTP")
     .notEmpty()
     .withMessage("OTP is required")
     .bail()
     .isLength({ min: 6 })
     .withMessage("OTP should be 6 characters"),
-  check("newPassword")
+  body("newPassword")
     .notEmpty()
     .withMessage("password is required")
     .bail()
@@ -129,12 +94,12 @@ export const forgetPasswordValidator = [
     .withMessage(
       "Password should start with an uppercase letter and contain 8 to 40 characters with lowercase letters, numbers, or symbols #, @.",
     ),
-  validatorMiddleware,
+  handleValidationErrors,
 ];
 
 // FORGOT PASSWORD VALIDATOR
 export const sendOtpValidator = [
-  check("email")
+  body("email")
     .notEmpty()
     .withMessage("email is required")
     .bail()
@@ -142,5 +107,5 @@ export const sendOtpValidator = [
     .withMessage("invalid email")
     .custom(customValidators.isUniEmail)
     .withMessage("email should end with helwan.edu.eg"),
-  validatorMiddleware,
+  handleValidationErrors,
 ];

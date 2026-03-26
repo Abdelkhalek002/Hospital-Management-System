@@ -1,65 +1,65 @@
 // IMPORTING DEPENDENCIES
-import { check } from "express-validator";
-import validatorMiddleware from "../../middlewares/validator.middleware.js";
-import customValidators from "../../utils/custom-validators.js"; // Ensure you have this module and it is correctly path
+import { body } from "express-validator";
+import handleValidationErrors from "../../middlewares/validator.middleware.js";
+import * as customValidators from "../../utils/custom-validators.js";
 
 export const addNewAdminValidator = [
-  check("userName").notEmpty().withMessage("userName is required"),
-  check("email")
+  body("userName").notEmpty().withMessage("userName is required"),
+  body("email")
     .notEmpty()
     .withMessage("email is required")
     .isEmail()
     .withMessage("email is not valid"),
-  check("password")
+  body("password")
     .notEmpty()
     .withMessage("password is required")
     .isLength({ min: 6 })
     .withMessage("password must be at least 6 characters long"),
-  check("role").notEmpty().withMessage("role is required"),
-  validatorMiddleware,
+  body("role").notEmpty().withMessage("role is required"),
+  handleValidationErrors,
 ];
 
 export const addSuperAdminValidator = [
-  check("name").notEmpty().withMessage("Name is required"),
-  check("email")
+  body("name").notEmpty().withMessage("Name is required"),
+  body("email")
     .notEmpty()
     .withMessage("email is required")
     .isEmail()
     .withMessage("email is not valid"),
-  check("password")
+  body("password")
     .notEmpty()
     .withMessage("password is required")
     .isLength({ min: 6 })
     .withMessage("password must be at least 6 characters long"),
-  check("role").notEmpty().withMessage("role is required"),
-  validatorMiddleware,
+  body("role").notEmpty().withMessage("role is required"),
+  handleValidationErrors,
 ];
 
 export const updateAdminValidator = [
-  check("userName").notEmpty().withMessage("userName is required"),
-  check("email")
+  body("userName").notEmpty().withMessage("userName is required"),
+  body("email")
     .notEmpty()
     .withMessage("email is required")
     .isEmail()
     .withMessage("email is not valid"),
-  check("role").notEmpty().withMessage("role is required"),
-  validatorMiddleware,
+  body("role").notEmpty().withMessage("role is required"),
+  handleValidationErrors,
 ];
 
 export const resetPasswordValidator = [
-  check("password")
+  body("password")
     .notEmpty()
     .withMessage("password is required")
     .isLength({ min: 6 })
     .withMessage("password must be at least 6 characters long"),
-  validatorMiddleware,
+  handleValidationErrors,
 ];
 
 export const sendObservationValidator = [
-  check("observation")
+  body("observation")
     .notEmpty()
     .withMessage("Observation is required")
     .isLength({ min: 4 })
     .withMessage("observation must be at least 6 characters long"),
-  validatorMiddleware,
+  handleValidationErrors,
 ];

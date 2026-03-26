@@ -1,6 +1,6 @@
 // IMPORTING DEPENDENCIES
 import { check } from "express-validator";
-import validatorMiddleware from "../../middlewares/validator.middleware.js";
+import handleValidationErrors from "../../middlewares/validator.middleware.js";
 
 export const updateUserProfileValidator = [
   check("user_image_file").optional(),
@@ -16,5 +16,5 @@ export const updateUserProfileValidator = [
     .withMessage("National ID should contain numerical values")
     .isLength({ min: 14, max: 14 })
     .withMessage("National ID must be exactly 14 characters"),
-  validatorMiddleware,
+  handleValidationErrors,
 ];

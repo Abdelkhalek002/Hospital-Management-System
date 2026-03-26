@@ -1,7 +1,7 @@
 // IMPORTING DEPENDENCIES
 import { check } from "express-validator";
-import validatorMiddleware from "../../middlewares/validator.middleware.js";
-import customValidators from "../../utils/custom-validators.js";
+import handleValidationErrors from "../../middlewares/validator.middleware.js";
+import * as customValidators from "../../utils/custom-validators.js";
 
 // CLINICS VALIDATOR
 export const clinicValidator = [
@@ -10,7 +10,7 @@ export const clinicValidator = [
     .withMessage("Clinic is Required")
     .custom(customValidators.isArabic)
     .withMessage("Clinic must be in arabic format"),
-  validatorMiddleware,
+  handleValidationErrors,
 ];
 
 // EXTERNAL HOSPITALS VALIDATOR
@@ -20,7 +20,7 @@ export const hospitalValidator = [
     .withMessage("Hospital is Required")
     .custom(customValidators.isArabic)
     .withMessage("Hospital must be in arabic format"),
-  validatorMiddleware,
+  handleValidationErrors,
 ];
 
 // FACULTY VALIDATOR
@@ -30,7 +30,7 @@ export const facultyValidator = [
     .withMessage("The Name of Faculty is Required")
     .custom(customValidators.isArabic)
     .withMessage("The Name of Faculty must be in arabic format"),
-  validatorMiddleware,
+  handleValidationErrors,
 ];
 
 // LEVELS VALIDATOR
@@ -40,5 +40,5 @@ export const levelsValidator = [
     .withMessage("level is required")
     .custom(customValidators.isArabic)
     .withMessage("level must be in arabic format"),
-  validatorMiddleware,
+  handleValidationErrors,
 ];

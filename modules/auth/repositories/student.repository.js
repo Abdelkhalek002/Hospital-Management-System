@@ -6,6 +6,11 @@ class StudentRepo {
     const result = await queryOne(sql, [value]);
     return !!result;
   }
+  async verfied(email) {
+    const sql = `SELECT verified FROM students WHERE email = ?`;
+    const result = await queryOne(sql, [email]);
+    return !!result;
+  }
   async create(studentData) {
     const sql = `
       INSERT INTO students 

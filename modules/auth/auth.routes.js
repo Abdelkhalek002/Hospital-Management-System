@@ -2,20 +2,12 @@ import express from "express";
 const router = express.Router();
 
 import * as authController from "./auth.controller.js";
-
-// Import services
+import * as validator from "./auth.validator.js";
 import { activateEmail } from "./services/activate-user-email.service.js";
 import {
   uploadRegisterationFiles,
   resizeFiles,
 } from "./services/file-upload.service.js";
-
-// Import validators
-import {
-  signupValidator,
-  sendOtpValidator,
-  forgetPasswordValidator,
-} from "./auth.validator.js";
 import { sendOtp } from "./services/otp.service.js";
 import limiter from "../../services/rate-limit.service.js";
 import { confirmEmail } from "./services/super-admin-email.service.js";
@@ -31,16 +23,16 @@ router
   .post(
     uploadRegisterationFiles,
     resizeFiles,
-    signupValidator,
+    validator.validateSignup,
     authController.signup,
   );
 router.get("/activate", activateEmail);
 
 router
-  .post("/sendOtp", sendOtpValidator, limiter, sendOtp)
+  .post("/sendOtp", validator.sendOtpValidator, limiter, sendOtp)
   .post(
     "/forgetPassword",
-    forgetPasswordValidator,
+    validator.forgetPasswordValidator,
     authController.forgetPassword,
   )
   .post("/login", authController.login);

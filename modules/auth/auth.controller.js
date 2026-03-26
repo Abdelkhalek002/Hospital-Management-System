@@ -4,50 +4,36 @@ import jwt from "jsonwebtoken";
 
 import pool from "../../config/db.js";
 import * as authService from "./services/auth.service.js";
-import {
-  isEmailExist,
-  isNationalIdExist,
-  isIDExist,
-} from "./auth.validator.js";
 import { roles } from "../../utils/roles.js";
 import { StatusCode } from "../../utils/status-codes.js";
 import dotenv from "dotenv";
 dotenv.config();
 
 //----------------------------------SIGNUP---------------------------------------
+const allowedFields = [
+  "username",
+  "email",
+  "password",
+  "national_id",
+  "nationality_id",
+  "level_id",
+  "gov_id",
+  "faculty_id",
+  "gender",
+  "birth_date",
+  "phone_number",
+  "user_image_file",
+  "national_id_file",
+  "fees_file",
+];
+const pick = (obj, fields) =>
+  fields.reduce((acc, field) => {
+    if (obj[field] !== undefined) acc[field] = obj[field];
+    return acc;
+  }, {});
+
 export const signup = asyncHandler(async (req, res) => {
-  const {
-    username,
-    email,
-    password,
-    national_id,
-    nationality_id,
-    level_id,
-    gov_id,
-    faculty_id,
-    gender,
-    birth_date,
-    phone_number,
-    user_image_file,
-    national_id_file,
-    fees_file,
-  } = req.body;
-  const studentData = {
-    username,
-    email,
-    password,
-    national_id,
-    nationality_id,
-    level_id,
-    gov_id,
-    faculty_id,
-    gender,
-    birth_date,
-    phone_number,
-    user_image_file,
-    national_id_file,
-    fees_file,
-  };
+  const studentData = pick(req.body, allowedFields);
   await authService.signup(studentData);
   res.status(201).json({
     status: "success",

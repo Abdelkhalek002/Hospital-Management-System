@@ -1,7 +1,7 @@
 // IMPORTING DEPENDENCIES
-import { check } from "express-validator";
-import validatorMiddleware from "../../middlewares/validator.middleware.js";
-import customValidators from "../../utils/custom-validators.js";
+import { body } from "express-validator";
+import handleValidationErrors from "../../middlewares/validator.middleware.js";
+import * as customValidators from "../../utils/custom-validators.js";
 
 //@desc   limit reservations to 50 requests per day
 export const isLimitReached = (err, result) => {
@@ -14,27 +14,27 @@ export const isLimitReached = (err, result) => {
 };
 
 export const createRequestValidator = [
-  check("clinic_id").notEmpty().isNumeric(),
-  check("date")
+  body("clinic_id").notEmpty().isNumeric(),
+  body("date")
     .notEmpty()
     .withMessage("request date is required")
     .custom(customValidators.isValidDate),
-  validatorMiddleware,
+  handleValidationErrors,
 ];
 export const updateRequestValidator = [
-  check("clinic_id").notEmpty().isNumeric(),
-  check("date")
+  body("clinic_id").notEmpty().isNumeric(),
+  body("date")
     .notEmpty()
     .withMessage("date for new reservation is required")
     .custom(customValidators.isValidDate),
-  check("examType")
+  body("examType")
     .custom(customValidators.isArabic)
     .isIn(["كشف جديد", "متابعة"])
     .withMessage("error happened in taking exam type data")
     .optional(),
-  validatorMiddleware,
+  handleValidationErrors,
 ];
 export const deleteRequestValidator = [
-  check("id").isInt().withMessage("invalid student id !"),
-  validatorMiddleware,
+  body("id").isInt().withMessage("invalid student id !"),
+  handleValidationErrors,
 ];
