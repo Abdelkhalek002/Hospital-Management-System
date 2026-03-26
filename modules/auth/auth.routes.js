@@ -9,7 +9,7 @@ import {
   resizeFiles,
 } from "./services/file-upload.service.js";
 import { sendOtp } from "./services/otp.service.js";
-import limiter from "../../services/rate-limit.service.js";
+import limiter from "../../shared/services/rate-limit.service.js";
 import { confirmEmail } from "./services/super-admin-email.service.js";
 import {
   Protect,
@@ -35,7 +35,7 @@ router
     validator.forgetPasswordValidator,
     authController.forgetPassword,
   )
-  .post("/login", authController.login);
+  .post("/login", validator.validateLogin, authController.login);
 router.get("/confirmEmail", confirmEmail);
 
 export default router;

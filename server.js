@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
 import dbPool from "./config/db.js";
-import { deActivateUser } from "./services/scheduler.service.js";
+import { deActivateUser } from "./shared/services/scheduler.service.js";
 
 dotenv.config();
 const { default: app } = await import("./app.js"); // es modules are hoisted (did this to solve .env load before app.js)

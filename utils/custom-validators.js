@@ -1,5 +1,5 @@
 // Importing dependencies
-import StudentRepo from "../modules/auth/repositories/student.repository.js";
+import StudentRepo from "../shared/repositories/student.repository.js";
 import ApiError from "./api-error.js";
 import { StatusCode } from "./status-codes.js";
 

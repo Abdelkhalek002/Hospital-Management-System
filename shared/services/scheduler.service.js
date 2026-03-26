@@ -1,5 +1,5 @@
 import { CronJob } from "cron";
-import db from "../config/db.js";
+import db from "../../config/db.js";
 
 export const deActivateUser = () => {
   new CronJob(

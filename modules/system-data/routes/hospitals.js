@@ -1,7 +1,7 @@
 import express from "express";
 import * as controller from "../controllers/hospitals.js";
 import { hospitalValidator } from "../validator.js";
-import limiter from "../../../services/rate-limit.service.js";
+import limiter from "../../../shared/services/rate-limit.service.js";
 import { Protect, allowedTo } from "../../../middlewares/auth.middleware.js";
 
 const router = express.Router();

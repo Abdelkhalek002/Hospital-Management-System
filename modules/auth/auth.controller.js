@@ -34,11 +34,17 @@ const pick = (obj, fields) =>
 
 export const signup = asyncHandler(async (req, res) => {
   const studentData = pick(req.body, allowedFields);
-  await authService.signup(studentData);
-  res.status(201).json({
+  const data = await authService.signup(studentData);
+  res.cookie("jwt", data.token, {
+    maxAge: Number(process.env.JWT_COOKIE_EXPIRES_IN) * 24 * 60 * 60 * 1000,
+    httpOnly: true,
+    secure: req.secure || req.headers["x-forwarded-proto"] === "https",
+  });
+  res.status(StatusCode.OK).json({
     status: "success",
     message:
       "تم عمل البريد الالكتروني بنجاح برجاء تفقد البريد الالكتروني للتفعيل",
+    token: data.token,
   });
 });
 
@@ -134,7 +140,7 @@ export const login = asyncHandler(async (req, res) => {
   //2- admin login
   if (email && email.includes("@admin.com")) {
     const sqlAdmin =
-      "SELECT email, username, password, user_id, type, role FROM admins WHERE email = ?";
+      "SELECT email, username, password, user_id, role FROM admins WHERE email = ?";
     pool.query(sqlAdmin, [email], async (err, result) => {
       if (err) {
         return res.status(StatusCode.INTERNAL_SERVER_ERROR).send(err);
@@ -151,7 +157,6 @@ export const login = asyncHandler(async (req, res) => {
         password: hashedPassword,
         user_id,
         username,
-        type,
         role,
       } = result[0];
 
@@ -169,7 +174,6 @@ export const login = asyncHandler(async (req, res) => {
         userId: user_id,
         email: adminEmail,
         name: username,
-        type,
         role,
       };
 
@@ -194,85 +198,13 @@ export const login = asyncHandler(async (req, res) => {
   }
 
   //3- User login
-  if (email && email.includes("helwan.edu.eg")) {
-    const sqlUser =
-      "SELECT username, email, password, type, student_id, verified FROM students WHERE email = ?";
-    pool.query(sqlUser, [email], async (err, result) => {
-      if (err) {
-        return res.status(StatusCode.INTERNAL_SERVER_ERROR).send(err);
-      }
-      if (result.length === 0) {
-        return res
-          .status(StatusCode.NOT_FOUND)
-          .json({ message: "المستخدم غير موجود" });
-      }
-
-      const {
-        email: userEmail,
-        password: hashedPassword,
-        student_id,
-        verified,
-        username,
-        type,
-      } = result[0];
-
-      const passwordMatch = await bcrypt.compare(
-        password.trim(),
-        hashedPassword.trim(),
-      );
-      if (!passwordMatch) {
-        return res
-          .status(StatusCode.UNAUTHORIZED)
-          .json({ success: false, error: "كلمة المرور غير صحيحة" });
-      }
-
-      if (!verified) {
-        return res.status(StatusCode.UNAUTHORIZED).json({
-          success: false,
-          error: "الاكونت غير مفعل رجاء تفقد البريد الالكتروني لتفعيل الاكونت",
-        });
-      }
-
-      if (blocked) {
-        return res.status(StatusCode.UNAUTHORIZED).json({
-          success: false,
-          error: "الاكونت محظور تواصل مع الادمن",
-        });
-      }
-
-      const currentDate = new Date();
-      const nextYear = new Date(currentDate.getFullYear() + 1, 0, 1); // January 1st of next year
-      const expiresInMilliseconds = nextYear - currentDate;
-      const expiresInDays = Math.ceil(
-        expiresInMilliseconds / (24 * 60 * 60 * 1000),
-      );
-
-      const payLoad = {
-        userId: student_id,
-        email: userEmail,
-        name: username,
-        type,
-      };
-
-      const token = jwt.sign(payLoad, process.env.JWT_SECRET, {
-        expiresIn: expiresInDays + "d",
-      });
-
-      // Update status to 1
-      pool.query(
-        "UPDATE students SET status = 1 WHERE student_id = ?",
-        [student_id],
-        (updateErr, updateResult) => {
-          if (updateErr) {
-            return res.status(StatusCode.INTERNAL_SERVER_ERROR).send(updateErr);
-          }
-          return res
-            .status(StatusCode.OK)
-            .json({ success: true, token, payLoad });
-        },
-      );
-    });
-    return;
+  if (email && email.endsWith("@fci.helwan.edu.eg")) {
+    const loggedIn = await authService.userLogin(email, password);
+    if (!loggedIn?.token)
+      throw new ApiError("Login failed", StatusCode.UNAUTHORIZED);
+    return res
+      .status(StatusCode.OK)
+      .json({ success: true, token: loggedIn.token });
   }
 
   return res

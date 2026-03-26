@@ -1,6 +1,6 @@
 import express from "express";
 import * as controller from "../controllers/governorates.js";
-import limiter from "../../../services/rate-limit.service.js";
+import limiter from "../../../shared/services/rate-limit.service.js";
 import {
   Protect,
   allowedToUser,

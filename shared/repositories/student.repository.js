@@ -1,11 +1,6 @@
-import { query, queryOne, transaction } from "../../../config/db-helpers.js";
+import { query, queryOne, transaction } from "../../config/db-helpers.js";
 
 class StudentRepo {
-  async existsByField(table, field, value) {
-    const sql = `SELECT 1 FROM ${table} WHERE ${field} = ? LIMIT 1`;
-    const result = await queryOne(sql, [value]);
-    return !!result;
-  }
   async verfied(email) {
     const sql = `SELECT verified FROM students WHERE email = ?`;
     const result = await queryOne(sql, [email]);
@@ -53,6 +48,11 @@ class StudentRepo {
     const result = await query(sql, params);
 
     return result;
+  }
+  async toggleStatus(id) {
+    const sql = `UPDATE students SET is_active = 1 WHERE student_id = ?`;
+    const result = await queryOne(sql, [id]);
+    return !!result;
   }
 }
 
