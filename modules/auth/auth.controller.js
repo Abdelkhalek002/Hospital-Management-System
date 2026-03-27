@@ -50,166 +50,37 @@ export const signup = asyncHandler(async (req, res) => {
 
 //--------------------------------------LOGIN------------------------------------
 export const login = asyncHandler(async (req, res) => {
-  const { password, username, email } = req.body;
+  const { email, password } = req.body;
 
-  //1- SuperAdmin login
-  if (email && email.includes("@hsh.io")) {
-    const sqlSuperAdmin =
-      "SELECT email, name, password, superAdmin_id, confirmed FROM superadmin WHERE email = ? AND role ='hsh_2_sa_4'";
-    const superAdminResult = await new Promise((resolve, reject) => {
-      pool.query(sqlSuperAdmin, [email], (err, result) => {
-        if (err) reject(err);
-        else resolve(result);
-      });
+  if (!email || !password) {
+    return res.status(StatusCode.BAD_REQUEST).json({
+      success: false,
+      error: "برجاء كتابة الايميل وكلمة المرور",
     });
-    if (superAdminResult.length === 0) {
-      return res.status(StatusCode.NOT_FOUND).json({ message: "غير موجود" });
-    }
-
-    const {
-      email: superAdminEmail,
-      password: hashedPassword,
-      superAdmin_id,
-      name,
-      confirmed,
-      role,
-    } = superAdminResult[0];
-
-    const passwordMatch = await bcrypt.compare(
-      password.trim(),
-      hashedPassword.trim(),
-    );
-    if (!passwordMatch) {
-      return res
-        .status(StatusCode.UNAUTHORIZED)
-        .json({ success: false, error: "كلمة المرور غير صحيحة" });
-    }
-    if (!confirmed) {
-      authService.sendConfirmationMail(email, name);
-      return res.status(StatusCode.UNAUTHORIZED).json({
-        success: false,
-        error:
-          "الايميل غير مفعل. تم ارسال رسالة تفعيل الى البريد الالكتروني الخاص بك",
-      });
-    }
-
-    const payLoad = {
-      userId: superAdmin_id,
-      email: superAdminEmail,
-      name,
-      role: `${roles.SUPER_ADMIN}`,
-      confirmed: confirmed,
-    };
-    const token = jwt.sign(payLoad, process.env.JWT_SECRET, {
-      expiresIn: process.env.JWT_EXPIRE_TIME,
-    });
-
-    setTimeout(() => {
-      pool.query(
-        "UPDATE superadmin SET status = 0, confirmed = 0 WHERE superAdmin_id = ?",
-        [superAdmin_id],
-        (updateErr, updateResult) => {
-          if (updateErr) {
-            console.error("Error updating status and confirmed:", updateErr);
-          } else {
-            console.log(
-              "Status and confirmed updated to 0 for super admin after 1 hour",
-            );
-          }
-        },
-      );
-    }, 3600000);
-
-    pool.query(
-      "UPDATE superadmin SET status=1 WHERE superAdmin_id = ?",
-      [superAdmin_id],
-      (updateErr, updateResult) => {
-        if (updateErr) {
-          return res.status(StatusCode.INTERNAL_SERVER_ERROR).send(updateErr);
-        } else {
-          console.log("Super Admin Logged in successfully");
-          return res
-            .status(StatusCode.OK)
-            .json({ success: true, token, payLoad });
-        }
-      },
-    );
-    return;
   }
 
-  //2- admin login
-  if (email && email.includes("@admin.com")) {
-    const sqlAdmin =
-      "SELECT email, username, password, user_id, role FROM admins WHERE email = ?";
-    pool.query(sqlAdmin, [email], async (err, result) => {
-      if (err) {
-        return res.status(StatusCode.INTERNAL_SERVER_ERROR).send(err);
-      }
+  let loginFn;
 
-      if (result.length === 0) {
-        return res
-          .status(StatusCode.NOT_FOUND)
-          .json({ message: "الادمن غير موجود" });
-      }
-
-      const {
-        email: adminEmail,
-        password: hashedPassword,
-        user_id,
-        username,
-        role,
-      } = result[0];
-
-      const passwordMatch = await bcrypt.compare(
-        password.trim(),
-        hashedPassword.trim(),
-      );
-      if (!passwordMatch) {
-        return res
-          .status(StatusCode.UNAUTHORIZED)
-          .json({ success: false, error: "كلمة المرور غير صحيحة" });
-      }
-
-      const payLoad = {
-        userId: user_id,
-        email: adminEmail,
-        name: username,
-        role,
-      };
-
-      const token = jwt.sign(payLoad, process.env.JWT_SECRET, {
-        expiresIn: process.env.JWT_EXPIRE_TIME,
-      });
-
-      pool.query(
-        "UPDATE admins SET status = 1 WHERE user_id = ?",
-        [user_id],
-        (updateErr, updateResult) => {
-          if (updateErr) {
-            return res.status(StatusCode.INTERNAL_SERVER_ERROR).send(updateErr);
-          }
-          return res
-            .status(StatusCode.OK)
-            .json({ success: true, token, payLoad });
-        },
-      );
-    });
-    return;
+  if (email.endsWith("@hsh.io")) {
+    loginFn = authService.superAdminLogin;
+  } else if (email.includes("@admin.com")) {
+    loginFn = authService.adminLogin;
+  } else if (email.endsWith("@fci.helwan.edu.eg")) {
+    loginFn = authService.userLogin;
+  } else {
+    throw new ApiError("Login failed", StatusCode.UNAUTHORIZED);
   }
 
-  //3- User login
-  if (email && email.endsWith("@fci.helwan.edu.eg")) {
-    const loggedIn = await authService.userLogin(email, password);
-    if (!loggedIn?.token)
-      throw new ApiError("Login failed", StatusCode.UNAUTHORIZED);
-    return res
-      .status(StatusCode.OK)
-      .json({ success: true, token: loggedIn.token });
+  const { token } = (await loginFn(email, password)) || {};
+
+  if (!token) {
+    throw new ApiError("Login failed", StatusCode.UNAUTHORIZED);
   }
 
-  return res
-    .status(StatusCode.BAD_REQUEST)
-    .json({ success: false, error: "برجاء كتابة الايميل وكلمة المرور" });
+  return res.status(StatusCode.OK).json({
+    success: true,
+    token,
+  });
 });
 
 //--------------------------------------forget Password--------------------------

@@ -39,6 +39,10 @@ export const isVerified = async (email) => {
 };
 
 // To validate Helwan University account
-export const isUniEmail = (value) => {
-  return value.split("@")[1].endsWith(".helwan.edu.eg");
+export const isAllowedEmail = (value) => {
+  return (
+    value.split("@")[1].endsWith("fci.helwan.edu.eg") ||
+    value.split("@")[1].endsWith("hsh.io") ||
+    value.split("@")[1].endsWith("admin.com")
+  );
 };

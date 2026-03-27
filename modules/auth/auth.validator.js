@@ -14,8 +14,8 @@ export const validateSignup = [
     .notEmpty()
     .withMessage("email required")
     .isEmail()
-    .custom(customValidators.isUniEmail)
-    .withMessage("email should end with .helwan.edu.eg"),
+    .custom(customValidators.isAllowedEmail)
+    .withMessage("Email format is not allowed!"),
   body("password")
     .notEmpty()
     .withMessage("password required")
@@ -66,8 +66,8 @@ export const validateLogin = [
     .bail()
     .isEmail()
     .withMessage("invalid email")
-    .custom(customValidators.isUniEmail)
-    .withMessage("Invalid Helwan University Email"),
+    .custom(customValidators.isAllowedEmail)
+    .withMessage("Email format is not allowed!"),
   body("password").notEmpty().withMessage("password is required").bail(),
   handleValidationErrors,
 ];
@@ -105,7 +105,7 @@ export const sendOtpValidator = [
     .bail()
     .isEmail()
     .withMessage("invalid email")
-    .custom(customValidators.isUniEmail)
-    .withMessage("email should end with helwan.edu.eg"),
+    .custom(customValidators.isAllowedEmail)
+    .withMessage("Email format is not allowed!"),
   handleValidationErrors,
 ];
