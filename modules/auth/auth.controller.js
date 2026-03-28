@@ -6,6 +6,7 @@ import pool from "../../config/db.js";
 import * as authService from "./services/auth.service.js";
 import { roles } from "../../utils/roles.js";
 import { StatusCode } from "../../utils/status-codes.js";
+import { UserType } from "../../utils/user-types.js";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -51,6 +52,16 @@ export const signup = asyncHandler(async (req, res) => {
 //--------------------------------------LOGIN------------------------------------
 export const login = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
+  let loginFn;
+
+  const studentLogin = async (email, password) =>
+    await authService.performLogin(UserType.STUDENT, email, password);
+
+  const adminLogin = async (email, password) =>
+    await authService.performLogin(UserType.ADMIN, email, password);
+
+  const superAdminLogin = async (email, password) =>
+    await authService.performLogin(UserType.SUPER_ADMIN, email, password);
 
   if (!email || !password) {
     return res.status(StatusCode.BAD_REQUEST).json({
@@ -59,20 +70,17 @@ export const login = asyncHandler(async (req, res) => {
     });
   }
 
-  let loginFn;
-
   if (email.endsWith("@hsh.io")) {
-    loginFn = authService.superAdminLogin;
+    loginFn = superAdminLogin;
   } else if (email.includes("@admin.com")) {
-    loginFn = authService.adminLogin;
+    loginFn = adminLogin;
   } else if (email.endsWith("@fci.helwan.edu.eg")) {
-    loginFn = authService.userLogin;
+    loginFn = studentLogin;
   } else {
     throw new ApiError("Login failed", StatusCode.UNAUTHORIZED);
   }
 
   const { token } = (await loginFn(email, password)) || {};
-
   if (!token) {
     throw new ApiError("Login failed", StatusCode.UNAUTHORIZED);
   }

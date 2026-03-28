@@ -10,6 +10,7 @@ import UserRepo from "../../../shared/repositories/user.repository.js";
 import { sendActivationMail } from "../services/email.service.js";
 import ApiError from "../../../utils/api-error.js";
 import { StatusCode } from "../../../utils/status-codes.js";
+import { UserType } from "../../../utils/user-types.js";
 
 const signToken = (student) => {
   const id = student.student_id;
@@ -62,57 +63,28 @@ export const signup = async (studentData) => {
   return result;
 };
 
-export const superAdminLogin = async (email, password) => {
-  //1- check email existence
+export const performLogin = async (userType, email, password) => {
+  // 1. Validate userType
+  if (!Object.values(UserType).includes(userType)) {
+    throw new ApiError("Invalid user type", StatusCode.BAD_REQUEST);
+  }
   const authRepo = new AuthRepo();
   const userRepo = new UserRepo();
-  const existed = await authRepo.findByEmailForAuth("super_admins", email);
-  if (!existed)
-    throw new ApiError("Email does not exist", StatusCode.NOT_FOUND);
-  //2- compare passwords
-  const matched = await checkPassword(password, existed.password);
-  if (!matched)
-    throw new ApiError("كلمة المرور غير صحيحة", StatusCode.UNAUTHORIZED);
-  //3- sign token
-  const token = signToken(existed);
-  const result = { existed, token };
-  //4- change status (online)
-  await userRepo.setOnline("super_admins", existed.id);
-  return result;
-};
-export const adminLogin = async (email, password) => {
-  //1- check email existence
-  const authRepo = new AuthRepo();
-  const userRepo = new UserRepo();
-  const existed = await authRepo.findByEmailForAuth("admins", email);
-  if (!existed) throw new ApiError("الأدمن غير موجود", StatusCode.NOT_FOUND);
-  //2- compare passwords
-  const matched = await checkPassword(password, existed.password);
-  if (!matched)
-    throw new ApiError("كلمة المرور غير صحيحة", StatusCode.UNAUTHORIZED);
-  //3- sign token
-  const token = signToken(existed);
-  const result = { existed, token };
-  //4- change status (online)
-  await userRepo.setOnline("admins", existed.id);
-  return result;
-};
 
-export const userLogin = async (email, password) => {
-  //1- check email existence
-  const authRepo = new AuthRepo();
-  const userRepo = new UserRepo();
-  const existed = await authRepo.findByEmailForAuth("students", email);
+  // 2. Check email existence
+  const user = await authRepo.findByEmailForAuth(userType, email);
+  if (!user) throw new ApiError("المستخدم غير موجود", StatusCode.NOT_FOUND);
 
-  if (!existed) throw new ApiError("المستخدم غير موجود", StatusCode.NOT_FOUND);
-  //2- compare passwords
-  const matched = await checkPassword(password, existed.password);
+  // 3. Compare passwords
+  const matched = await checkPassword(password, user.password);
   if (!matched)
     throw new ApiError("كلمة المرور غير صحيحة", StatusCode.UNAUTHORIZED);
-  //3- sign token
-  const token = signToken(existed);
-  const result = { existed, token };
-  //4- change status (online)
-  await userRepo.setOnline("students", "student_id", existed.id);
+
+  // 4. Sign token
+  const token = signToken(user);
+  const result = { user, token };
+  // 5. Change status to online
+  await userRepo.setOnline(userType, user.id);
+
   return result;
 };
