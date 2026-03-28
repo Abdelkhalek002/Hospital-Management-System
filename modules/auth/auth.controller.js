@@ -1,6 +1,7 @@
 // IMPORTING DEPENDENCIES
 import asyncHandler from "express-async-handler";
 import jwt from "jsonwebtoken";
+import bcrypt from "bcrypt";
 
 import pool from "../../config/db.js";
 import * as authService from "./services/auth.service.js";
@@ -8,6 +9,7 @@ import { roles } from "../../utils/roles.js";
 import { StatusCode } from "../../utils/status-codes.js";
 import { UserType } from "../../utils/user-types.js";
 import dotenv from "dotenv";
+import ApiError from "../../utils/api-error.js";
 dotenv.config();
 
 //----------------------------------SIGNUP---------------------------------------
@@ -33,14 +35,26 @@ const pick = (obj, fields) =>
     return acc;
   }, {});
 
+const getCookieOptions = (req) => ({
+  maxAge: Number(process.env.JWT_COOKIE_EXPIRES_IN) * 24 * 60 * 60 * 1000,
+  httpOnly: true,
+  secure: req.secure || req.headers["x-forwarded-proto"] === "https",
+  sameSite: "lax",
+});
+
+const getClearCookieOptions = (req) => {
+  const cookieOptions = getCookieOptions(req);
+  return {
+    httpOnly: cookieOptions.httpOnly,
+    secure: cookieOptions.secure,
+    sameSite: cookieOptions.sameSite,
+  };
+};
+
 export const signup = asyncHandler(async (req, res) => {
   const studentData = pick(req.body, allowedFields);
   const data = await authService.signup(studentData);
-  res.cookie("jwt", data.token, {
-    maxAge: Number(process.env.JWT_COOKIE_EXPIRES_IN) * 24 * 60 * 60 * 1000,
-    httpOnly: true,
-    secure: req.secure || req.headers["x-forwarded-proto"] === "https",
-  });
+  res.cookie("jwt", data.token, getCookieOptions(req));
   res.status(StatusCode.OK).json({
     status: "success",
     message:
@@ -123,5 +137,35 @@ export const forgetPassword = asyncHandler(async (req, res, next) => {
         );
       }
     }
+  });
+});
+
+export const logout = asyncHandler(async (req, res) => {
+  let token;
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith("Bearer")
+  ) {
+    token = req.headers.authorization.split(" ")[1];
+  } else if (req.cookies?.jwt) {
+    token = req.cookies.jwt;
+  }
+  let decoded;
+  if (token) {
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (error) {
+      throw new ApiError("Invalid or expired token", StatusCode.UNAUTHORIZED);
+    }
+  }
+  await authService.logout({
+    res,
+    userType: decoded?.userType,
+    userId: decoded?.id,
+    clearCookieOptions: getClearCookieOptions(req),
+  });
+  return res.status(StatusCode.OK).json({
+    success: true,
+    message: "Logged out successfully",
   });
 });

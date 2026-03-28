@@ -4,7 +4,7 @@ import bodyParser from "body-parser";
 import morgan from "morgan";
 //import redis from "redis";
 import cors from "cors";
-
+import cookieParser from "cookie-parser";
 import ApiError from "./utils/api-error.js";
 import globalError from "./middlewares/error.middleware.js";
 
@@ -21,6 +21,7 @@ import userSecRoute from "./modules/users/user-security.routes.js";
 // Start Express App
 const app = express();
 app.use(cors());
+app.use(cookieParser());
 app.use("/api/v1/uploads", express.static(path.join(process.cwd(), "uploads")));
 app.use(express.static(path.join(process.cwd(), "uploads")));
 

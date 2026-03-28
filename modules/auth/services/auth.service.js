@@ -13,8 +13,9 @@ import { StatusCode } from "../../../utils/status-codes.js";
 import { UserType } from "../../../utils/user-types.js";
 
 const signToken = (student) => {
-  const id = student.student_id;
-  const token = jwt.sign({ id }, process.env.JWT_SECRET, {
+  const { id } = student;
+  const userType = student.userType;
+  const token = jwt.sign({ id, userType }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRE_TIME,
   });
   student.password = undefined;
@@ -57,7 +58,7 @@ export const signup = async (studentData) => {
   //await sendActivationMail(finalStudentData.email, finalStudentData.username);
 
   //6- create a new token
-  const token = signToken(newUser);
+  const token = signToken({ ...newUser, userType: UserType.STUDENT });
   const result = { newUser, token };
 
   return result;
@@ -81,10 +82,19 @@ export const performLogin = async (userType, email, password) => {
     throw new ApiError("كلمة المرور غير صحيحة", StatusCode.UNAUTHORIZED);
 
   // 4. Sign token
-  const token = signToken(user);
+  const token = signToken({ ...user, userType });
   const result = { user, token };
+
   // 5. Change status to online
   await userRepo.setOnline(userType, user.id);
 
   return result;
+};
+
+export const logout = async ({ res, userType, userId, clearCookieOptions }) => {
+  const userRepo = new UserRepo();
+  res.clearCookie("jwt", clearCookieOptions);
+  if (userType && userId) {
+    await userRepo.setOffline(userType, userId);
+  }
 };

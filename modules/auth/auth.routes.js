@@ -35,7 +35,8 @@ router
     validator.forgetPasswordValidator,
     authController.forgetPassword,
   )
-  .post("/login", validator.validateLogin, authController.login);
+  .post("/login", validator.validateLogin, authController.login)
+  .post("/logout", authController.logout);
 router.get("/confirmEmail", confirmEmail);
 
 export default router;
