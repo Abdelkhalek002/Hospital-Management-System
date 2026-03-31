@@ -46,7 +46,6 @@ export const validateSignup = [
     .notEmpty()
     .withMessage("phone number required")
     .isMobilePhone("ar-EG"),
-
   body("user_image_file")
     .notEmpty()
     .withMessage("user profile photo is required"),

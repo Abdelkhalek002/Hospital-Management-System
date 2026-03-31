@@ -26,7 +26,11 @@ router
     validator.validateSignup,
     authController.signup,
   );
-router.get("/activate", activateEmail);
+router.get(
+  "/activate/:token",
+  activateEmail,
+  //testEmail,
+);
 
 router
   .post("/sendOtp", validator.sendOtpValidator, limiter, sendOtp)

@@ -12,6 +12,22 @@ import dotenv from "dotenv";
 import ApiError from "../../utils/api-error.js";
 dotenv.config();
 
+const getCookieOptions = (req) => ({
+  maxAge: Number(process.env.JWT_COOKIE_EXPIRES_IN) * 24 * 60 * 60 * 1000,
+  httpOnly: true,
+  secure: req.secure || req.headers["x-forwarded-proto"] === "https",
+  sameSite: "lax",
+});
+
+const getClearCookieOptions = (req) => {
+  const cookieOptions = getCookieOptions(req);
+  return {
+    httpOnly: cookieOptions.httpOnly,
+    secure: cookieOptions.secure,
+    sameSite: cookieOptions.sameSite,
+  };
+};
+
 //----------------------------------SIGNUP---------------------------------------
 const allowedFields = [
   "username",
@@ -34,22 +50,6 @@ const pick = (obj, fields) =>
     if (obj[field] !== undefined) acc[field] = obj[field];
     return acc;
   }, {});
-
-const getCookieOptions = (req) => ({
-  maxAge: Number(process.env.JWT_COOKIE_EXPIRES_IN) * 24 * 60 * 60 * 1000,
-  httpOnly: true,
-  secure: req.secure || req.headers["x-forwarded-proto"] === "https",
-  sameSite: "lax",
-});
-
-const getClearCookieOptions = (req) => {
-  const cookieOptions = getCookieOptions(req);
-  return {
-    httpOnly: cookieOptions.httpOnly,
-    secure: cookieOptions.secure,
-    sameSite: cookieOptions.sameSite,
-  };
-};
 
 export const signup = asyncHandler(async (req, res) => {
   const studentData = pick(req.body, allowedFields);

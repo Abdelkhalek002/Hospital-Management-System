@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ar">
+  <head>
+    <meta charset="UTF-8" />
+    <title>تأكيد البريد الإلكتروني</title>
+    <style>
+      body {
+        background-color: #001f3f;
+        color: #ffffff;
+        font-family: "Tajawal", sans-serif;
+        margin: 0;
+        padding: 0;
+        direction: rtl;
+      }
+
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+        text-align: center;
+        border-radius: 16px;
+      }
+
+      h1 {
+        color: #fff;
+        margin-bottom: 20px;
+      }
+
+      p {
+        margin: 20px 0;
+        font-size: 18px;
+      }
+
+      a {
+        display: inline-block;
+        padding: 15px 30px;
+        text-decoration: none;
+        background-color: #004080;
+        color: #ffffff;
+        border-radius: 15px;
+        font-weight: bold;
+      }
+
+      .expiry {
+        color: red;
+        margin-top: 20px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <h1>أهلاً بيك في مستشفى جامعة حلوان</h1>
+      <h2>مرحباً {{firstName}}</h2>
+
+      <p>
+        شكراً لاختيارك مستشفى جامعة حلوان. لإكمال تسجيلك، اضغط على الزر أدناه
+        لتأكيد عنوان بريدك الإلكتروني.
+      </p>
+
+      <a href="{{url}}">تأكيد البريد الإلكتروني</a>
+
+      <p class="expiry">الرابط سينتهي خلال 120 ثانية!</p>
+      <p>صحتك تهمنا</p>
+    </div>
+  </body>
+</html>
