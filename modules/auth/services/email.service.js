@@ -4,6 +4,9 @@ import db from "../../../config/db.js";
 import dotenv from "dotenv";
 dotenv.config();
 
+// First time student account activation
+
+// if valid account ? activate : return
 export const sendActivationMail = async (email, name) => {
   // 1- Sign JWT token with user information and set expiration to 50 seconds
   const activationToken = jwt.sign({ email }, process.env.JWT_SECRET, {
@@ -180,7 +183,9 @@ export const activateEmail = async (req, res) => {
   }
 };
 
-// CONFIRM SUPER ADMIN
+// VALIDATE SUPER ADMIN EVERY SINGLE TIME HE LOGS IN
+
+// if valid superAdmin ? createSession : return
 export const sendConfirmationMail = async (email, name) => {
   // 1- Sign JWT token with user information and set expiration to 1 hour
   const confirmationToken = jwt.sign({ email }, process.env.JWT_SECRET, {

@@ -3,7 +3,7 @@ const router = express.Router();
 
 import * as authController from "./auth.controller.js";
 import * as validator from "./auth.validator.js";
-import { activateEmail } from "./services/activate-user-email.service.js";
+import { activateEmail } from "./services/email.service.js";
 import {
   uploadRegisterationFiles,
   resizeFiles,
