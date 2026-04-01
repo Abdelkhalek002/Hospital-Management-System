@@ -1,165 +1,134 @@
 import nodemailer from "nodemailer";
-import jwt from "jsonwebtoken";
+import asyncHandler from "express-async-handler";
 import path from "path";
+import fs from "fs/promises";
 import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-import db from "../../../config/db.js";
-import Email from "../../../shared/services/email/email.js";
-import { renderHTML } from "../../../shared/services/renderHTML.js";
 import { signToken, verifyToken } from "./jwt.service.js";
 import dotenv from "dotenv";
 import AuthRepo from "../repositories/auth.repository.js";
 import { UserType } from "../../../utils/user-types.js";
+import { StatusCode } from "../../../utils/status-codes.js";
 dotenv.config();
 
-// if valid account ? activate : return
+const renderHTML = async (path, data) => {
+  let content = await fs.readFile(path, "utf-8");
+  for (const key in data) {
+    const regex = new RegExp(`{{${key}}}`, "g");
+    content = content.replace(regex, data[key]);
+  }
+  return content;
+};
+export class Email {
+  constructor(user, url, otp) {
+    this.to = user.email;
+    this.firstName = user.username.split(" ")[0];
+    this.url = url;
+    this.otp = otp;
+    this.from = `Helwan University Hospital <${process.env.EMAIL_FROM}>`;
+  }
+  newTransport() {
+    if (process.env.NODE_ENV === "production") {
+      // sendGrid
+      return nodemailer.createTransport({
+        host: "smtp.sendgrid.net",
+        port: 587,
+        secure: false,
+        auth: {
+          user: process.env.SENDGRID_USERNAME,
+          pass: process.env.SENDGRID_PASSWORD,
+        },
+      });
+    }
+    return nodemailer.createTransport({
+      host: process.env.EMAIL_HOST,
+      port: process.env.EMAIL_PORT,
+      auth: {
+        user: process.env.EMAIL_USERNAME,
+        pass: process.env.EMAIL_PASSWORD,
+      },
+    });
+  }
+  // send the actual email
+  async send(template, subject) {
+    // 1. Render HTML template
+    const html = await renderHTML(`${__dirname}/../views/${template}.html`, {
+      firstName: this.firstName,
+      url: this.url,
+      otp: this.otp,
+      subject,
+    });
+
+    // 2. Define email options
+    const mailOptions = {
+      from: this.from,
+      to: this.to,
+      subject,
+      html,
+    };
+
+    // 3) Create a transport and send email
+    await this.newTransport().sendMail(mailOptions);
+  }
+  async sendActivation() {
+    await this.send("activate", "تفعيل حساب مستشفي جامعة حلوان");
+  }
+  async sendConfirmation() {
+    await this.send("confirm", "Email Confirmation");
+  }
+  async sendOtp() {
+    await this.send("otp", "تغيير كلمة السر");
+  }
+}
+
+// ACTIVATE USER ACCOUNT
 export const sendActivationMail = async (user) => {
-  const token = signToken(user, process.env.ACTIVATION_EXPIRE_TIME);
-  const url = `http://localhost:7000/api/v1/auth/activate/${token}`;
+  // 1. sign activation token
+  const token = signToken(user, process.env.JWT_SHORT_EXPIRE_TIME);
+  const url = `http://localhost:7000/api/v1/auth/activate/?token=${token}`;
+  // 2. send token to user
   await new Email(user, url).sendActivation();
   return;
 };
-
-export const activateEmail = async (req, res) => {
+export const activateEmail = asyncHandler(async (req, res) => {
   const { token } = req.params;
-  const activatedHtml = await renderHTML(
-    `${__dirname}/../views/activated.html`,
-  );
+  const html = await renderHTML(`${__dirname}/../views/activated.html`);
+  // 1. verify token
   const decoded = await verifyToken(token, process.env.JWT_SECRET);
+  // 2. activate email and save data into the database
   await new AuthRepo().activateEmail(UserType.STUDENT, decoded.email);
-  return res.status(202).send(activatedHtml);
+  // 3. send response
+  return res.status(StatusCode.OK).send(html);
+});
+
+// VALIDATE SUPER ADMIN
+export const sendConfirmationMail = async (user) => {
+  // 1. sign confirmation token
+  const token = signToken(user, process.env.JWT_SHORT_EXPIRE_TIME);
+  const url = `http://localhost:7000/api/v1/auth/confirmEmail?token=${token}`;
+  // 2. confirm email and save data into the database
+  await new Email(user, url).sendConfirmation();
+  return;
 };
 
-// VALIDATE SUPER ADMIN EVERY SINGLE TIME HE LOGS IN
+export const confirmEmail = asyncHandler(async (req, res) => {
+  const { token } = req.params;
+  const html = await renderHTML(`${__dirname}/../views/confirmed.html`);
+  // 1. verify token
+  const decoded = await verifyToken(token, process.env.JWT_SECRET);
+  // 2. activate email and save data into the database
+  await new AuthRepo().confirmEmail(UserType.SUPER_ADMIN, decoded.email);
+  // 3. send response
+  return res.status(StatusCode.OK).send(html);
+});
 
-// if valid superAdmin ? createSession : return
-export const sendConfirmationMail = async (email, name) => {
-  // 1- Sign JWT token with user information and set expiration to 1 hour
-  const confirmationToken = jwt.sign({ email }, process.env.JWT_SECRET, {
-    expiresIn: "5m",
-  });
-
-  // 2- Prepare confirmation mail for user
-  const recipientEmail = email;
-  const confirmationLink = `http://localhost:7000/api/v1/auth/confirmEmail?token=${confirmationToken}`;
-  const emailBody = `
-  <div style="background-color: #001f3f; color: #fff; font-family: 'Tajawal', sans-serif; margin: 0; padding: 0;">
-    <div style="max-width: 600px; margin: 0 auto; padding: 20px; text-align: center; border-radius: 16px; background-color: #001f3f;">
-        <h1 style="color: #fff; margin-bottom: 20px;">أهلاً بيك في مستشفى جامعة حلوان</h1>
-        <h2 style="color: #fff;"> ${name}  أهلاً</h2>
-        <p style="margin: 20px 0; font-size: 18px; color: #fff;">اضغط ع الزر تحت عشان تفعل بريدك الالكتروني</p>
-        <a href="${confirmationLink}" style="display: inline-block; padding: 15px 30px; text-decoration: none; background-color: #004080; color: #ffffff; border-radius: 15px; font-weight: bold;">تأكيد البريد الإلكتروني</a>
-        <p style="color: red; margin-top: 20px; font-weight:bolder">الرابط هينتهي بعد خمس دقايق!</p>
-        <p style="color: #fff;">صحتك تهمنا</p>
-    </div>
-  </div>
-  `;
-
-  // 3- Send confirmation mail to user
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
-
-  const info = await transporter.sendMail({
-    from: '"مستشفي جامعة حلوان" <inkozeks@gmail.com>',
-    to: recipientEmail,
-    subject: "Confirmation Email!",
-    html: emailBody,
-  });
-
-  console.log("Message sent: %s", info.messageId);
-};
-
-export const confirmEmail = (req, res) => {
-  const { token } = req.query;
-  console.info("Hello from confirmation email");
-
-  // Verify JWT token
-  jwt.verify(token, process.env.JWT_SECRET, async (err, decoded) => {
-    if (err) {
-      return res
-        .status(400)
-        .json({ success: false, error: "Invalid JWT token." });
-    }
-
-    // Update the user's confirmation status
-    db.query("UPDATE superadmin SET confirmed = 1 WHERE email = ?", [
-      decoded.email,
-    ]);
-
-    return res.status(202).send(`
-    <style>
-      body {
-        background-color: #0C2D57;
-        color: #343a40;
-        font-family: 'Tajawal', sans-serif;
-        margin: 0;
-        padding: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 100vh;
-      }
-
-      .container {
-        width: 100%;
-        background-color: #004080;
-        max-width: 600px;
-        margin: 0 auto;
-        padding: 30px;
-        text-align: center;
-        background-color: #;
-        border-radius: 10px;
-        box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-      }
-
-      .header {
-        padding: 20px 0;
-      }
-
-      h1 {
-        color: #fff;
-        margin: 0;
-        font-size: 24px;
-      }
-
-      .content {
-        padding: 20px 0;
-      }
-
-      p {
-        margin: 0;
-        font-size: 16px;
-        color: #fff;
-      }
-
-      .footer {
-        padding: 20px 0;
-      }
-
-      .branding {
-        color: #fff;
-        font-weight: bold;
-      }
-    </style>
-    <body>
-      <div class="container">
-        <div class="header">
-          <h1>تم تأكيد بريدك الإلكتروني بنجاح</h1>
-        </div>
-        <div class="content">
-          <p>شكراً لك لتأكيد بريدك الإلكتروني</p>
-        </div>
-        <div class="footer">
-          <p class="branding">صحتك تهمنا</p>
-        </div>
-      </div>
-    </body>`);
-  });
-};
+// SEND OTP TO USER
+export const sendOtpMail = asyncHandler(async (user, otp) => {
+  // 1. check if email exist
+  const html = await renderHTML(`${__dirname}/../views/otp.html`);
+  const url = `http://localhost:7000/api/v1/auth/forgetPassword`;
+  // 2. confirm email and save data into the database
+  return res.status(StatusCode.OK).send(html);
+});
