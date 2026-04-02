@@ -1,4 +1,5 @@
 import path from "path";
+import { fileURLToPath } from "url";
 import express from "express";
 import bodyParser from "body-parser";
 import morgan from "morgan";
@@ -18,17 +19,23 @@ import systemDataRoutes from "./modules/system-data/routes/index.js";
 
 import userSecRoute from "./modules/users/user-security.routes.js";
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 // Start Express App
 const app = express();
 app.use(cors());
 app.use(cookieParser());
 app.use("/api/v1/uploads", express.static(path.join(process.cwd(), "uploads")));
-app.use(express.static(path.join(process.cwd(), "uploads")));
 
-// MIDDLEWARE FOR PARSING JSON REQUESTS
-app.use(express.json());
+// 1) GLOBAL MIDDLEWARES
+// Body parser, reading data from body into req.body
+app.use(express.json({ limit: "10kb" }));
+app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 app.use(bodyParser.json());
-app.use(express.static(path.join(process.cwd(), "uploads")));
+
+// Serving static files
+app.use(express.static(path.join(__dirname, "uploads")));
 
 if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));

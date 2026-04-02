@@ -7,7 +7,7 @@ import * as passwordResetController from "./password-reset/password-reset.contro
 import * as passwordResetValidator from "./password-reset/password-reset.validator.js";
 
 import {
-  uploadRegisterationFiles,
+  uploadRegistrationFiles,
   resizeFiles,
 } from "../../middlewares/file-upload.service.js";
 import { activateEmail, confirmEmail } from "./services/email.service.js";
@@ -16,7 +16,7 @@ import limiter from "../../services/rate-limit.service.js";
 router
   .route("/signUp")
   .post(
-    uploadRegisterationFiles,
+    uploadRegistrationFiles,
     resizeFiles,
     authValidator.validateSignup,
     authController.signup,

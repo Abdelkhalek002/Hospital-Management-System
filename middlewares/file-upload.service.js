@@ -1,26 +1,35 @@
 import path from "path";
-import fs from "fs";
+import { promises as fs } from "fs";
+import { createHash, randomBytes } from "crypto";
 import multer from "multer";
 import sanitizeFilename from "sanitize-filename";
-import sharp from "sharp";
-import { v4 as uuidv4 } from "uuid";
 import asyncHandler from "express-async-handler";
 
 import ApiError from "../utils/api-error.js";
 import { StatusCode } from "../utils/status-codes.js";
 
-// 1. intialize multer storage
 const multerStorage = multer.memoryStorage();
+const STUDENTS_PARENT_DIRECTORY = path.join("uploads", "students");
 
-// 2. filtering coming files to accept only ("image/jpeg", "image/png", "image/jpg")
-const allowedMimeTypes = ["image/jpeg", "image/png", "image/jpg"];
+const registrationUploadFieldNames = [
+  "user_image_file",
+  "national_id_file",
+  "fees_file",
+];
+const fileFieldAliases = {
+  user_image_file: "profile",
+  national_id_file: "national-id",
+  fees_file: "fees",
+};
+const FILE_NAME_MAX_ATTEMPTS = 10;
+
 const multerFilter = (req, file, cb) => {
-  if (allowedMimeTypes.includes(file.mimetype)) {
+  if (file.mimetype.endsWith("/jpeg")) {
     cb(null, true);
   } else {
     cb(
       new ApiError(
-        "Only JPEG, JPG and PNG images are allowed!",
+        "Only JPG and JPEG files are allowed!",
         StatusCode.BAD_REQUEST,
       ),
       false,
@@ -28,76 +37,182 @@ const multerFilter = (req, file, cb) => {
   }
 };
 
-// 3. intialize multer upload-ready
 const upload = multer({
   storage: multerStorage,
   fileFilter: multerFilter,
-  limits: { fileSize: 5 * 1024 * 1024 },
+  limits: { fileSize: 2 * 1024 * 1024 },
 });
 
-// 4. Upload required files
-export const uploadRegisterationFiles = upload.fields([
+// Upload files
+export const uploadRegistrationFiles = upload.fields([
   { name: "user_image_file", maxCount: 1 },
   { name: "national_id_file", maxCount: 1 },
   { name: "fees_file", maxCount: 1 },
 ]);
 
-// 5. Resize uploaded files
-export const resizeFiles = asyncHandler(async (req, res, next) => {
-  // Resize and save profile image
-  if (req.files["user_image_file"] && req.files["user_image_file"][0]) {
-    const user_image_file = req.files["user_image_file"][0];
-    const userImage_name = `Document-${uuidv4()}-${Date.now()}.jpeg`;
-    const sanitizeduser_image_filename = sanitizeFilename(userImage_name);
-    const userImage_Directory = "uploads";
+// get uploaded files
+const getUploadedFile = (req, fieldName) => req.files?.[fieldName]?.[0];
 
-    // if (!fs.existsSync(userImage_Directory)) {
-    //   fs.mkdirSync(userImage_Directory, { recursive: true });
-    // }
+const ensureDirectory = async (directory) => {
+  await fs.mkdir(directory, { recursive: true });
+};
 
-    await sharp(user_image_file.buffer)
-      .resize(500, 500)
-      .toFormat("jpeg")
-      .jpeg({ quality: 95 })
-      .toFile(path.join(userImage_Directory, sanitizeduser_image_filename));
-
-    req.body.user_image_file = sanitizeduser_image_filename;
-  }
-  // Save national ID
-  if (req.files["national_id_file"] && req.files["national_id_file"][0]) {
-    const national_id_file = req.files["national_id_file"][0];
-    const national_id_name = `Document-${uuidv4()}-${Date.now()}.jpeg`;
-    const sanitizedNationalId_Filename = sanitizeFilename(national_id_name);
-    const national_id_Directory = "uploads/student_info/national_id";
-
-    // if (!fs.existsSync(national_id_Directory)) {
-    //   fs.mkdirSync(national_id_Directory, { recursive: true });
-    // }
-
-    fs.writeFileSync(
-      path.join(national_id_Directory, sanitizedNationalId_Filename),
-      national_id_file.buffer,
+const ensureSafeUsername = (username) => {
+  if (typeof username !== "string" || username.length === 0) {
+    throw new ApiError(
+      "Username is required for student uploads",
+      StatusCode.BAD_REQUEST,
     );
-
-    req.body.national_id_file = sanitizedNationalId_Filename;
   }
-  // Save fees
-  if (req.files["fees_file"] && req.files["fees_file"][0]) {
-    const fees_file = req.files["fees_file"][0];
-    const fessFile_name = `Document-${uuidv4()}-${Date.now()}.jpeg`;
-    const sanitizedFees_Filename = sanitizeFilename(fessFile_name);
-    const fees_Directory = "uploads/student_info/fees";
 
-    // if (!fs.existsSync(fees_Directory)) {
-    //   fs.mkdirSync(fees_Directory, { recursive: true });
-    // }
+  const hasPathSeparators = username.includes("/") || username.includes("\\");
+  const isParentTraversal = username.includes("..");
+  const safeUsername = sanitizeFilename(username);
 
-    fs.writeFileSync(
-      path.join(fees_Directory, sanitizedFees_Filename),
-      fees_file.buffer,
+  if (
+    hasPathSeparators ||
+    isParentTraversal ||
+    safeUsername.length === 0 ||
+    safeUsername !== username
+  ) {
+    throw new ApiError(
+      "Invalid username for upload directory",
+      StatusCode.BAD_REQUEST,
     );
-
-    req.body.fees_file = sanitizedFees_Filename;
   }
+
+  return username;
+};
+
+const getStudentDirectory = (username) => {
+  const rootDirectory = path.resolve(STUDENTS_PARENT_DIRECTORY);
+  const studentDirectory = path.resolve(
+    path.join(STUDENTS_PARENT_DIRECTORY, username),
+  );
+
+  const isInsideStudentsRoot =
+    studentDirectory === rootDirectory ||
+    studentDirectory.startsWith(`${rootDirectory}${path.sep}`);
+
+  if (!isInsideStudentsRoot) {
+    throw new ApiError("Invalid upload path", StatusCode.BAD_REQUEST);
+  }
+
+  return studentDirectory;
+};
+
+const hasJpegMagicBytes = (buffer) => {
+  if (!Buffer.isBuffer(buffer) || buffer.length < 4) {
+    return false;
+  }
+
+  const startsWithJpegSignature = buffer[0] === 0xff && buffer[1] === 0xd8;
+  const endsWithJpegSignature =
+    buffer[buffer.length - 2] === 0xff && buffer[buffer.length - 1] === 0xd9;
+
+  return startsWithJpegSignature && endsWithJpegSignature;
+};
+
+const ensureValidJpegContent = (file, fieldName) => {
+  if (!hasJpegMagicBytes(file?.buffer)) {
+    throw new ApiError(
+      `Invalid file content for "${fieldName}". Only real JPEG images are allowed.`,
+      StatusCode.BAD_REQUEST,
+    );
+  }
+};
+
+const createImmutableStudentKey = (requestBody) => {
+  const nationalId = String(requestBody?.national_id ?? "").trim();
+  if (!nationalId) {
+    throw new ApiError(
+      "National ID is required to build a student upload key",
+      StatusCode.BAD_REQUEST,
+    );
+  }
+
+  return createHash("sha256").update(nationalId).digest("hex").slice(0, 12);
+};
+
+const formatTimestampForFileName = () =>
+  new Date().toISOString().replace(/[-:.TZ]/g, "");
+
+const buildAuditFriendlyFileName = (fieldName, studentKey) => {
+  const alias = fileFieldAliases[fieldName] || "document";
+  const timestamp = formatTimestampForFileName();
+  const randomSuffix = randomBytes(4).toString("hex");
+
+  return `${alias}-${studentKey}-${timestamp}-${randomSuffix}.jpeg`;
+};
+
+const getSafeOutputPath = (studentDirectory, fileName) => {
+  const outputPath = path.resolve(path.join(studentDirectory, fileName));
+  const isInsideStudentDirectory =
+    outputPath === studentDirectory ||
+    outputPath.startsWith(`${studentDirectory}${path.sep}`);
+
+  if (!isInsideStudentDirectory) {
+    throw new ApiError("Invalid output path", StatusCode.BAD_REQUEST);
+  }
+
+  return outputPath;
+};
+
+const writeStudentFileCollisionSafe = async ({
+  studentDirectory,
+  fieldName,
+  studentKey,
+  fileBuffer,
+}) => {
+  for (let attempt = 0; attempt < FILE_NAME_MAX_ATTEMPTS; attempt += 1) {
+    const fileName = buildAuditFriendlyFileName(fieldName, studentKey);
+    const outputPath = getSafeOutputPath(studentDirectory, fileName);
+
+    try {
+      await fs.writeFile(outputPath, fileBuffer, { flag: "wx" });
+      return fileName;
+    } catch (error) {
+      if (error?.code === "EEXIST") {
+        continue;
+      }
+      throw error;
+    }
+  }
+
+  throw new ApiError(
+    `Could not create a unique file name for "${fieldName}"`,
+    StatusCode.INTERNAL_SERVER_ERROR,
+  );
+};
+
+export const resizeFiles = asyncHandler(async (req, _res, next) => {
+  const username = ensureSafeUsername(req.body?.username);
+  const studentDirectory = getStudentDirectory(username);
+  let studentKey = null;
+
+  await ensureDirectory(studentDirectory);
+
+  for (const fieldName of registrationUploadFieldNames) {
+    const file = getUploadedFile(req, fieldName);
+    if (!file) {
+      continue;
+    }
+
+    ensureValidJpegContent(file, fieldName);
+    if (!studentKey) {
+      studentKey = createImmutableStudentKey(req.body);
+      req.body.student_upload_key = studentKey;
+    }
+
+    const fileName = await writeStudentFileCollisionSafe({
+      studentDirectory,
+      fieldName,
+      studentKey,
+      fileBuffer: file.buffer,
+    });
+
+    req.body[fieldName] = path.posix.join("students", username, fileName);
+  }
+
   next();
 });
