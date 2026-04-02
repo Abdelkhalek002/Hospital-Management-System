@@ -1,6 +1,6 @@
 import express from "express";
 import * as controller from "../controllers/levels.js";
-import limiter from "../../../shared/services/rate-limit.service.js";
+import limiter from "../../../services/rate-limit.service.js";
 import { Protect, allowedTo } from "../../../middlewares/auth.middleware.js";
 import { levelsValidator } from "../validator.js";
 import { roles } from "../../../utils/roles.js";

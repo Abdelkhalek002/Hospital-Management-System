@@ -80,14 +80,14 @@ export const forgetPasswordValidator = [
     .isEmail()
     .withMessage("invalid email"),
   body("OTP")
-    .notEmpty()
+    .custom(customValidators.otpExist)
     .withMessage("OTP is required")
     .bail()
-    .isLength({ min: 6 })
-    .withMessage("OTP should be 6 characters"),
+    .isLength({ min: 6, max: 6 })
+    .withMessage("OTP should be 6 digits"),
   body("newPassword")
     .notEmpty()
-    .withMessage("password is required")
+    .withMessage("new password is required")
     .bail()
     .matches(/^[A-Z][a-z0-9#@]{7,39}$/)
     .withMessage(

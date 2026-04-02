@@ -1,7 +1,5 @@
 // Importing dependencies
-import StudentRepo from "../shared/repositories/student.repository.js";
-import ApiError from "./api-error.js";
-import { StatusCode } from "./status-codes.js";
+import StudentRepo from "../repositories/student.repository.js";
 
 // To check if the code is in Arabic or not
 export const isArabic = (value) => {
@@ -16,24 +14,6 @@ export const isValidDate = (value) => {
 
 // To check if the account is verified
 export const isVerified = async (email) => {
-  // return new Promise((resolve, reject) => {
-  //   const sql = "SELECT verified FROM students WHERE email = ?";
-  //   db.query(sql, [email], (err, result) => {
-  //     if (err) {
-  //       reject(err);
-  //     } else {
-  //       if (result.length === 0 || result[0].verified === 0) {
-  //         reject(
-  //           new Error(
-  //             "Account is not activated. Please activate your account.",
-  //           ),
-  //         );
-  //       } else {
-  //         resolve(true);
-  //       }
-  //     }
-  //   });
-  // });
   const studentRepo = new StudentRepo();
   return studentRepo.verfied(email);
 };
@@ -45,4 +25,8 @@ export const isAllowedEmail = (value) => {
     value.split("@")[1].endsWith("hsh.io") ||
     value.split("@")[1].endsWith("admin.com")
   );
+};
+
+export const otpExist = (_, { req }) => {
+  return req.body.OTP || req.body.otp;
 };

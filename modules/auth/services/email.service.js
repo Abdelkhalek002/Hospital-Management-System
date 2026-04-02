@@ -24,7 +24,8 @@ const renderHTML = async (path, data) => {
 export class Email {
   constructor(user, url, otp) {
     this.to = user.email;
-    this.firstName = user.username.split(" ")[0];
+    const fallbackName = (user.email || "user").split("@")[0];
+    this.firstName = (user.username || fallbackName).split(" ")[0];
     this.url = url;
     this.otp = otp;
     this.from = `Helwan University Hospital <${process.env.EMAIL_FROM}>`;
@@ -125,10 +126,7 @@ export const confirmEmail = asyncHandler(async (req, res) => {
 });
 
 // SEND OTP TO USER
-export const sendOtpMail = asyncHandler(async (user, otp) => {
-  // 1. check if email exist
-  const html = await renderHTML(`${__dirname}/../views/otp.html`);
-  const url = `http://localhost:7000/api/v1/auth/forgetPassword`;
-  // 2. confirm email and save data into the database
-  return res.status(StatusCode.OK).send(html);
-});
+export const sendOtpMail = async (user, otp) => {
+  const url = `http://localhost:7000/api/v1/auth/resetPassword`;
+  await new Email(user, url, otp).sendOtp();
+};

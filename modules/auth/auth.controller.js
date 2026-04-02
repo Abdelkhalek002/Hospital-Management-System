@@ -1,15 +1,13 @@
 // IMPORTING DEPENDENCIES
 import asyncHandler from "express-async-handler";
 import jwt from "jsonwebtoken";
-import bcrypt from "bcrypt";
+import dotenv from "dotenv";
 
-import pool from "../../config/db.js";
 import * as authService from "./services/auth.service.js";
-import { roles } from "../../utils/roles.js";
 import { StatusCode } from "../../utils/status-codes.js";
 import { UserType } from "../../utils/user-types.js";
-import dotenv from "dotenv";
 import ApiError from "../../utils/api-error.js";
+
 dotenv.config();
 
 const getCookieOptions = (req) => ({
@@ -45,6 +43,7 @@ const allowedFields = [
   "national_id_file",
   "fees_file",
 ];
+
 const pick = (obj, fields) =>
   fields.reduce((acc, field) => {
     if (obj[field] !== undefined) acc[field] = obj[field];
@@ -54,8 +53,9 @@ const pick = (obj, fields) =>
 export const signup = asyncHandler(async (req, res) => {
   const studentData = pick(req.body, allowedFields);
   const data = await authService.signup(studentData);
+
   res.cookie("jwt", data.token, getCookieOptions(req));
-  res.status(StatusCode.OK).json({
+  return res.status(StatusCode.OK).json({
     status: "success",
     message:
       "تم عمل البريد الالكتروني بنجاح برجاء تفقد البريد الالكتروني للتفعيل",
@@ -68,14 +68,22 @@ export const login = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
   let loginFn;
 
-  const studentLogin = async (email, password) =>
-    await authService.performLogin(UserType.STUDENT, email, password);
+  const studentLogin = async (studentEmail, studentPassword) =>
+    await authService.performLogin(
+      UserType.STUDENT,
+      studentEmail,
+      studentPassword,
+    );
 
-  const adminLogin = async (email, password) =>
-    await authService.performLogin(UserType.ADMIN, email, password);
+  const adminLogin = async (adminEmail, adminPassword) =>
+    await authService.performLogin(UserType.ADMIN, adminEmail, adminPassword);
 
-  const superAdminLogin = async (email, password) =>
-    await authService.performLogin(UserType.SUPER_ADMIN, email, password);
+  const superAdminLogin = async (superEmail, superPassword) =>
+    await authService.performLogin(
+      UserType.SUPER_ADMIN,
+      superEmail,
+      superPassword,
+    );
 
   if (!email || !password) {
     return res.status(StatusCode.BAD_REQUEST).json({
@@ -105,41 +113,34 @@ export const login = asyncHandler(async (req, res) => {
   });
 });
 
-//--------------------------------------forget Password--------------------------
-export const forgetPassword = asyncHandler(async (req, res, next) => {
-  const { email, OTP, newPassword } = req.body;
+//--------------------------------------SEND RESET OTP---------------------------
+export const sendPasswordResetOtp = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+  const data = await authService.sendPasswordResetOtp(email);
 
-  const sql = "SELECT * FROM students WHERE email = ? AND OTP = ?";
-  pool.query(sql, [email, OTP], async (err, result) => {
-    if (err) {
-      return res.status(StatusCode.INTERNAL_SERVER_ERROR).send(err);
-    } else {
-      if (result.length === 0) {
-        return res
-          .status(StatusCode.NOT_FOUND)
-          .json({ message: "Invalid OTP" });
-      } else {
-        const { email } = result[0];
-        const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-        pool.query(
-          "UPDATE students SET password = ?, OTP = NULL WHERE email = ?",
-          [hashedPassword, email],
-          (err, result) => {
-            if (err) {
-              return res.status(StatusCode.INTERNAL_SERVER_ERROR).send(err);
-            } else {
-              return res
-                .status(StatusCode.OK)
-                .json({ message: "تم تغيير كلمة السر بنجاح" });
-            }
-          },
-        );
-      }
-    }
+  return res.status(StatusCode.OK).json({
+    success: true,
+    message: data.message,
   });
 });
 
+//--------------------------------------FORGET PASSWORD--------------------------
+export const resetPassword = asyncHandler(async (req, res) => {
+  const { email, OTP, newPassword } = req.body;
+
+  const data = await authService.resetPasswordWithOtp({
+    email,
+    otp: OTP,
+    newPassword,
+  });
+
+  return res.status(StatusCode.OK).json({
+    success: true,
+    message: data.message,
+  });
+});
+
+//--------------------------------------LOGOUT-----------------------------------
 export const logout = asyncHandler(async (req, res) => {
   let token;
   if (
@@ -150,6 +151,7 @@ export const logout = asyncHandler(async (req, res) => {
   } else if (req.cookies?.jwt) {
     token = req.cookies.jwt;
   }
+
   let decoded;
   if (token) {
     try {
@@ -158,12 +160,14 @@ export const logout = asyncHandler(async (req, res) => {
       throw new ApiError("Invalid or expired token", StatusCode.UNAUTHORIZED);
     }
   }
+
   await authService.logout({
     res,
     userType: decoded?.userType,
     userId: decoded?.id,
     clearCookieOptions: getClearCookieOptions(req),
   });
+
   return res.status(StatusCode.OK).json({
     success: true,
     message: "Logged out successfully",

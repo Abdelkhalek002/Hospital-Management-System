@@ -11,6 +11,11 @@ class UserRepo {
     const result = await queryOne(sql, [id]);
     return !!result;
   }
+  async findByEmail(table, email) {
+    const sql = `SELECT email, password, username FROM ${table} WHERE email = ? LIMIT 1`;
+    const result = await queryOne(sql, [email]);
+    return result;
+  }
 }
 
 export default UserRepo;
