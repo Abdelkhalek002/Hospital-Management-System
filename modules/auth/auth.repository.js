@@ -1,4 +1,4 @@
-import { query, queryOne, transaction } from "../../../config/db-helpers.js";
+import { query, queryOne, transaction } from "../../config/db-helpers.js";
 
 class AuthRepo {
   async findByEmailForAuth(table, email) {

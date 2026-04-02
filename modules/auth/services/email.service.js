@@ -8,7 +8,7 @@ const __dirname = path.dirname(__filename);
 
 import { signToken, verifyToken } from "./jwt.service.js";
 import dotenv from "dotenv";
-import AuthRepo from "../repositories/auth.repository.js";
+import AuthRepo from "../auth.repository.js";
 import { UserType } from "../../../utils/user-types.js";
 import { StatusCode } from "../../../utils/status-codes.js";
 dotenv.config();

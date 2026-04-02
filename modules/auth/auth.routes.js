@@ -2,7 +2,9 @@ import express from "express";
 const router = express.Router();
 
 import * as authController from "./auth.controller.js";
-import * as validator from "./auth.validator.js";
+import * as authValidator from "./auth.validator.js";
+import * as passwordResetController from "./password-reset/password-reset.controller.js";
+import * as passwordResetValidator from "./password-reset/password-reset.validator.js";
 import { activateEmail, confirmEmail } from "./services/email.service.js";
 import {
   uploadRegisterationFiles,
@@ -15,7 +17,7 @@ router
   .post(
     uploadRegisterationFiles,
     resizeFiles,
-    validator.validateSignup,
+    authValidator.validateSignup,
     authController.signup,
   );
 router.get("/activate/:token", activateEmail);
@@ -23,17 +25,17 @@ router.get("/activate/:token", activateEmail);
 router
   .post(
     "/forgetPassword",
-    validator.sendOtpValidator,
+    passwordResetValidator.forgetPasswordValidator,
     limiter,
-    authController.sendPasswordResetOtp,
+    passwordResetController.sendPasswordResetOtp,
   )
   .post(
     "/resetPassword",
-    validator.forgetPasswordValidator,
-    authController.resetPassword,
+    passwordResetValidator.resetPasswordValidator,
+    passwordResetController.resetPassword,
   )
-  .post("/login", validator.validateLogin, authController.login)
+  .post("/login", authValidator.validateLogin, authController.login)
   .post("/logout", authController.logout);
-router.get("/confirmEmail", confirmEmail);
+router.get("/confirmEmail/:token", confirmEmail);
 
 export default router;

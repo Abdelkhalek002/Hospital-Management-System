@@ -3,7 +3,7 @@ import asyncHandler from "express-async-handler";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 
-import * as authService from "./services/auth.service.js";
+import * as authService from "./auth.service.js";
 import { StatusCode } from "../../utils/status-codes.js";
 import { UserType } from "../../utils/user-types.js";
 import ApiError from "../../utils/api-error.js";
@@ -110,33 +110,6 @@ export const login = asyncHandler(async (req, res) => {
   return res.status(StatusCode.OK).json({
     success: true,
     token,
-  });
-});
-
-//--------------------------------------SEND RESET OTP---------------------------
-export const sendPasswordResetOtp = asyncHandler(async (req, res) => {
-  const { email } = req.body;
-  const data = await authService.sendPasswordResetOtp(email);
-
-  return res.status(StatusCode.OK).json({
-    success: true,
-    message: data.message,
-  });
-});
-
-//--------------------------------------FORGET PASSWORD--------------------------
-export const resetPassword = asyncHandler(async (req, res) => {
-  const { email, OTP, newPassword } = req.body;
-
-  const data = await authService.resetPasswordWithOtp({
-    email,
-    otp: OTP,
-    newPassword,
-  });
-
-  return res.status(StatusCode.OK).json({
-    success: true,
-    message: data.message,
   });
 });
 
