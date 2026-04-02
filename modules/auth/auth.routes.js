@@ -3,13 +3,12 @@ const router = express.Router();
 
 import * as authController from "./auth.controller.js";
 import * as validator from "./auth.validator.js";
-import { activateEmail } from "./services/email.service.js";
+import { activateEmail, confirmEmail } from "./services/email.service.js";
 import {
   uploadRegisterationFiles,
   resizeFiles,
 } from "./services/file-upload.service.js";
 import limiter from "../../services/rate-limit.service.js";
-import { confirmEmail } from "./services/super-admin-email.service.js";
 
 router
   .route("/signUp")
