@@ -49,11 +49,6 @@ class StudentRepo {
 
     return result;
   }
-  async toggleStatus(id) {
-    const sql = `UPDATE students SET is_active = 1 WHERE student_id = ?`;
-    const result = await queryOne(sql, [id]);
-    return !!result;
-  }
 }
 
 export default StudentRepo;

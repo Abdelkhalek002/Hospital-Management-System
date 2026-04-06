@@ -125,10 +125,7 @@ const ensureValidJpegContent = (file, fieldName) => {
 const createImmutableStudentKey = (requestBody) => {
   const nationalId = String(requestBody?.national_id ?? "").trim();
   if (!nationalId) {
-    throw new ApiError(
-      "National ID is required to build a student upload key",
-      StatusCode.BAD_REQUEST,
-    );
+    throw new ApiError("National ID is required", StatusCode.BAD_REQUEST);
   }
 
   return createHash("sha256").update(nationalId).digest("hex").slice(0, 12);

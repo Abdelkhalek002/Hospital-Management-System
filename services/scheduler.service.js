@@ -1,13 +1,13 @@
 import { CronJob } from "cron";
+import AuthRepo from "../modules/auth/auth.repository.js";
 import db from "../config/db.js";
 
-export const deActivateUser = () => {
+export const deActivateUser = async (email) => {
   new CronJob(
     "0 0 1 1 *",
     async () => {
       try {
-        const sql = "UPDATE students SET verified = 0 WHERE verified = 1";
-        const result = await db.query(sql);
+        await new AuthRepo().deActivateEmail("students", email);
         console.log(
           `Account Deactivated⏳...Rows updated: ${result.affectedRows}`,
         );

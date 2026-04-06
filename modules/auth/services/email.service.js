@@ -55,7 +55,7 @@ export class Email {
   // send the actual email
   async send(template, subject) {
     // 1. Render HTML template
-    const html = await renderHTML(`${__dirname}/../views/${template}.html`, {
+    const html = await renderHTML(`${__dirname}/../html/${template}.html`, {
       firstName: this.firstName,
       url: this.url,
       otp: this.otp,
@@ -95,7 +95,7 @@ export const sendActivationMail = async (user) => {
 };
 export const activateEmail = asyncHandler(async (req, res) => {
   const { token } = req.params;
-  const html = await renderHTML(`${__dirname}/../views/activated.html`);
+  const html = await renderHTML(`${__dirname}/../html/activated.html`);
   // 1. verify token
   const decoded = await verifyToken(token, process.env.JWT_SECRET);
   // 2. activate email and save data into the database
@@ -116,7 +116,7 @@ export const sendConfirmationMail = async (user) => {
 
 export const confirmEmail = asyncHandler(async (req, res) => {
   const { token } = req.params;
-  const html = await renderHTML(`${__dirname}/../views/confirmed.html`);
+  const html = await renderHTML(`${__dirname}/../html/confirmed.html`);
   // 1. verify token
   const decoded = await verifyToken(token, process.env.JWT_SECRET);
   // 2. activate email and save data into the database

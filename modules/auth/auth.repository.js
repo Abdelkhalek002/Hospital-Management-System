@@ -11,6 +11,11 @@ class AuthRepo {
     const result = await queryOne(sql, [email]);
     return result;
   }
+  async deActivateEmail(table, email) {
+    const sql = `UPDATE ${table} SET verified = 0 WHERE email = ?`;
+    const result = await queryOne(sql, [email]);
+    return result;
+  }
 }
 
 export default AuthRepo;
