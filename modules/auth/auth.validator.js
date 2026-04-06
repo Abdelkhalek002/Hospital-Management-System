@@ -65,7 +65,7 @@ export const validateLogin = [
     .bail()
     .isEmail()
     .withMessage("invalid email")
-    .custom(customValidators.isAllowedEmail)
+    .custom(customValidators.isAllowedEmailForLogin)
     .withMessage("Email format is not allowed!"),
   body("password").notEmpty().withMessage("password is required").bail(),
   handleValidationErrors,

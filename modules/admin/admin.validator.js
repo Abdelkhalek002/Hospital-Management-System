@@ -19,22 +19,6 @@ export const addNewAdminValidator = [
   handleValidationErrors,
 ];
 
-export const addSuperAdminValidator = [
-  body("name").notEmpty().withMessage("Name is required"),
-  body("email")
-    .notEmpty()
-    .withMessage("email is required")
-    .isEmail()
-    .withMessage("email is not valid"),
-  body("password")
-    .notEmpty()
-    .withMessage("password is required")
-    .isLength({ min: 6 })
-    .withMessage("password must be at least 6 characters long"),
-  body("role").notEmpty().withMessage("role is required"),
-  handleValidationErrors,
-];
-
 export const updateAdminValidator = [
   body("userName").notEmpty().withMessage("userName is required"),
   body("email")

@@ -7,7 +7,6 @@ import {
   addNewAdminValidator,
   resetPasswordValidator,
   sendObservationValidator,
-  addSuperAdminValidator,
 } from "./admin.validator.js";
 
 import { Protect, allowedTo } from "../../middlewares/auth.middleware.js";
@@ -51,19 +50,6 @@ router
   .put(adminController.updateUserProfile)
   .delete(adminController.deleteUserProfile);
 
-router.patch(
-  "/userProfiles/:student_id/block",
-  Protect,
-  allowedTo(roles.SUPER_ADMIN, roles.SECOND_MANAGER, roles.COUNTER),
-  adminController.blockUser,
-);
-router.patch(
-  "/userProfiles/:student_id/unblock",
-  Protect,
-  allowedTo(roles.SUPER_ADMIN, roles.SECOND_MANAGER, roles.COUNTER),
-  adminController.unblockUser,
-);
-
 // ADMIN CRUD ROUTERS
 router
   .route("/")
@@ -73,10 +59,6 @@ router
     addNewAdminValidator,
     adminController.addNewAdmin,
   );
-
-router
-  .route("/add")
-  .post(Protect, addSuperAdminValidator, adminController.addSuperAdmin);
 
 router
   .route("/all")

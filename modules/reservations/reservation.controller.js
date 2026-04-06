@@ -682,7 +682,7 @@ export const getMyReservations = asyncHandler(async (req, res) => {
   });
 });
 
-//! Cancel req only if its not already accepted🥰
+//! Cancel req only if its not already accepted
 export const cancelRequest = asyncHandler(async (req, res) => {
   const { medicEx_id } = req.params;
   // Check if the medical examination exists

@@ -6,11 +6,14 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-import { signToken, verifyToken } from "./jwt.service.js";
+import {
+  signToken,
+  verifyToken,
+} from "../modules/auth/services/jwt.service.js";
 import dotenv from "dotenv";
-import AuthRepo from "../auth.repository.js";
-import { UserType } from "../../../utils/user-types.js";
-import { StatusCode } from "../../../utils/status-codes.js";
+import AuthRepo from "../modules/auth/auth.repository.js";
+import { UserType } from "../utils/user-types.js";
+import { StatusCode } from "../utils/status-codes.js";
 dotenv.config();
 
 const renderHTML = async (path, data) => {
@@ -55,12 +58,15 @@ export class Email {
   // send the actual email
   async send(template, subject) {
     // 1. Render HTML template
-    const html = await renderHTML(`${__dirname}/../html/${template}.html`, {
-      firstName: this.firstName,
-      url: this.url,
-      otp: this.otp,
-      subject,
-    });
+    const html = await renderHTML(
+      `${__dirname}/../services/html/${template}.html`,
+      {
+        firstName: this.firstName,
+        url: this.url,
+        otp: this.otp,
+        subject,
+      },
+    );
 
     // 2. Define email options
     const mailOptions = {
@@ -95,7 +101,7 @@ export const sendActivationMail = async (user) => {
 };
 export const activateEmail = asyncHandler(async (req, res) => {
   const { token } = req.params;
-  const html = await renderHTML(`${__dirname}/../html/activated.html`);
+  const html = await renderHTML(`${__dirname}/../services/html/activated.html`);
   // 1. verify token
   const decoded = await verifyToken(token, process.env.JWT_SECRET);
   // 2. activate email and save data into the database
@@ -116,7 +122,7 @@ export const sendConfirmationMail = async (user) => {
 
 export const confirmEmail = asyncHandler(async (req, res) => {
   const { token } = req.params;
-  const html = await renderHTML(`${__dirname}/../html/confirmed.html`);
+  const html = await renderHTML(`${__dirname}/../services/html/confirmed.html`);
   // 1. verify token
   const decoded = await verifyToken(token, process.env.JWT_SECRET);
   // 2. activate email and save data into the database

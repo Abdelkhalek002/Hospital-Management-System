@@ -118,6 +118,7 @@ const Protect = asyncHandler(async (req, res, next) => {
       next();
     });
   }
+  next();
 });
 
 const allowedTo = (...roles) =>

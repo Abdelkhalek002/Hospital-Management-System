@@ -55,7 +55,7 @@ export const signup = asyncHandler(async (req, res) => {
   const data = await authService.signup(studentData);
 
   res.cookie("jwt", data.token, getCookieOptions(req));
-  return res.status(StatusCode.OK).json({
+  return res.status(StatusCode.CREATED).json({
     status: "success",
     message:
       "تم عمل البريد الالكتروني بنجاح برجاء تفقد البريد الالكتروني للتفعيل",

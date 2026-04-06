@@ -14,6 +14,7 @@ import userReservationRoute from "./modules/reservations/reservation-user.routes
 import adminReservationRoute from "./modules/reservations/reservation-admin.routes.js";
 import authRoute from "./modules/auth/auth.routes.js";
 import adminRoute from "./modules/admin/admin.routes.js";
+import superAdminRoute from "./modules/super-admin/super-admin.routes.js";
 import userProfileRoute from "./modules/users/user.routes.js";
 import systemDataRoutes from "./modules/system-data/routes/index.js";
 
@@ -50,6 +51,7 @@ app.use("/api/v1/auth/", authRoute); // DONE
 app.use("/api/v1/Myreservations/", userReservationRoute);
 app.use("/api/v1/reservations/", adminReservationRoute);
 app.use("/api/v1/admin/", adminRoute);
+app.use("/api/v1/super/", superAdminRoute);
 app.use("/api/v1/password/", userSecRoute);
 app.use("/api/v1/myProfile/", userProfileRoute);
 app.use("/api/v1/sysdata/", systemDataRoutes);

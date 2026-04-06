@@ -3,7 +3,7 @@ import crypto from "crypto";
 
 import UserRepo from "../../../repositories/user.repository.js";
 import PasswordResetRepo from "./password-reset.repository.js";
-import * as emailService from "../services/email.service.js";
+import * as emailService from "../../../services/email.service.js";
 
 // IMPORT UTILITIES
 import ApiError from "../../../utils/api-error.js";
