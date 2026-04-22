@@ -11,7 +11,7 @@ import {
   verifyToken,
 } from "../modules/auth/services/jwt.service.js";
 import dotenv from "dotenv";
-import AuthRepo from "../modules/auth/auth.repository.js";
+import Auth from "../modules/auth/auth.repository.js";
 import { UserType } from "../utils/user-types.js";
 import { StatusCode } from "../utils/status-codes.js";
 dotenv.config();
@@ -105,7 +105,7 @@ export const activateEmail = asyncHandler(async (req, res) => {
   // 1. verify token
   const decoded = await verifyToken(token, process.env.JWT_SECRET);
   // 2. activate email and save data into the database
-  await new AuthRepo().activateEmail(UserType.STUDENT, decoded.email);
+  await new Auth().activateEmail(UserType.STUDENT, decoded.email);
   // 3. send response
   return res.status(StatusCode.OK).send(html);
 });
@@ -126,7 +126,7 @@ export const confirmEmail = asyncHandler(async (req, res) => {
   // 1. verify token
   const decoded = await verifyToken(token, process.env.JWT_SECRET);
   // 2. activate email and save data into the database
-  await new AuthRepo().confirmEmail(UserType.SUPER_ADMIN, decoded.email);
+  await new Auth().confirmEmail(UserType.SUPER_ADMIN, decoded.email);
   // 3. send response
   return res.status(StatusCode.OK).send(html);
 });

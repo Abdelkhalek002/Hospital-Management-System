@@ -2,7 +2,7 @@ import express from "express";
 import * as controller from "../controllers/governorates.js";
 import limiter from "../../../services/rate-limit.service.js";
 import {
-  Protect,
+  protect,
   allowedToUser,
 } from "../../../middlewares/auth.middleware.js";
 import { roles } from "../../../utils/roles.js";
@@ -12,11 +12,11 @@ const router = express.Router();
 router
   .route("/governorates")
   .get(controller.GetAllGovernorates)
-  .post(Protect, limiter, controller.createGovernorate);
+  .post(protect, limiter, controller.createGovernorate);
 
 router
   .route("/governorates/:gov_id")
-  .put(Protect, limiter, controller.updateGovernorate)
-  .delete(Protect, limiter, controller.deleteGovernorate);
+  .put(protect, limiter, controller.updateGovernorate)
+  .delete(protect, limiter, controller.deleteGovernorate);
 
 export default router;

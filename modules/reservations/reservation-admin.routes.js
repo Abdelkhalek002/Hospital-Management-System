@@ -3,18 +3,18 @@ const router = express.Router();
 
 import * as reservationController from "./reservation.controller.js";
 
-import { Protect, allowedTo } from "../../middlewares/auth.middleware.js";
+import { protect, allowedTo } from "../../middlewares/auth.middleware.js";
 import { roles } from "../../utils/roles.js";
 
 router
   .route("/")
   .post(
-    Protect,
+    protect,
     allowedTo(roles.SUPER_ADMIN, roles.COUNTER),
     reservationController.adminCreateRequest,
   )
   .get(
-    Protect,
+    protect,
     allowedTo(roles.SUPER_ADMIN, roles.COUNTER, roles.OBSERVER),
     reservationController.adminGetAllReservations,
   );
@@ -22,20 +22,20 @@ router
 router
   .route("/emergency")
   .get(
-    Protect,
+    protect,
     allowedTo(roles.SUPER_ADMIN, roles.COUNTER),
     reservationController.adminGetAllEmergencyReservations,
   );
 router
   .route("/:emergencyUser_id")
   .put(
-    Protect,
+    protect,
     allowedTo(roles.SUPER_ADMIN, roles.COUNTER),
     reservationController.adminUpdateRequest,
   )
   .get(reservationController.adminViewRequest)
   .delete(
-    Protect,
+    protect,
     allowedTo(roles.SUPER_ADMIN, roles.COUNTER),
     reservationController.adminDeleteRequest,
   );

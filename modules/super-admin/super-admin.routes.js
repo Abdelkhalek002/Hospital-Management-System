@@ -1,11 +1,39 @@
 import express from "express";
 import * as controller from "./super-admin.controller.js";
 import { createAdminValidator } from "./super-admin.validator.js";
-import { Protect, allowedTo } from "../../middlewares/auth.middleware.js";
+import {
+  protect,
+  allowedToSuper,
+  allowedToUser,
+} from "../../middlewares/auth.middleware.js";
+import { UserType } from "../../utils/user-types.js";
 import { roles } from "../../utils/roles.js";
 const router = express.Router();
 
-router.use(Protect, allowedTo(roles.SUPER_ADMIN));
+router.use(protect, allowedToSuper);
 
-router.route("/add").post(createAdminValidator, controller.createSuperAdmin);
+router
+  .route("/addSuper")
+  .post(createAdminValidator, controller.createSuperAdmin);
+router.route("/addAdmin").post(controller.addNewAdmin);
+
+router.route("/all").get(controller.getAllAdmin);
+
+router
+  .route("/:user_id")
+  .get(controller.viewAdmin)
+  .put(controller.updateAdmin)
+  .delete(controller.deleteAdmin);
+
+// ADMIN LOG ROUTERS
+router
+  .route("/logs")
+  .get(controller.getAdminLogs)
+  .delete(controller.clearHistory);
+
+router
+  .route("/logs/:admin_id")
+  .get(controller.getSpecificAdminLogs)
+  .delete(controller.clearSpecificHistory);
+
 export default router;

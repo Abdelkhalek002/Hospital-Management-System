@@ -1,6 +1,6 @@
 import { query, queryOne } from "../../config/db-helpers.js";
 import { roles } from "../../utils/roles.js";
-class SuperAdminRepo {
+class SuperAdmin {
   async create(data) {
     const sql = `INSERT INTO super_admins (username, email, password, role) VALUES (?, ?, ?, ?)`;
     const result = await query(sql, [
@@ -23,4 +23,4 @@ class SuperAdminRepo {
   }
 }
 
-export default SuperAdminRepo;
+export default SuperAdmin;

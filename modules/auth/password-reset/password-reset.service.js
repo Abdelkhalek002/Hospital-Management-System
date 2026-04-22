@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 
-import UserRepo from "../../../repositories/user.repository.js";
+import User from "../../../repositories/user.repository.js";
 import PasswordResetRepo from "./password-reset.repository.js";
 import * as emailService from "../../../services/email.service.js";
 
@@ -32,7 +32,7 @@ export const sendPasswordResetOtp = async (email) => {
   await passwordResetRepo.cleanupConsumedAndExpiredOtps();
 
   // 2. check if email exist
-  const student = await new UserRepo().findByEmail(UserType.STUDENT, email);
+  const student = await new User().findByEmail(UserType.STUDENT, email);
   if (!student) {
     throw new ApiError("المستخدم غير موجود", StatusCode.NOT_FOUND);
   }
@@ -83,7 +83,7 @@ export const resetPasswordWithOtp = async ({ email, otp, newPassword }) => {
   otp = String(otp);
 
   // 1. check if email exist
-  const student = await new UserRepo().findByEmail(UserType.STUDENT, email);
+  const student = await new User().findByEmail(UserType.STUDENT, email);
   if (!student) {
     throw new ApiError("User not found", StatusCode.NOT_FOUND);
   }

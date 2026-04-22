@@ -94,7 +94,7 @@ export const login = asyncHandler(async (req, res) => {
 
   if (email.endsWith("@hsh.io")) {
     loginFn = superAdminLogin;
-  } else if (email.includes("@admin.com")) {
+  } else if (email.includes("@admin.io")) {
     loginFn = adminLogin;
   } else if (email.endsWith("@fci.helwan.edu.eg")) {
     loginFn = studentLogin;

@@ -1,6 +1,6 @@
 import { query, queryOne, transaction } from "../config/db-helpers.js";
 
-class StudentRepo {
+class Student {
   async verfied(email) {
     const sql = `SELECT verified FROM students WHERE email = ?`;
     const result = await queryOne(sql, [email]);
@@ -51,4 +51,4 @@ class StudentRepo {
   }
 }
 
-export default StudentRepo;
+export default Student;

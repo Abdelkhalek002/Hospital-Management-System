@@ -1,5 +1,5 @@
 // Importing dependencies
-import StudentRepo from "../repositories/student.repository.js";
+import Student from "../repositories/student.repository.js";
 
 // To check if the code is in Arabic or not
 export const isArabic = (value) => {
@@ -14,8 +14,8 @@ export const isValidDate = (value) => {
 
 // To check if the account is verified
 export const isVerified = async (email) => {
-  const studentRepo = new StudentRepo();
-  return studentRepo.verfied(email);
+  const Student = new Student();
+  return Student.verfied(email);
 };
 
 // To validate Helwan University account

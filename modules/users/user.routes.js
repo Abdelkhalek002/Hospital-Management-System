@@ -2,15 +2,15 @@ import express from "express";
 
 import * as userController from "./user.controller.js";
 import { updateUserProfileValidator } from "./user.validator.js";
-import { Protect } from "../../middlewares/auth.middleware.js";
+import { protect } from "../../middlewares/auth.middleware.js";
 
 const router = express.Router();
 router
   .route("/:student_id")
-  .get(Protect, userController.getUserProfile)
-  .put(Protect, updateUserProfileValidator, userController.updateUserProfile)
+  .get(protect, userController.getUserProfile)
+  .put(protect, updateUserProfileValidator, userController.updateUserProfile)
   .patch(
-    Protect,
+    protect,
     userController.uploadUserImage,
     userController.resizeImage,
     userController.updateProfilePhoto,

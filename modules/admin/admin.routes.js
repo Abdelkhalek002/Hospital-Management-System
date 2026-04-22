@@ -9,38 +9,26 @@ import {
   sendObservationValidator,
 } from "./admin.validator.js";
 
-import { Protect, allowedTo } from "../../middlewares/auth.middleware.js";
+import { protect, allowedTo } from "../../middlewares/auth.middleware.js";
 import limiter from "../../services/rate-limit.service.js";
 import { roles } from "../../utils/roles.js";
 
 //Statistics
-router
-  .route("/statistics")
-  .get(Protect, allowedTo(roles.SUPER_ADMIN), adminController.getStatistics);
+router.route("/statistics").get(adminController.getStatistics);
+
 router
   .route("/resbymonth")
   .get(
-    Protect,
+    protect,
     allowedTo(roles.SUPER_ADMIN),
     adminController.getReservationsByMonth,
   );
-
-// ADMIN LOG ROUTERS
-router
-  .route("/logs")
-  .get(Protect, allowedTo(roles.SUPER_ADMIN), adminController.getAdminLogs)
-  .delete(Protect, allowedTo(roles.SUPER_ADMIN), adminController.clearHistory);
-
-router
-  .route("/logs/:admin_id")
-  .get(adminController.getSpecificAdminLogs)
-  .delete(adminController.clearSpecificHistory);
 
 // GET ALL USER PROFILES
 router
   .route("/userProfiles")
   .get(
-    Protect,
+    protect,
     allowedTo(roles.SUPER_ADMIN, roles.COUNTER),
     adminController.getAllUserProfiles,
   );
@@ -50,26 +38,10 @@ router
   .put(adminController.updateUserProfile)
   .delete(adminController.deleteUserProfile);
 
-// ADMIN CRUD ROUTERS
-router
-  .route("/")
-  .post(
-    Protect,
-    allowedTo(roles.SUPER_ADMIN),
-    addNewAdminValidator,
-    adminController.addNewAdmin,
-  );
-
-router
-  .route("/all")
-  .get(Protect, allowedTo(roles.SUPER_ADMIN), adminController.getAllAdmin);
-
 router
   .route("/:user_id")
-  .get(adminController.viewAdmin)
-  .put(Protect, allowedTo(roles.SUPER_ADMIN), adminController.updateAdmin)
   .patch(
-    Protect,
+    protect,
     allowedTo(
       roles.COUNTER,
       roles.TRANSFER_CLERK,
@@ -80,27 +52,26 @@ router
     resetPasswordValidator,
     adminController.resetPassword,
   );
-//.delete(Protect, allowedTo(roles.SUPER_ADMIN), adminController.deleteAdmin);
 
 router.get("/filter", adminController.filterStudents);
 
 // SYSTEM FEATURES ROUTERS
 // TODO: Add allowedTo(roles) to each route
-router.route("/search").post(Protect, adminController.searchStudent);
-router.route("/advancedSearch").post(Protect, adminController.advancedSearch);
+router.route("/search").post(protect, adminController.searchStudent);
+router.route("/advancedSearch").post(protect, adminController.advancedSearch);
 
 // ADMIN MAIN ROUTERS
 router
   .route("/acceptOrDecline/:id")
   .patch(
-    Protect,
+    protect,
     allowedTo(roles.SUPER_ADMIN, roles.COUNTER),
     adminController.acceptOrDecline,
   );
 router
   .route("/transfer")
   .post(
-    Protect,
+    protect,
     allowedTo(
       roles.TRANSFER_CLERK,
       roles.SUPER_ADMIN,
@@ -112,7 +83,7 @@ router
 router
   .route("/transferdata")
   .post(
-    Protect,
+    protect,
     allowedTo(
       roles.SUPER_ADMIN,
       roles.BADR_HOSPITAL_ADMIN,
@@ -123,7 +94,7 @@ router
 router
   .route("/transfer/:transfer_id")
   .put(
-    Protect,
+    protect,
     allowedTo(
       roles.TRANSFER_CLERK,
       roles.SUPER_ADMIN,
@@ -134,7 +105,7 @@ router
 router
   .route("/:student_id")
   .post(
-    Protect,
+    protect,
     allowedTo(roles.SUPER_ADMIN, roles.COUNTER, roles.OBSERVER),
     sendObservationValidator,
     adminController.sendObservation,

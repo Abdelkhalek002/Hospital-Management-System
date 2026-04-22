@@ -1,6 +1,6 @@
 import { query, queryOne, transaction } from "../../config/db-helpers.js";
 
-class AuthRepo {
+class Auth {
   async findByEmailForAuth(table, email) {
     const sql = `SELECT username, email, password, id FROM ${table} WHERE email = ?`;
     const result = await queryOne(sql, [email]);
@@ -18,4 +18,4 @@ class AuthRepo {
   }
 }
 
-export default AuthRepo;
+export default Auth;

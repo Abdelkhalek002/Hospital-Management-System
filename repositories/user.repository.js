@@ -1,6 +1,6 @@
 import { query, queryOne, transaction } from "../config/db-helpers.js";
 
-class UserRepo {
+class User {
   async setOnline(table, id) {
     const sql = `UPDATE ${table} SET is_active = 1 WHERE id = ?`;
     const result = await queryOne(sql, [id]);
@@ -18,4 +18,4 @@ class UserRepo {
   }
 }
 
-export default UserRepo;
+export default User;
