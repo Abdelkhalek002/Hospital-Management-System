@@ -41,164 +41,106 @@ export const transfer = async (data) => {
   return result;
 };
 
-export const getTransfered = async () => {
-  const page = parseInt(req.query.page, 10) || 1;
-  const limit = parseInt(req.query.limit, 10) || 10;
-  const searchKey = req.query.searchKey || "";
+export const getTransferred = async ({ page, limit, searchKey }) => {
+  // 1. intialize search param
   const offset = (page - 1) * limit;
-
   const searchParam = `%${searchKey}%`;
+  // 2. database WHERE
+  const whereClause = `
+    medical_examinations.status = "مقبول" AND (
+      medical_examinations.exam_type LIKE ? OR 
+      medical_examinations.status LIKE ? OR 
+      students.username LIKE ? OR 
+      students.email LIKE ? OR 
+      students.national_id LIKE ? OR 
+      students.phone_number LIKE ? OR
+      clinics.clinic_name LIKE ? OR
+      levels.level_name LIKE ? OR
+      transfers.transfer_reason LIKE ? OR
+      transfers.notes LIKE ? OR
+      external_hospitals.hospital_name LIKE ?
+    )
+  `;
+
+  // 3. params
+  const params = Array(11).fill(searchParam);
+
   const countSql = `
     SELECT COUNT(*) AS count 
     FROM medical_examinations 
-    LEFT JOIN students ON medical_examinations.student_id = students.student_id 
-    LEFT JOIN clinics ON medical_examinations.clinic_id = clinics.clinic_id
-    LEFT JOIN levels ON students.level_id = levels.level_id
-    LEFT JOIN transfers ON medical_examinations.medicEx_id = transfers.medicEx_id
-    LEFT JOIN external_hospitals ON transfers.exHosp_id = external_hospitals.exHosp_id
-    WHERE 
-      medical_examinations.status = "مقبول" AND (
-        medical_examinations.examType LIKE ? OR 
-        medical_examinations.status LIKE ? OR 
-        students.userName LIKE ? OR 
-        students.email LIKE ? OR 
-        students.national_id LIKE ? OR 
-        students.nationality_id LIKE ? OR 
-        students.level_id LIKE ? OR 
-        students.gov_id LIKE ? OR 
-        students.faculty_id LIKE ? OR 
-        students.phone_number LIKE ? OR
-        clinics.clinicName LIKE ? OR
-        levels.levelName LIKE ? OR
-        transfers.transferReason LIKE ? OR
-        transfers.notes LIKE ? OR
-        external_hospitals.hospName LIKE ?
-      )
+    LEFT JOIN students ON medical_examinations.student_id = students.id 
+    LEFT JOIN clinics ON medical_examinations.clinic_id = clinics.id
+    LEFT JOIN levels ON students.level_id = levels.id
+    LEFT JOIN transfers ON transfers.medical_exam_id = medical_examinations.id 
+    LEFT JOIN external_hospitals ON transfers.hospital_id = external_hospitals.id
+    WHERE ${whereClause}
   `;
 
-  const sql = `
+  const dataSql = `
     SELECT 
       medical_examinations.*,  
-      clinics.clinicName AS clinic_name, 
-      levels.levelName AS level_name,
-      students.userName AS student_name,
+      clinics.clinic_name AS clinic_name, 
+      levels.level_name AS level_name,
+      students.username AS student_name,
       students.user_image_file,
       students.national_id_file AS national_id_img,
       students.fees_file AS fees_file,
       students.email AS student_email,
       students.national_id AS national_id,
-      transfers.transfer_id AS transfer_id,
-      external_hospitals.hospName AS transfered_to,
-      transfers.transferReason,
+      transfers.id AS transfer_id,
+      external_hospitals.hospital_name AS transfered_to,
+      transfers.transfer_reason,
       transfers.notes
     FROM 
       medical_examinations 
       LEFT JOIN clinics ON medical_examinations.clinic_id = clinics.clinic_id
       LEFT JOIN students ON medical_examinations.student_id = students.student_id
       LEFT JOIN levels ON students.level_id = levels.level_id
-      LEFT JOIN transfers ON medical_examinations.medicEx_id = transfers.medicEx_id
-      LEFT JOIN external_hospitals ON transfers.exHosp_id = external_hospitals.exHosp_id
-    WHERE (
-        medical_examinations.examType LIKE ? OR 
-        medical_examinations.status LIKE ? OR 
-        students.userName LIKE ? OR 
-        students.email LIKE ? OR 
-        students.national_id LIKE ? OR 
-        students.nationality_id LIKE ? OR 
-        students.level_id LIKE ? OR 
-        students.gov_id LIKE ? OR 
-        students.faculty_id LIKE ? OR 
-        students.phone_number LIKE ? OR
-        clinics.clinicName LIKE ? OR
-        levels.levelName LIKE ? OR
-        transfers.transferReason LIKE ? OR
-        transfers.notes LIKE ? OR
-        external_hospitals.hospName LIKE ?
-      )
+      LEFT JOIN transfers ON transfers.medical_exam_id = medical_examinations.id
+      LEFT JOIN external_hospitals ON transfers.hospital_id = external_hospitals.id
+    WHERE ${whereClause}
     ORDER BY
-      medical_examinations.medicEx_id DESC
+      medical_examinations.id DESC
     LIMIT ? OFFSET ?
   `;
 
-  // Get the total count of records matching the search criteria
-  db.query(
-    countSql,
-    [
-      searchParam,
-      searchParam,
-      searchParam,
-      searchParam,
-      searchParam,
-      searchParam,
-      searchParam,
-      searchParam,
-      searchParam,
-      searchParam,
-      searchParam,
-      searchParam,
-      searchParam,
-      searchParam,
-      searchParam,
-    ],
-    (err, countResults) => {
-      if (err) {
-        console.error("Error fetching count of examinations:", err);
+  // 4. Get the total count of records matching the search criteria
+  db.query(countSql, [params], (err, countResults) => {
+    if (err) {
+      console.error("Error fetching count of examinations:", err);
+      return res.status(500).json({ error: "Internal Server Error" });
+    }
+
+    const totalCount = countResults[0].count;
+    const totalPages = Math.ceil(totalCount / limit);
+
+    // Check if totalCount is empty
+    if (!totalCount) {
+      return res.status(404).json({ msg: "No examinations found" });
+    }
+
+    // Get the paginated results with search criteria
+    db.query(dataSql, [...params, limit, offset], (error, results) => {
+      if (error) {
+        console.error("Error fetching examination data:", error);
         return res.status(500).json({ error: "Internal Server Error" });
       }
 
-      const totalCount = countResults[0].count;
-      const totalPages = Math.ceil(totalCount / limit);
+      // Converting the time-zone to Cairo time-zone
+      results.forEach((result) => {
+        result.date = new Date(result.date).toLocaleString("en-US", {
+          timeZone: "Africa/Cairo",
+        });
+      });
 
-      // Check if totalCount is empty
-      if (!totalCount) {
-        return res.status(404).json({ msg: "No examinations found" });
-      }
-
-      // Get the paginated results with search criteria
-      db.query(
-        sql,
-        [
-          searchParam,
-          searchParam,
-          searchParam,
-          searchParam,
-          searchParam,
-          searchParam,
-          searchParam,
-          searchParam,
-          searchParam,
-          searchParam,
-          searchParam,
-          searchParam,
-          searchParam,
-          searchParam,
-          searchParam,
-          limit,
-          offset,
-        ],
-        (error, results) => {
-          if (error) {
-            console.error("Error fetching examination data:", error);
-            return res.status(500).json({ error: "Internal Server Error" });
-          }
-
-          // Converting the time-zone to Cairo time-zone
-          results.forEach((result) => {
-            result.date = new Date(result.date).toLocaleString("en-US", {
-              timeZone: "Africa/Cairo",
-            });
-          });
-
-          // Examinations found, return them
-          res.status(200).json({
-            totalPages,
-            currentPage: page,
-            data: results,
-          });
-        },
-      );
-    },
-  );
+      // Examinations found, return them
+      res.status(200).json({
+        totalPages,
+        currentPage: page,
+        data: results,
+      });
+    });
+  });
 };
 
 export const updateTransfer = async () => {

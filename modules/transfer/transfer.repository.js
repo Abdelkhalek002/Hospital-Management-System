@@ -17,6 +17,7 @@ class Transfer {
     ]);
     return result;
   }
+  async index() {}
 }
 
 export default Transfer;

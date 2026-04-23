@@ -37,7 +37,27 @@ export const transfer = asyncHandler(async (req, res) => {
 });
 
 // get all transfered
-export const getTransfered = asyncHandler(async (req, res) => {});
+export const getTransferred = asyncHandler(async (req, res) => {
+  // 1. get page, limit, searchKey from req.query
+  const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+  const limit = Math.min(parseInt(req.query.limit, 10) || 10, 100);
+  const searchKey = req.query.searchKey || "";
+
+  // 2. call the service
+  const result = await service.getTransferred({ page, limit, searchKey });
+  if (!result.totalCount) {
+    return res
+      .status(StatusCode.NOT_FOUND)
+      .json({ msg: "No examinations found" });
+  }
+
+  // 3. send response
+  return res.status(StatusCode.OK).json({
+    totalPages: result.totalPages,
+    currentPage: page,
+    data: result.data,
+  });
+});
 
 // update transfer
 export const updateTransfer = asyncHandler(async (req, res) => {});
