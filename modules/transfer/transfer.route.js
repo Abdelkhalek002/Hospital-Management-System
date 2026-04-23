@@ -13,12 +13,10 @@ router
     controller.transfer,
   );
 
-router
-  .route("/index")
-  .post(
-    authMiddleware.allowedTo(roles.BADR_HOSPITAL_ADMIN, roles.TRANSFER_CLERK),
-    controller.getTransferred,
-  );
+router.route("/index").post(
+  //authMiddleware.allowedTo(roles.BADR_HOSPITAL_ADMIN, roles.TRANSFER_CLERK),
+  controller.getTransferred,
+);
 router
   .route("/:transfer_id")
   .put(

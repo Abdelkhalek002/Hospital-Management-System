@@ -243,7 +243,7 @@ export const adminGetAllReservations = asyncHandler(async (req, res) => {
           LEFT JOIN clinics ON medical_examinations.clinic_id = clinics.clinic_id
           LEFT JOIN students ON medical_examinations.student_id = students.student_id
           LEFT JOIN levels ON students.level_id = levels.level_id
-          LEFT JOIN transfers ON medical_examinations.medicEx_id = transfers.medicEx_id
+          LEFT JOIN transfers ON medical_examinations.id = transfers.medicEx_id
           LEFT JOIN external_hospitals ON transfers.exHosp_id = external_hospitals.exHosp_id
 
 
@@ -261,7 +261,7 @@ export const adminGetAllReservations = asyncHandler(async (req, res) => {
           OR clinics.clinicName LIKE ?
           OR levels.levelName LIKE ?
       ORDER BY
-          medical_examinations.medicEx_id DESC
+          medical_examinations.id DESC
       LIMIT ? OFFSET ?
   `;
   // Get the total count of records matching the search criteria
@@ -589,7 +589,7 @@ export const viewRequest = asyncHandler(async (req, res) => {
       medical_examinations 
       LEFT JOIN clinics ON medical_examinations.clinic_id = clinics.clinic_id
     WHERE 
-      medical_examinations.medicEx_id = ?`;
+      medical_examinations.id = ?`;
 
   // Check if medical exam exists
   db.query(sql, [medicEx_id], (error, results) => {
@@ -643,13 +643,13 @@ export const getMyReservations = asyncHandler(async (req, res) => {
         medical_examinations 
         LEFT JOIN clinics ON medical_examinations.clinic_id = clinics.clinic_id
         LEFT JOIN students ON medical_examinations.student_id = students.student_id
-        LEFT JOIN transfers ON medical_examinations.medicEx_id = transfers.medicEx_id
+        LEFT JOIN transfers ON medical_examinations.id = transfers.medicEx_id
         LEFT JOIN external_hospitals ON transfers.exHosp_id = external_hospitals.exHosp_id
 
       WHERE 
         medical_examinations.student_id = ?
         ORDER BY
-        medical_examinations.medicEx_id DESC
+        medical_examinations.id DESC
       LIMIT ? OFFSET ?`;
 
     // Execute the query

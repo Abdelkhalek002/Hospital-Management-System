@@ -102,7 +102,7 @@ export const getReservationsByMonth = asyncHandler(async (req, res) => {
         WHEN 11 THEN 'November'
         WHEN 12 THEN 'December'
       END AS month_name, 
-      COALESCE(COUNT(medical_examinations.medicEx_id), 0) AS reservationsCount
+      COALESCE(COUNT(medical_examinations.id), 0) AS reservationsCount
     FROM Months
     LEFT JOIN medical_examinations ON MONTH(medical_examinations.date) = Months.month AND YEAR(medical_examinations.date) = YEAR(CURDATE())
     GROUP BY Months.month;
@@ -608,7 +608,7 @@ export const advancedSearch = asyncHandler(async (req, res) => {
   }
   query += " " + conditions.join(" AND ");
 
-  query += " ORDER BY medical_examinations.medicEx_id DESC";
+  query += " ORDER BY medical_examinations.id DESC";
 
   // Pagination
   const page = parseInt(req.query.page, 10) || 1;
