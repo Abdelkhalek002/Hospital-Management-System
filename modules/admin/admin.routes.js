@@ -2,6 +2,7 @@ import express from "express";
 const router = express.Router();
 
 import * as adminController from "./admin.controller.js";
+import * as transferController from "./submodules/transfer/transfer.controller.js";
 
 import {
   addNewAdminValidator,
@@ -9,26 +10,27 @@ import {
   sendObservationValidator,
 } from "./admin.validator.js";
 
-import { protect, allowedTo } from "../../middlewares/auth.middleware.js";
+import {
+  protect,
+  allowedTo,
+  allowedToSuper,
+} from "../../middlewares/auth.middleware.js";
 import limiter from "../../services/rate-limit.service.js";
 import { roles } from "../../utils/roles.js";
+
+router.use(protect);
 
 //Statistics
 router.route("/statistics").get(adminController.getStatistics);
 
 router
   .route("/resbymonth")
-  .get(
-    protect,
-    allowedTo(roles.SUPER_ADMIN),
-    adminController.getReservationsByMonth,
-  );
+  .get(allowedTo(roles.SUPER_ADMIN), adminController.getReservationsByMonth);
 
 // GET ALL USER PROFILES
 router
   .route("/userProfiles")
   .get(
-    protect,
     allowedTo(roles.SUPER_ADMIN, roles.COUNTER),
     adminController.getAllUserProfiles,
   );
@@ -41,7 +43,6 @@ router
 router
   .route("/:user_id")
   .patch(
-    protect,
     allowedTo(
       roles.COUNTER,
       roles.TRANSFER_CLERK,
@@ -57,55 +58,45 @@ router.get("/filter", adminController.filterStudents);
 
 // SYSTEM FEATURES ROUTERS
 // TODO: Add allowedTo(roles) to each route
-router.route("/search").post(protect, adminController.searchStudent);
-router.route("/advancedSearch").post(protect, adminController.advancedSearch);
+router.route("/search").post(adminController.searchStudent);
+router.route("/advancedSearch").post(adminController.advancedSearch);
 
 // ADMIN MAIN ROUTERS
 router
   .route("/acceptOrDecline/:id")
   .patch(
-    protect,
     allowedTo(roles.SUPER_ADMIN, roles.COUNTER),
     adminController.acceptOrDecline,
   );
-router
-  .route("/transfer")
-  .post(
-    protect,
-    allowedTo(
-      roles.TRANSFER_CLERK,
-      roles.SUPER_ADMIN,
-      roles.BADR_HOSPITAL_ADMIN,
-    ),
-    adminController.transfer,
-  );
+router.route("/transfer").post(
+  //allowedTo(roles.TRANSFER_CLERK, roles.BADR_HOSPITAL_ADMIN),
+  allowedToSuper,
+  transferController.transfer,
+);
 
 router
   .route("/transferdata")
   .post(
-    protect,
     allowedTo(
       roles.SUPER_ADMIN,
       roles.BADR_HOSPITAL_ADMIN,
       roles.TRANSFER_CLERK,
     ),
-    adminController.getTransfered,
+    transferController.getTransfered,
   );
 router
   .route("/transfer/:transfer_id")
   .put(
-    protect,
     allowedTo(
       roles.TRANSFER_CLERK,
       roles.SUPER_ADMIN,
       roles.BADR_HOSPITAL_ADMIN,
     ),
-    adminController.updateTransfer,
+    transferController.updateTransfer,
   );
 router
   .route("/:student_id")
   .post(
-    protect,
     allowedTo(roles.SUPER_ADMIN, roles.COUNTER, roles.OBSERVER),
     sendObservationValidator,
     adminController.sendObservation,

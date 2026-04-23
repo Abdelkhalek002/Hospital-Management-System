@@ -10,8 +10,8 @@ import ApiError from "./utils/api-error.js";
 import globalError from "./middlewares/error.middleware.js";
 
 // ROUTES
-import userReservationRoute from "./modules/reservations/reservation-user.routes.js";
-import adminReservationRoute from "./modules/reservations/reservation-admin.routes.js";
+import userReservationRoute from "./modules/reservation/reservation-user.routes.js";
+import adminReservationRoute from "./modules/reservation/reservation-admin.routes.js";
 import authRoute from "./modules/auth/auth.routes.js";
 import adminRoute from "./modules/admin/admin.routes.js";
 import superAdminRoute from "./modules/super-admin/super-admin.routes.js";

@@ -2,17 +2,12 @@ import asyncHandler from "express-async-handler";
 import * as superAdminService from "./super-admin.service.js";
 import { auditLog } from "../../utils/audit-log.js";
 import { StatusCode } from "../../utils/status-codes.js";
-
+import { pick } from "../../utils/pick-from-body-request.js";
 import jwt from "jsonwebtoken";
 
 export const createSuperAdmin = asyncHandler(async (req, res) => {
   // 1. pick valid data only from req.body
   const allowedFields = ["username", "email", "password"];
-  const pick = (obj, fields) =>
-    fields.reduce((acc, field) => {
-      if (obj[field] !== undefined) acc[field] = obj[field];
-      return acc;
-    }, {});
   const data = pick(req.body, allowedFields);
 
   // 2. create super admin
@@ -28,9 +23,6 @@ export const createSuperAdmin = asyncHandler(async (req, res) => {
 //@route    POST  /api/v1/admin
 //@access   private
 export const addNewAdmin = asyncHandler(async (req, res) => {
-  // const token = req.headers.authorization?.split(" ")[1]; // Get token from "Bearer token"
-  // const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
   // 1. pick valid data only from req.body
   const allowedFields = ["username", "email", "password", "role"];
   const pick = (obj, fields) =>

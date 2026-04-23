@@ -6,6 +6,7 @@ import dotenv from "dotenv";
 import * as authService from "./auth.service.js";
 import { StatusCode } from "../../utils/status-codes.js";
 import { UserType } from "../../utils/user-types.js";
+import { pick } from "../../utils/pick-from-body-request.js";
 import ApiError from "../../utils/api-error.js";
 
 dotenv.config();
@@ -43,12 +44,6 @@ const allowedFields = [
   "national_id_file",
   "fees_file",
 ];
-
-const pick = (obj, fields) =>
-  fields.reduce((acc, field) => {
-    if (obj[field] !== undefined) acc[field] = obj[field];
-    return acc;
-  }, {});
 
 export const signup = asyncHandler(async (req, res) => {
   const studentData = pick(req.body, allowedFields);
