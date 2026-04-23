@@ -25,6 +25,16 @@ class Transfer extends Base {
       this.notes,
     ]);
   }
+  async update(id, data) {
+    const sql = `UPDATE transfers SET transfer_reason = ?, hospital_id = ?, notes = ?  WHERE id = ?`;
+    const result = await query(sql, [
+      data.transfer_reason ?? null,
+      data.hospital_id ?? null,
+      data.notes ?? null,
+      id,
+    ]);
+    return result;
+  }
 }
 
 export default Transfer;

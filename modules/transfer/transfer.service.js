@@ -58,51 +58,19 @@ export const getTransferred = async ({ page, limit, searchKey }) => {
   }
 };
 
-export const updateTransfer = async () => {
-  const { transfer_id } = req.params;
-  const { student_id, transferReason, notes, exHosp_id } = req.body;
-  const checkSql = "SELECT * FROM transfers WHERE transfer_id=?";
-  db.query(checkSql, [transfer_id], (checkErr, checkResult) => {
-    if (checkErr) {
-      return res.status(StatusCode.INTERNAL_SERVER_ERROR).send(checkErr);
-    }
-    if (checkResult.length === 0) {
-      return res
-        .status(StatusCode.NOT_FOUND)
-        .json({ error: "التحويل غير موجود" });
-    }
-    const updateSql =
-      "UPDATE transfers SET student_id=?,transferReason=?,notes=?,exHosp_id=? WHERE transfer_id=?";
-    db.query(
-      updateSql,
-      [student_id, transferReason, notes, exHosp_id, transfer_id],
-      (err, result) => {
-        if (err) {
-          return res.status(StatusCode.INTERNAL_SERVER_ERROR).send(err);
-        }
+export const updateTransfer = async (id, data) => {
+  try {
+    // 1. Check for transfer existence
+    const Exist = await new Transfer().existsByField("transfers", "id", id);
+    if (!Exist)
+      throw new ApiError("بيانات التحويل غير موجودة", StatusCode.NOT_FOUND);
 
-        // Audit log
-        const isSuperAdmin = req.user[0].role === roles.SUPER_ADMIN; // Check if the user is a super admin
-        const auditData = {
-          timestamp: new Date().toISOString(),
-          method: "تعديل تحويل طالب",
-          body: {
-            student_id,
-            transferReason,
-            notes,
-            exHosp_id,
-          },
-          admin_id: isSuperAdmin
-            ? req.user[0].superAdmin_id
-            : req.user[0].user_id,
-          adminName: isSuperAdmin ? req.user[0].name : req.user[0].userName,
-        };
-        insertAuditLog(auditData);
+    // 2. update transfer data
+    const updated = await new Transfer().update(id, data);
 
-        return res
-          .status(StatusCode.OK)
-          .json({ message: "تم تعديل التحويل بنجاح" });
-      },
-    );
-  });
+    return updated;
+  } catch (error) {
+    console.error("Update Transfer service error:", error);
+    throw new ApiError("Failed to update transfer", StatusCode.BAD_REQUEST);
+  }
 };
