@@ -2,7 +2,7 @@ import express from "express";
 const router = express.Router();
 
 import * as adminController from "./admin.controller.js";
-import * as transferController from "./submodules/transfer/transfer.controller.js";
+import * as transferController from "../transfer/transfer.controller.js";
 
 import {
   addNewAdminValidator,

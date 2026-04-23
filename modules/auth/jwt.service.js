@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 import { promisify } from "util";
-import ApiError from "../../../utils/api-error.js";
-import { StatusCode } from "../../../utils/status-codes.js";
+import ApiError from "../../utils/api-error.js";
+import { StatusCode } from "../../utils/status-codes.js";
 
 export const signToken = (user, expiresIn) => {
   const { id, email } = user;

@@ -1,4 +1,4 @@
-import { query, queryOne, transaction } from "../../../../config/db-helpers.js";
+import { query, queryOne, transaction } from "../../config/db-helpers.js";
 
 class Transfer {
   constructor(medical_exam_id, hospital_id, transfer_reason, notes) {

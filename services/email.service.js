@@ -6,10 +6,7 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-import {
-  signToken,
-  verifyToken,
-} from "../modules/auth/services/jwt.service.js";
+import { signToken, verifyToken } from "../modules/auth/jwt.service.js";
 import dotenv from "dotenv";
 import Auth from "../modules/auth/auth.repository.js";
 import { UserType } from "../utils/user-types.js";

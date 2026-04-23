@@ -1,13 +1,13 @@
 import asyncHandler from "express-async-handler";
-import db from "../../../../config/db.js";
+import db from "../../config/db.js";
 import bcrypt from "bcrypt";
 
 import * as service from "./transfer.service.js";
-import { StatusCode } from "../../../../utils/status-codes.js";
-import { auditLog } from "../../../../utils/audit-log.js";
-import { pick } from "../../../../utils/pick-from-body-request.js";
-import sendObservationMail from "../../admin.service.js";
-import { roles } from "../../../../utils/roles.js";
+import { StatusCode } from "../../utils/status-codes.js";
+import { auditLog } from "../../utils/audit-log.js";
+import { pick } from "../../utils/pick-from-body-request.js";
+import sendObservationMail from "../admin/admin.service.js";
+import { roles } from "../../utils/roles.js";
 
 //transfer to external hospital
 export const transfer = asyncHandler(async (req, res) => {

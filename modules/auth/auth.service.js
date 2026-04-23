@@ -8,7 +8,7 @@ import Student from "../../repositories/student.repository.js";
 import User from "../../repositories/user.repository.js";
 
 // IMPORT SERVICES
-import { signToken } from "./services/jwt.service.js";
+import { signToken } from "./jwt.service.js";
 import * as emailService from "../../services/email.service.js";
 
 // IMPORT UTILITIES
