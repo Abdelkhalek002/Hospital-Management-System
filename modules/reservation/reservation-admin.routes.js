@@ -12,6 +12,11 @@ router.use(authMiddleware.allowedToSuper);
 
 router.get("/byMonth", reservationController.getReservationsPerMonth);
 
+router.route("/accept/:id").patch(
+  //authMiddleware.allowedTo(roles.SUPER_ADMIN, roles.COUNTER),
+  reservationController.isAccepted,
+);
+
 router
   .route("/")
   .post(

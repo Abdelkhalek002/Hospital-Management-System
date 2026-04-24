@@ -41,5 +41,15 @@ class Reservation extends Base {
     });
     return months;
   }
+  async accept(id) {
+    const sql = `UPDATE medical_examinations SET status = "مقبول"  WHERE id = ?`;
+    const result = await query(sql, [id]);
+    return !!result;
+  }
+  async decline(id) {
+    const sql = `UPDATE medical_examinations SET status = "مرفوض"  WHERE id = ?`;
+    const result = await query(sql, [id]);
+    return !!result;
+  }
 }
 export default Reservation;

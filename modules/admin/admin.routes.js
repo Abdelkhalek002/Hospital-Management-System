@@ -62,12 +62,4 @@ router.get("/filter", adminController.filterStudents);
 router.route("/search").post(adminController.searchStudent);
 router.route("/advancedSearch").post(adminController.advancedSearch);
 
-// ADMIN MAIN ROUTERS
-router
-  .route("/acceptOrDecline/:id")
-  .patch(
-    authMiddleware.allowedTo(roles.SUPER_ADMIN, roles.COUNTER),
-    adminController.acceptOrDecline,
-  );
-
 export default router;

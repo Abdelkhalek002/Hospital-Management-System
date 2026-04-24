@@ -9,8 +9,10 @@ import fs from "fs";
 import sanitizeFilename from "sanitize-filename";
 import { isLimitReached } from "./reservation.validator.js";
 import { StatusCode } from "../../utils/status-codes.js";
+import { auditLog } from "../../utils/audit-log.js";
 import { roles } from "../../utils/roles.js";
 import Reservation from "./reservation.repository.js";
+import * as service from "./resrervation.service.js";
 
 //!Emergency Reservations routes
 //@desc     submit medical examination request
@@ -725,5 +727,27 @@ export const getReservationsPerMonth = asyncHandler(async (req, res) => {
   res.status(StatusCode.OK).json({
     msg: "success",
     data: months,
+  });
+});
+
+// accept reservation or decline it
+export const isAccepted = asyncHandler(async (req, res) => {
+  //1. get data
+  const { id } = req.params;
+  const { operation } = req.body;
+  // 2. call service
+  const accepted = await service.isAccepted(id, operation);
+
+  // 3. record action
+  const auditData = {
+    adminId: req.user.id,
+    method: accepted ? "قبول طلب كشف" : "رفض طلب كشف",
+    createdAt: new Date().toISOString(),
+  };
+  await auditLog(auditData);
+  // 4. send response
+
+  return res.status(StatusCode.OK).json({
+    message: accepted ? "تم قبول الكشف" : "تم رفض الكشف",
   });
 });
