@@ -1,130 +1,17 @@
 import asyncHandler from "express-async-handler";
-import db from "../../config/db.js";
 import bcrypt from "bcrypt";
+import db from "../../config/db.js";
 import { StatusCode } from "../../utils/status-codes.js";
-import sendObservationMail from "./admin.service.js";
 import { roles } from "../../utils/roles.js";
+import * as service from "./admin.service.js";
+import Base from "../../repositories/base.repository.js";
 
-//? STATISTICS
+// System Stats
 export const getStatistics = asyncHandler(async (req, res) => {
-  try {
-    const queries = {
-      usersCount: "SELECT COUNT(*) AS value FROM students",
-      reservationsCount: "SELECT COUNT(*) AS value FROM medical_examinations",
-      clinicsCount: "SELECT COUNT(*) AS value FROM clinics",
-      adminsCount: "SELECT COUNT(*) AS value FROM admins",
-      superAdminsCount: "SELECT COUNT(*) AS value FROM super_admins",
-      avgReservationsPerUser: `SELECT AVG(reservationsCount) AS value
-                               FROM (SELECT COUNT(*) AS reservationsCount 
-                                     FROM medical_examinations 
-                                     GROUP BY student_id) AS reservationsPerUser`,
-      avgReservationsPerClinic: `SELECT AVG(reservationsCount) AS value
-                                 FROM (SELECT COUNT(*) AS reservationsCount 
-                                       FROM medical_examinations 
-                                       GROUP BY clinic_id) AS reservationsPerClinic`,
-      mostReservedClinic: `SELECT clinics.clinic_name AS clinic_name, COUNT(*) AS value 
-                           FROM medical_examinations 
-                           JOIN clinics ON medical_examinations.clinic_id = clinics.clinic_id 
-                           GROUP BY medical_examinations.clinic_id 
-                           ORDER BY value DESC 
-                           LIMIT 1`,
-    };
-
-    const labels = {
-      usersCount: "عدد المستخدمين",
-      reservationsCount: "عدد الحجوزات",
-      clinicsCount: "عدد العيادات",
-      adminsCount: "عدد الادمن",
-      superAdminsCount: "عدد مديري النظام",
-      avgReservationsPerUser: "متوسط الحجوزات لكل مستخدم",
-      avgReservationsPerClinic: "متوسط الحجوزات لكل عيادة",
-      mostReservedClinic: "العيادة الأكثر حجزاً",
-    };
-
-    const queryPromises = Object.keys(queries).map(
-      (key) =>
-        new Promise((resolve, reject) => {
-          db.query(queries[key], (err, result) => {
-            if (err) {
-              reject({ key, err });
-            } else {
-              resolve({ key, result: result[0] });
-            }
-          });
-        }),
-    );
-
-    const results = await Promise.all(queryPromises);
-
-    const statistics = results.map(({ key, result }) => {
-      if (key === "mostReservedClinic") {
-        return {
-          label: labels[key],
-          clinicName: result.clinicName,
-          value: result.value,
-        };
-      }
-      return {
-        label: labels[key],
-        value: result.value,
-      };
-    });
-
-    res.status(StatusCode.OK).json({ statistics });
-  } catch (error) {
-    console.error(`Error fetching ${error.key}:`, error.err);
-    res
-      .status(StatusCode.INTERNAL_SERVER_ERROR)
-      .json({ error: `Failed to fetch ${error.key}` });
-  }
-});
-
-//? get the number of reservations by each month from the beginning of the year
-export const getReservationsByMonth = asyncHandler(async (req, res) => {
-  const sql = `
-    WITH RECURSIVE Months AS (
-      SELECT 1 AS month
-      UNION ALL
-      SELECT month + 1 FROM Months WHERE month < 12
-    )
-    SELECT 
-      CASE Months.month
-        WHEN 1 THEN 'January'
-        WHEN 2 THEN 'February'
-        WHEN 3 THEN 'March'
-        WHEN 4 THEN 'April'
-        WHEN 5 THEN 'May'
-        WHEN 6 THEN 'June'
-        WHEN 7 THEN 'July'
-        WHEN 8 THEN 'August'
-        WHEN 9 THEN 'September'
-        WHEN 10 THEN 'October'
-        WHEN 11 THEN 'November'
-        WHEN 12 THEN 'December'
-      END AS month_name, 
-      COALESCE(COUNT(medical_examinations.id), 0) AS reservationsCount
-    FROM Months
-    LEFT JOIN medical_examinations ON MONTH(medical_examinations.date) = Months.month AND YEAR(medical_examinations.date) = YEAR(CURDATE())
-    GROUP BY Months.month;
-  `;
-
-  db.query(sql, (err, results) => {
-    if (err) {
-      console.error("Error fetching reservations by month:", err);
-      return res
-        .status(StatusCode.INTERNAL_SERVER_ERROR)
-        .json({ error: "Internal Server Error" });
-    }
-
-    // Map the result to ensure all months are included
-    const months = results.map((row) => {
-      return {
-        month: row.month_name,
-        reservationsCount: row.reservationsCount,
-      };
-    });
-
-    res.status(StatusCode.OK).json(months);
+  const result = await new Base().getStats();
+  res.status(StatusCode.OK).json({
+    msg: "success",
+    data: result,
   });
 });
 
@@ -193,61 +80,6 @@ export const resetPassword = asyncHandler(async (req, res) => {
         },
       );
     });
-  });
-});
-
-//! ADMIN PRVILIGES FROM HERE
-//@desc     send observation to a user
-//@route    PUT  /api/v1/admin/sendObservation/:id
-//@access   private
-export const sendObservation = asyncHandler(async (req, res) => {
-  const { student_id } = req.params;
-  const { observation } = req.body;
-  const sql = "SELECT email, userName FROM students WHERE student_id = ?";
-  db.query(sql, [student_id], (err, result) => {
-    if (err) {
-      console.error("Error querying user:", err);
-      return res.status(StatusCode.INTERNAL_SERVER_ERROR).send(err);
-    }
-    if (result.length === 0) {
-      return res
-        .status(StatusCode.NOT_FOUND)
-        .json({ message: "المستخدم غير موجود" });
-    }
-    const { email, userName } = result[0];
-    console.log(userName, email, observation);
-    sendObservationMail(email, observation, userName);
-    const isSuperAdmin = req.user[0].role === roles.SUPER_ADMIN; // Check if the user is a super admin
-
-    const auditData = {
-      timestamp: new Date().toISOString(),
-      method: "ارسال ملاحظة للمستخدم",
-      body: { student_id, observation },
-      admin_id: isSuperAdmin ? req.user[0].superAdmin_id : req.user[0].user_id,
-      adminName: isSuperAdmin ? req.user[0].name : req.user[0].userName,
-    };
-    const auditSql =
-      "INSERT INTO admin_log (admin_id, admin_name, timestamp, method, body) VALUES (?, ?, ?, ?, ?)";
-    db.query(
-      auditSql,
-      [
-        auditData.admin_id,
-        auditData.adminName,
-        auditData.timestamp,
-        auditData.method,
-        JSON.stringify(auditData.body),
-      ],
-      (auditErr, auditResult) => {
-        if (auditErr) {
-          console.error("Error creating audit record:", auditErr);
-        } else {
-          console.log("Audit record created successfully:", auditResult);
-        }
-      },
-    );
-    res
-      .status(StatusCode.OK)
-      .json({ message: "تم تسجيل الملاحظة", user: result[0] });
   });
 });
 

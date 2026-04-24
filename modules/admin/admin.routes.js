@@ -1,19 +1,20 @@
 import express from "express";
-const router = express.Router();
 
 import transferRoute from "../transfer/transfer.route.js";
+import reservationRoute from "../reservation/reservation-admin.routes.js";
 
 import * as adminController from "./admin.controller.js";
 
 import {
   addNewAdminValidator,
   resetPasswordValidator,
-  sendObservationValidator,
 } from "./admin.validator.js";
 
 import * as authMiddleware from "../../middlewares/auth.middleware.js";
 import limiter from "../../services/rate-limit.service.js";
 import { roles } from "../../utils/roles.js";
+
+const router = express.Router();
 
 router.use(authMiddleware.protect);
 router.use(authMiddleware.allowedToSuper);
@@ -21,26 +22,22 @@ router.use(authMiddleware.allowedToSuper);
 // Transfer Route
 router.use("/transfer", transferRoute);
 
-//Statistics
-router.route("/statistics").get(adminController.getStatistics);
+// Reservation Route
+router.use("/reservations", reservationRoute);
 
-router
-  .route("/resbymonth")
-  .get(
-    authMiddleware.allowedTo(roles.SUPER_ADMIN),
-    adminController.getReservationsByMonth,
-  );
+// Statistics
+router.route("/stats").get(adminController.getStatistics);
 
 // GET ALL USER PROFILES
 router
-  .route("/userProfiles")
+  .route("/users")
   .get(
     authMiddleware.allowedTo(roles.SUPER_ADMIN, roles.COUNTER),
     adminController.getAllUserProfiles,
   );
 
 router
-  .route("/userProfiles/:student_id")
+  .route("/users/:student_id")
   .put(adminController.updateUserProfile)
   .delete(adminController.deleteUserProfile);
 
@@ -71,14 +68,6 @@ router
   .patch(
     authMiddleware.allowedTo(roles.SUPER_ADMIN, roles.COUNTER),
     adminController.acceptOrDecline,
-  );
-
-router
-  .route("/:student_id")
-  .post(
-    authMiddleware.allowedTo(roles.SUPER_ADMIN, roles.COUNTER, roles.OBSERVER),
-    sendObservationValidator,
-    adminController.sendObservation,
   );
 
 export default router;

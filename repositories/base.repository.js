@@ -62,6 +62,86 @@ class Base {
       params: columns.map(() => like),
     };
   }
+  async getStats() {
+    const labels = {
+      usersCount: "Total users",
+      reservationsCount: "Total reservations",
+      clinicsCount: "Clinics",
+      adminsCount: "Total admins",
+      superAdminsCount: "Total super admins",
+      avgReservationsPerUser: "Reservations average per user",
+      avgReservationsPerClinic: "Reservations average per clinic",
+      mostReservedClinic: "Most reserved clinic",
+    };
+
+    const statsRow = await transaction(async (connection) => {
+      const execOne = async (sql, params = []) => {
+        const [rows] = await connection.execute(sql, params);
+        return rows.length > 0 ? rows[0] : null;
+      };
+
+      const sql = `
+        SELECT
+          (SELECT COUNT(*) FROM students) AS usersCount,
+          (SELECT COUNT(*) FROM medical_examinations) AS reservationsCount,
+          (SELECT COUNT(*) FROM clinics) AS clinicsCount,
+          (SELECT COUNT(*) FROM admins) AS adminsCount,
+          (SELECT COUNT(*) FROM super_admins) AS superAdminsCount,
+          (
+            SELECT AVG(reservationsCount)
+            FROM (
+              SELECT COUNT(*) AS reservationsCount
+              FROM medical_examinations
+              GROUP BY student_id
+            ) AS reservationsPerUser
+          ) AS avgReservationsPerUser,
+          (
+            SELECT AVG(reservationsCount)
+            FROM (
+              SELECT COUNT(*) AS reservationsCount
+              FROM medical_examinations
+              GROUP BY clinic_id
+            ) AS reservationsPerClinic
+          ) AS avgReservationsPerClinic,
+          mostReserved.clinic_name AS mostReservedClinicName,
+          mostReserved.value AS mostReservedClinicValue
+        FROM (SELECT 1) AS dummy
+        LEFT JOIN (
+          SELECT clinics.clinic_name, COUNT(*) AS value
+          FROM medical_examinations
+          JOIN clinics ON medical_examinations.clinic_id = clinics.id
+          GROUP BY medical_examinations.clinic_id
+          ORDER BY value DESC
+          LIMIT 1
+        ) AS mostReserved ON 1=1
+      `;
+
+      return await execOne(sql);
+    });
+
+    if (!statsRow) return [];
+
+    return [
+      { label: labels.superAdminsCount, value: statsRow.superAdminsCount },
+      { label: labels.adminsCount, value: statsRow.adminsCount },
+      { label: labels.usersCount, value: statsRow.usersCount },
+      { label: labels.reservationsCount, value: statsRow.reservationsCount },
+      { label: labels.clinicsCount, value: statsRow.clinicsCount },
+      {
+        label: labels.avgReservationsPerUser,
+        value: statsRow.avgReservationsPerUser,
+      },
+      {
+        label: labels.avgReservationsPerClinic,
+        value: statsRow.avgReservationsPerClinic,
+      },
+      {
+        label: labels.mostReservedClinic,
+        clinic: statsRow.mostReservedClinicName,
+        value: statsRow.mostReservedClinicValue,
+      },
+    ];
+  }
 }
 
 export default Base;

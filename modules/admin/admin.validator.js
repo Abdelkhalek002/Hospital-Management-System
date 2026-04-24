@@ -4,7 +4,7 @@ import handleValidationErrors from "../../middlewares/validator.middleware.js";
 import * as customValidators from "../../utils/custom-validators.js";
 
 export const addNewAdminValidator = [
-  body("userName").notEmpty().withMessage("userName is required"),
+  body("username").notEmpty().withMessage("username is required"),
   body("email")
     .notEmpty()
     .withMessage("email is required")
@@ -20,7 +20,7 @@ export const addNewAdminValidator = [
 ];
 
 export const updateAdminValidator = [
-  body("userName").notEmpty().withMessage("userName is required"),
+  body("username").notEmpty().withMessage("username is required"),
   body("email")
     .notEmpty()
     .withMessage("email is required")
@@ -36,14 +36,5 @@ export const resetPasswordValidator = [
     .withMessage("password is required")
     .isLength({ min: 6 })
     .withMessage("password must be at least 6 characters long"),
-  handleValidationErrors,
-];
-
-export const sendObservationValidator = [
-  body("observation")
-    .notEmpty()
-    .withMessage("Observation is required")
-    .isLength({ min: 4 })
-    .withMessage("observation must be at least 6 characters long"),
   handleValidationErrors,
 ];

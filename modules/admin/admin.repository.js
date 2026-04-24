@@ -1,6 +1,10 @@
 import { query, queryOne } from "../../config/db-helpers.js";
+import Base from "../../repositories/base.repository.js";
 import { roles } from "../../utils/roles.js";
-class Admin {
+class Admin extends Base {
+  constructor() {
+    super("admins");
+  }
   async create(data) {
     const sql = `INSERT INTO admins (username, email, password, role) VALUES (?, ?, ?, ?)`;
     const result = await query(sql, [

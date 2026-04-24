@@ -5,7 +5,6 @@ import db from "../../config/db.js";
 import Base from "../../repositories/base.repository.js";
 import Transfer from "./transfer.repository.js";
 import MedicalExamination from "../medical-examination/medical-examination.repository.js";
-import sendObservationMail from "../admin/admin.service.js";
 import { StatusCode } from "../../utils/status-codes.js";
 import { roles } from "../../utils/roles.js";
 import ApiError from "../../utils/api-error.js";

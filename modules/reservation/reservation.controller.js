@@ -10,6 +10,7 @@ import sanitizeFilename from "sanitize-filename";
 import { isLimitReached } from "./reservation.validator.js";
 import { StatusCode } from "../../utils/status-codes.js";
 import { roles } from "../../utils/roles.js";
+import Reservation from "./reservation.repository.js";
 
 //!Emergency Reservations routes
 //@desc     submit medical examination request
@@ -715,5 +716,14 @@ export const cancelRequest = asyncHandler(async (req, res) => {
         });
       }
     }
+  });
+});
+
+// Get the number of reservations by each month from the beginning of the year
+export const getReservationsPerMonth = asyncHandler(async (req, res) => {
+  const months = await new Reservation().getPerMonth();
+  res.status(StatusCode.OK).json({
+    msg: "success",
+    data: months,
   });
 });

@@ -6,7 +6,6 @@ import * as service from "./transfer.service.js";
 import { StatusCode } from "../../utils/status-codes.js";
 import { auditLog } from "../../utils/audit-log.js";
 import { pick } from "../../utils/pick-from-body-request.js";
-import sendObservationMail from "../admin/admin.service.js";
 import { roles } from "../../utils/roles.js";
 
 // transfer to external hospital
