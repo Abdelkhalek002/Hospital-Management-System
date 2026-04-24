@@ -15,11 +15,20 @@ export const clinicValidator = [
 
 // EXTERNAL HOSPITALS VALIDATOR
 export const hospitalValidator = [
-  check("hospName")
-    .notEmpty()
-    .withMessage("Hospital is Required")
+  check("hospital_name")
+    .optional()
     .custom(customValidators.isArabic)
     .withMessage("Hospital must be in arabic format"),
+  check("hospName")
+    .optional()
+    .custom(customValidators.isArabic)
+    .withMessage("Hospital must be in arabic format"),
+  check("hospital_name").custom((_, { req }) => {
+    const hospital_name = req.body.hospital_name ?? req.body.hospName;
+    if (!hospital_name) throw new Error("Hospital is Required");
+    req.body.hospital_name = hospital_name;
+    return true;
+  }),
   handleValidationErrors,
 ];
 

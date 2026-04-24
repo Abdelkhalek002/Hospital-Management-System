@@ -12,7 +12,7 @@ router
   .get(controller.getAllhospitals);
 
 router
-  .route("/hospitals/:exHosp_id")
+  .route("/hospitals/:id")
   .delete(protect, controller.deleteHospital)
   .put(protect, limiter, hospitalValidator, controller.updateHospital);
 

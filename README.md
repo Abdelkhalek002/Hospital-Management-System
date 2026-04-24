@@ -212,7 +212,7 @@ Mounted in `server.js`:
 - Governorates: `POST/GET /governorates`, `PUT/DELETE /governorates/:gov_id`
 - Clinics: `POST/GET /clinics`, `PUT/DELETE /clinics/:clinic_id`
 - Faculties: `POST/GET /faculties`, `PUT/DELETE /faculties/:faculty_id`
-- Hospitals: `POST/GET /hospitals`, `PUT/DELETE /hospitals/:exHosp_id`
+- Hospitals: `POST/GET /hospitals`, `PUT/DELETE /hospitals/:id`
 
 ## Static Files
 

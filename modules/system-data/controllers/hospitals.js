@@ -1,31 +1,33 @@
 import asyncHandler from "express-async-handler";
-import db from "../../../config/db.js";
+import { query, queryOne } from "../../../config/db-helpers.js";
 import { StatusCode } from "../../../utils/status-codes.js";
+
+const getHospitalNameFromBody = (req) => req.body.hospital_name ?? req.body.hospName;
+const getHospitalIdFromParams = (req) => req.params.id ?? req.params.exHosp_id;
 
 //@desc     add new hospital
 //@route    POST  /api/v1/sysdata/hospitals
 //@access   private
 export const createHospital = asyncHandler(async (req, res) => {
-  const { hospName } = req.body;
-  const isExistSql = "SELECT * FROM external_hospitals WHERE hospName = ?";
-  db.query(isExistSql, [hospName], (err, result) => {
-    if (result.length > 0) {
-      return res
-        .status(StatusCode.CONFLICT)
-        .json({ message: `مستشفى ${hospName} موجود بالفعل` });
-    } else {
-      const sql = "INSERT INTO external_hospitals (hospName) VALUES (?)";
-      db.query(sql, [hospName], (err, result) => {
-        if (err) {
-          res.status(StatusCode.INTERNAL_SERVER_ERROR).send(err);
-        } else {
-          console.log("Hospital has been added successfully");
-          res.status(StatusCode.CREATED).json({
-            message: `تم اضافة مستشفى ${hospName} بنجاح`,
-          });
-        }
-      });
-    }
+  const hospital_name = getHospitalNameFromBody(req);
+
+  const existsSql =
+    "SELECT 1 FROM external_hospitals WHERE hospital_name = ? LIMIT 1";
+  const exists = await queryOne(existsSql, [hospital_name]);
+  if (exists) {
+    return res
+      .status(StatusCode.CONFLICT)
+      .json({ message: `Ù…Ø³ØªØ´ÙÙ‰ ${hospital_name} Ù…ÙˆØ¬ÙˆØ¯ Ø¨Ø§Ù„ÙØ¹Ù„` });
+  }
+
+  const insertSql = "INSERT INTO external_hospitals (hospital_name) VALUES (?)";
+  const result = await query(insertSql, [hospital_name]);
+
+  console.log("Hospital has been added successfully");
+  return res.status(StatusCode.CREATED).json({
+    message: `ØªÙ… Ø§Ø¶Ø§ÙØ© Ù…Ø³ØªØ´ÙÙ‰ ${hospital_name} Ø¨Ù†Ø¬Ø§Ø­`,
+    id: result.insertId,
+    hospital_name,
   });
 });
 
@@ -33,54 +35,44 @@ export const createHospital = asyncHandler(async (req, res) => {
 //@route    GET  /api/v1/sysdata/hospitals
 //@access   private
 export const getAllhospitals = asyncHandler(async (req, res) => {
-  const sql = "SELECT * FROM external_hospitals";
-  db.query(sql, (err, results) => {
-    if (err) {
-      res.status(StatusCode.INTERNAL_SERVER_ERROR).send(err);
-    } else {
-      console.log("Request created successfully");
-      res.json(results);
-    }
-  });
+  const sql = "SELECT * FROM external_hospitals ORDER BY id DESC";
+  const results = await query(sql);
+  console.log("Request created successfully");
+  return res.status(StatusCode.OK).json(results);
 });
 
 //@desc     update hospital
-//@route    GET  /api/v1/sysdata/hospitals
+//@route    PUT  /api/v1/sysdata/hospitals/:id
 //@access   private
 export const updateHospital = asyncHandler(async (req, res) => {
-  const { exHosp_id } = req.params;
-  const { hospName } = req.body;
+  const id = getHospitalIdFromParams(req);
+  const hospital_name = getHospitalNameFromBody(req);
 
-  const checkSql = "SELECT * FROM external_hospitals WHERE exHosp_id = ?";
-  db.query(checkSql, [exHosp_id], (checkErr, checkResult) => {
-    if (checkErr) {
-      return res.status(StatusCode.INTERNAL_SERVER_ERROR).send(checkErr);
-    }
-    if (checkResult.length === 0) {
-      return res
-        .status(StatusCode.NOT_FOUND)
-        .json({ error: "لم يتم العثور على المستشفى" });
-    }
-    const isExistSql = "SELECT * FROM external_hospitals WHERE hospName = ?";
-    db.query(isExistSql, [hospName], (err, result) => {
-      if (result.length > 0) {
-        return res
-          .status(StatusCode.CONFLICT)
-          .json({ message: `مستشفى ${hospName} موجود بالفعل` });
-      }
+  const checkSql = "SELECT * FROM external_hospitals WHERE id = ? LIMIT 1";
+  const hospital = await queryOne(checkSql, [id]);
+  if (!hospital) {
+    return res
+      .status(StatusCode.NOT_FOUND)
+      .json({ error: "Ù„Ù… ÙŠØªÙ… Ø§Ù„Ø¹Ø«ÙˆØ± Ø¹Ù„Ù‰ Ø§Ù„Ù…Ø³ØªØ´ÙÙ‰" });
+  }
 
-      const updateSql =
-        "UPDATE external_hospitals SET hospName = ? WHERE exHosp_id = ?";
-      db.query(updateSql, [hospName, exHosp_id], (err, result) => {
-        if (err) {
-          res.status(StatusCode.INTERNAL_SERVER_ERROR).send(err);
-        } else {
-          res
-            .status(StatusCode.OK)
-            .json({ message: `تم تعديل المستشفى بنجاح`, hospName });
-        }
-      });
-    });
+  const existsSql =
+    "SELECT 1 FROM external_hospitals WHERE hospital_name = ? AND id <> ? LIMIT 1";
+  const exists = await queryOne(existsSql, [hospital_name, id]);
+  if (exists) {
+    return res
+      .status(StatusCode.CONFLICT)
+      .json({ message: `Ù…Ø³ØªØ´ÙÙ‰ ${hospital_name} Ù…ÙˆØ¬ÙˆØ¯ Ø¨Ø§Ù„ÙØ¹Ù„` });
+  }
+
+  const updateSql =
+    "UPDATE external_hospitals SET hospital_name = ? WHERE id = ?";
+  await query(updateSql, [hospital_name, id]);
+
+  return res.status(StatusCode.OK).json({
+    message: `ØªÙ… ØªØ¹Ø¯ÙŠÙ„ Ø§Ù„Ù…Ø³ØªØ´ÙÙ‰ Ø¨Ù†Ø¬Ø§Ø­`,
+    id: Number(id),
+    hospital_name,
   });
 });
 
@@ -88,31 +80,22 @@ export const updateHospital = asyncHandler(async (req, res) => {
 //@route    DELETE  /api/v1/sysdata/hospitals/:id
 //@access   private
 export const deleteHospital = asyncHandler(async (req, res) => {
-  const { exHosp_id } = req.params;
+  const id = getHospitalIdFromParams(req);
 
-  const checkSql = "SELECT * FROM external_hospitals WHERE exHosp_id = ?";
+  const checkSql = "SELECT * FROM external_hospitals WHERE id = ? LIMIT 1";
+  const hospital = await queryOne(checkSql, [id]);
+  if (!hospital) {
+    return res
+      .status(StatusCode.NOT_FOUND)
+      .json({ error: "Ù„Ù… ÙŠØªÙ… Ø§Ù„Ø¹Ø«ÙˆØ± Ø¹Ù„Ù‰ Ø§Ù„Ù…Ø³ØªØ´ÙÙ‰" });
+  }
 
-  db.query(checkSql, [exHosp_id], (checkErr, checkResult) => {
-    if (checkErr) {
-      return res.status(StatusCode.INTERNAL_SERVER_ERROR).send(checkErr);
-    }
-    if (checkResult.length === 0) {
-      return res
-        .status(StatusCode.NOT_FOUND)
-        .json({ error: "لم يتم العثور على المستشفى" });
-    }
-    const { hospName } = checkResult[0];
+  const deleteSql = "DELETE FROM external_hospitals WHERE id = ?";
+  await query(deleteSql, [id]);
 
-    const deleteSql = "DELETE FROM external_hospitals WHERE exHosp_id = ?";
-    db.query(deleteSql, [exHosp_id], (err, result) => {
-      if (err) {
-        res.status(StatusCode.INTERNAL_SERVER_ERROR).send(err);
-      } else {
-        res.status(StatusCode.OK).json({
-          message: `تم حذف المستشفى ${hospName} بنجاح`,
-          exHosp_id,
-        });
-      }
-    });
+  return res.status(StatusCode.OK).json({
+    message: `ØªÙ… Ø­Ø°Ù Ø§Ù„Ø³ØªØ´ÙÙ‰ ${hospital.hospital_name} Ø¨Ù†Ø¬Ø§Ø­`,
+    id: Number(id),
   });
 });
+
