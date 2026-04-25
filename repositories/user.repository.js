@@ -1,18 +1,33 @@
 import { query, queryOne, transaction } from "../config/db-helpers.js";
+import Base from "./base.repository.js";
 
-class User {
-  async setOnline(table, id) {
-    const sql = `UPDATE ${table} SET is_active = 1 WHERE id = ?`;
+class User extends Base {
+  constructor(type) {
+    super(type);
+    this.type = type;
+  }
+  async activateEmail(email) {
+    const sql = `UPDATE ${this.table} SET verified = 1 WHERE email = ?`;
+    const result = await queryOne(sql, [email]);
+    return result;
+  }
+  async deActivateEmail(email) {
+    const sql = `UPDATE ${this.table} SET verified = 0 WHERE email = ?`;
+    const result = await queryOne(sql, [email]);
+    return result;
+  }
+  async setOnline(id) {
+    const sql = `UPDATE ${this.type} SET is_active = 1 WHERE id = ?`;
     const result = await queryOne(sql, [id]);
     return !!result;
   }
-  async setOffline(table, id) {
-    const sql = `UPDATE ${table} SET is_active = 0 WHERE id = ?`;
+  async setOffline(id) {
+    const sql = `UPDATE ${this.table} SET is_active = 0 WHERE id = ?`;
     const result = await queryOne(sql, [id]);
     return !!result;
   }
-  async findByEmail(table, email) {
-    const sql = `SELECT email, password, username FROM ${table} WHERE email = ? LIMIT 1`;
+  async findByEmail(email) {
+    const sql = `SELECT username, email, password, id FROM ${this.table} WHERE email = ? LIMIT 1`;
     const result = await queryOne(sql, [email]);
     return result;
   }

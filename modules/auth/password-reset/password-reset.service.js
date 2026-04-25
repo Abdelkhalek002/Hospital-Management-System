@@ -32,7 +32,7 @@ export const sendPasswordResetOtp = async (email) => {
   await passwordResetRepo.cleanupConsumedAndExpiredOtps();
 
   // 2. check if email exist
-  const student = await new User().findByEmail(UserType.STUDENT, email);
+  const student = await new User(UserType.STUDENT).findByEmail(email);
   if (!student) {
     throw new ApiError("المستخدم غير موجود", StatusCode.NOT_FOUND);
   }
@@ -83,7 +83,7 @@ export const resetPasswordWithOtp = async ({ email, otp, newPassword }) => {
   otp = String(otp);
 
   // 1. check if email exist
-  const student = await new User().findByEmail(UserType.STUDENT, email);
+  const student = await new User(UserType.STUDENT).findByEmail(email);
   if (!student) {
     throw new ApiError("User not found", StatusCode.NOT_FOUND);
   }

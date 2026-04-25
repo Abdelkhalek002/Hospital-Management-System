@@ -17,7 +17,7 @@ router.use(authMiddleware.protect);
 router.use(authMiddleware.allowedToSuper);
 
 // Transfer Route
-router.use("/transfer", transferRoute);
+router.use("/transfers", transferRoute);
 
 // Reservation Route
 router.use("/reservations", reservationRoute);
@@ -29,7 +29,7 @@ router.route("/stats").get(adminController.getStatistics);
 router
   .route("/users")
   .get(
-    authMiddleware.allowedTo(roles.SUPER_ADMIN, roles.COUNTER),
+    authMiddleware.allowedTo(roles.COUNTER),
     adminController.getAllUserProfiles,
   );
 
@@ -41,7 +41,6 @@ router
 router.get("/filter", adminController.filterStudents);
 
 // SYSTEM FEATURES ROUTERS
-// TODO: Add allowedTo(roles) to each route
 router.route("/search").post(adminController.searchStudent);
 router.route("/advancedSearch").post(adminController.advancedSearch);
 

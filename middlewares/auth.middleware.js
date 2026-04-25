@@ -4,7 +4,7 @@ import * as authService from "../modules/auth/auth.service.js";
 import { roles } from "../utils/roles.js";
 import { StatusCode } from "../utils/status-codes.js";
 
-const protect = asyncHandler(async (req, res, next) => {
+export const protect = asyncHandler(async (req, res, next) => {
   let token;
   if (
     req.headers.authorization &&
@@ -24,20 +24,6 @@ const protect = asyncHandler(async (req, res, next) => {
   next();
 });
 
-const allowedTo = (...roles) =>
-  asyncHandler(async (req, res, next) => {
-    console.log(req.user[0]);
-    if (!roles.includes(req.user[0].role)) {
-      return next(
-        new ApiError(
-          "You are not authorized to access this route!",
-          StatusCode.FORBIDDEN,
-        ),
-      );
-    }
-    next();
-  });
-
 export const allowedToSuper = asyncHandler(async (req, res, next) => {
   if (!req.user.email.endsWith(process.env.SUPER_ADMIN_Email_DOMAIN)) {
     return next(
@@ -50,7 +36,21 @@ export const allowedToSuper = asyncHandler(async (req, res, next) => {
   next();
 });
 
-const restrictToUser = asyncHandler(async (req, res, next) => {
+export const allowedTo = (...roles) =>
+  asyncHandler(async (req, res, next) => {
+    console.log(req.user);
+    if (!roles.includes(req.user.role)) {
+      return next(
+        new ApiError(
+          "You are not authorized to access this route!",
+          StatusCode.FORBIDDEN,
+        ),
+      );
+    }
+    next();
+  });
+
+export const restrictToUser = asyncHandler(async (req, res, next) => {
   if (!req.user.email.endsWith(process.env.User_Email_DOMAIN)) {
     return next(
       new ApiError(
@@ -61,5 +61,3 @@ const restrictToUser = asyncHandler(async (req, res, next) => {
   }
   next();
 });
-
-export { protect, allowedTo, restrictToUser };

@@ -8,9 +8,9 @@ const __dirname = path.dirname(__filename);
 
 import { signToken, verifyToken } from "../modules/auth/jwt.service.js";
 import dotenv from "dotenv";
-import Auth from "../modules/auth/auth.repository.js";
 import { UserType } from "../utils/user-types.js";
 import { StatusCode } from "../utils/status-codes.js";
+import User from "../repositories/user.repository.js";
 dotenv.config();
 
 const renderHTML = async (path, data) => {
@@ -102,7 +102,8 @@ export const activateEmail = asyncHandler(async (req, res) => {
   // 1. verify token
   const decoded = await verifyToken(token, process.env.JWT_SECRET);
   // 2. activate email and save data into the database
-  await new Auth().activateEmail(UserType.STUDENT, decoded.email);
+  const user = await new User(UserType.STUDENT);
+  user.activateEmail(decoded.email);
   // 3. send response
   return res.status(StatusCode.OK).send(html);
 });
@@ -122,8 +123,12 @@ export const confirmEmail = asyncHandler(async (req, res) => {
   const html = await renderHTML(`${__dirname}/../services/html/confirmed.html`);
   // 1. verify token
   const decoded = await verifyToken(token, process.env.JWT_SECRET);
+  console.log(decoded);
+  return;
   // 2. activate email and save data into the database
-  await new Auth().confirmEmail(UserType.SUPER_ADMIN, decoded.email);
+
+  // some code ...
+
   // 3. send response
   return res.status(StatusCode.OK).send(html);
 });

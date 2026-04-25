@@ -11,7 +11,7 @@ import limiter from "../../services/rate-limit.service.js";
 const router = express.Router();
 
 router
-  .route("/signUp")
+  .route("/signup")
   .post(
     authValidator.validateSignup,
     fileUploader.uploadRegistrationFiles,

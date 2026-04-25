@@ -10,9 +10,6 @@ export const getMe = asyncHandler(async (req, res) => {
   res.status(StatusCode.OK).json({ status: "success", result });
 });
 
-//@desc user update profile data
-//@route    POST  /api/v1/myProfile/:id
-//@access   public
 export const updateMe = asyncHandler(async (req, res) => {
   // 1. pick data
   const user = req.user;
