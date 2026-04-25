@@ -4,7 +4,7 @@ import limiter from "../../../services/rate-limit.service.js";
 import {
   protect,
   allowedTo,
-  allowedToUser,
+  restrictToUser,
 } from "../../../middlewares/auth.middleware.js";
 import { clinicValidator } from "../validator.js";
 import { roles } from "../../../utils/roles.js";

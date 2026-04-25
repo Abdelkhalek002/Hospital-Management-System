@@ -7,14 +7,12 @@ import ApiError from "../../utils/api-error.js";
 
 export const addOne = async (data) => {
   // 1. check if username or email provided is already existed
-  const usernameExists = await new Base().existsByField(
-    "super_admins",
+  const usernameExists = await new Base("super_admins").existsByField(
     "username",
     data.username,
   );
   if (usernameExists) throw new ApiError("username already exists");
-  const emailExists = await new Base().existsByField(
-    "super_admins",
+  const emailExists = await new Base("super_admins").existsByField(
     "email",
     data.email,
   );
@@ -39,14 +37,12 @@ export const addOne = async (data) => {
 
 export const addNewAdmin = async (data) => {
   // 1. check if username or email provided is already existed
-  const usernameExists = await new Base().existsByField(
-    "admins",
+  const usernameExists = await new Base("admins").existsByField(
     "username",
     data.username,
   );
   if (usernameExists) throw new ApiError("username already exists");
-  const emailExists = await new Base().existsByField(
-    "admins",
+  const emailExists = await new Base("admins").existsByField(
     "email",
     data.email,
   );

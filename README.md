@@ -115,7 +115,7 @@ Role/type checks are applied through middleware:
 
 - `Protect`
 - `allowedTo(...)` for admin roles
-- `allowedToUser(...)` for user type checks
+- `restrictToUser(...)` for user type checks
 
 ### Role Constants
 

@@ -9,14 +9,14 @@ class Base {
     return await query(sql, params);
   }
 
-  async existsByField(table, field, value) {
-    const sql = `SELECT 1 FROM ${table} WHERE ${field} = ? LIMIT 1`;
+  async existsByField(field, value) {
+    const sql = `SELECT 1 FROM ${this.table} WHERE ${field} = ? LIMIT 1`;
     const result = await queryOne(sql, [value]);
     return !!result;
   }
 
-  async findById(table, id) {
-    const sql = `SELECT * FROM ${table} WHERE id = ? LIMIT 1`;
+  async findById(id) {
+    const sql = `SELECT * FROM ${this.table} WHERE id = ? LIMIT 1`;
     const result = await queryOne(sql, [id]);
     return result;
   }

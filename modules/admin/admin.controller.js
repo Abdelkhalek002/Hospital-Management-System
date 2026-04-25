@@ -15,74 +15,6 @@ export const getStatistics = asyncHandler(async (req, res) => {
   });
 });
 
-//@desc     reset admin password
-//@route    PATCH  /api/v1/admin/:user_id
-//@access   private
-export const resetPassword = asyncHandler(async (req, res) => {
-  const { user_id } = req.params;
-  const { password } = req.body;
-  const hashedPassword = await bcrypt.hash(password, 8);
-  // Update password in the database
-  const updatePasswordQuery = `UPDATE admins SET password = ? , password_changed_at = NOW() WHERE user_id = ?`;
-  db.query(updatePasswordQuery, [hashedPassword, user_id], (err, result) => {
-    if (err) {
-      console.error("Error updating password:", err);
-      return res
-        .status(StatusCode.INTERNAL_SERVER_ERROR)
-        .json({ error: "فشل في تحديث كلمة السر" });
-    }
-    if (result.affectedRows === 0) {
-      return res
-        .status(StatusCode.NOT_FOUND)
-        .json({ error: "الادمن غير موجود او لم يتم تحديث كلمة السر" });
-    }
-    const updateStatusQuery = "UPDATE admins SET status = 0 WHERE user_id = ?";
-    db.query(updateStatusQuery, [user_id], (updateErr, updateResult) => {
-      if (updateErr) {
-        console.error("Error updating admin status:", updateErr);
-        return res
-          .status(StatusCode.INTERNAL_SERVER_ERROR)
-          .json({ error: "فشل في تحديث حالة الادمن" });
-      }
-
-      const auditData = {
-        timestamp: new Date().toISOString(),
-        method: "Reset Password",
-        body: {
-          user_id,
-          newPassword: password,
-        },
-        admin_id: req.user[0].user_id,
-        adminName: req.user[0].userName,
-      };
-      const auditSql =
-        "INSERT INTO admin_log (admin_id, admin_name, timestamp, method, body) VALUES (?, ?, ?, ?, ?)";
-      db.query(
-        auditSql,
-        [
-          auditData.admin_id,
-          auditData.adminName,
-          auditData.timestamp,
-          auditData.method,
-          JSON.stringify(auditData.body),
-        ],
-        (auditErr, auditResult) => {
-          if (auditErr) {
-            console.error("Error creating audit record:", auditErr);
-            return res
-              .status(StatusCode.INTERNAL_SERVER_ERROR)
-              .json({ error: "Failed to audit password reset" });
-          }
-          console.log("Audit record created successfully:", auditResult);
-          return res
-            .status(StatusCode.OK)
-            .json({ message: "تم تغيير كلمة السر بنجاح", auditData });
-        },
-      );
-    });
-  });
-});
-
 //@desc     view all user profiles
 //@route    GET  /api/v1/admin
 //@access   private
@@ -424,31 +356,6 @@ export const filterStudents = asyncHandler(async (req, res) => {
     }
   });
 });
-
-// Function to insert audit logs
-async function insertAuditLog(auditData) {
-  return new Promise((resolve, reject) => {
-    const auditSql =
-      "INSERT INTO admin_log (admin_id, admin_name, timestamp, method, body) VALUES (?, ?, ?, ?, ?)";
-    db.query(
-      auditSql,
-      [
-        auditData.admin_id,
-        auditData.adminName,
-        auditData.timestamp,
-        auditData.method,
-        JSON.stringify(auditData.body),
-      ],
-      (error, results) => {
-        if (error) {
-          reject(error);
-        } else {
-          resolve(results);
-        }
-      },
-    );
-  });
-}
 
 // Search with multiple fields
 export const reservationSearch = asyncHandler(async (req, res) => {

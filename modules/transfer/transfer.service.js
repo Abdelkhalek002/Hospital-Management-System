@@ -23,8 +23,7 @@ export const transfer = async (data) => {
   }
 
   //2. check if hospital id exists
-  const hospitalResult = await new Base().findById(
-    "external_hospitals",
+  const hospitalResult = await new Base("external_hospitals").findById(
     data.hospital_id,
   );
   if (!hospitalResult)
@@ -60,7 +59,7 @@ export const getTransferred = async ({ page, limit, searchKey }) => {
 export const updateTransfer = async (id, data) => {
   try {
     // 1. Check for transfer existence
-    const Exist = await new Transfer().existsByField("transfers", "id", id);
+    const Exist = await new Transfer().findById(id);
     if (!Exist)
       throw new ApiError("بيانات التحويل غير موجودة", StatusCode.NOT_FOUND);
 

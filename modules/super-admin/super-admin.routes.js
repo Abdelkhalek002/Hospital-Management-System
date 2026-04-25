@@ -4,7 +4,7 @@ import { createAdminValidator } from "./super-admin.validator.js";
 import {
   protect,
   allowedToSuper,
-  allowedToUser,
+  restrictToUser,
 } from "../../middlewares/auth.middleware.js";
 import { UserType } from "../../utils/user-types.js";
 import { roles } from "../../utils/roles.js";

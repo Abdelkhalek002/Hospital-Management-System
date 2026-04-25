@@ -3,7 +3,6 @@ import { fileURLToPath } from "url";
 import express from "express";
 import bodyParser from "body-parser";
 import morgan from "morgan";
-//import redis from "redis";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import ApiError from "./utils/api-error.js";
@@ -15,10 +14,8 @@ import adminReservationRoute from "./modules/reservation/reservation-admin.route
 import authRoute from "./modules/auth/auth.routes.js";
 import adminRoute from "./modules/admin/admin.routes.js";
 import superAdminRoute from "./modules/super-admin/super-admin.routes.js";
-import userProfileRoute from "./modules/users/user.routes.js";
+import userRoute from "./modules/users/user.routes.js";
 import systemDataRoutes from "./modules/system-data/routes/index.js";
-
-import userSecRoute from "./modules/users/user-security.routes.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -48,12 +45,11 @@ if (process.env.NODE_ENV === "development") {
 
 // MOUNT ROUTES
 app.use("/api/v1/auth/", authRoute); // DONE
-app.use("/api/v1/Myreservations/", userReservationRoute);
+app.use("/api/v1/super-admins/", superAdminRoute); // DONE
+app.use("/api/v1/admins/", adminRoute);
 app.use("/api/v1/reservations/", adminReservationRoute);
-app.use("/api/v1/admin/", adminRoute);
-app.use("/api/v1/super/", superAdminRoute);
-app.use("/api/v1/password/", userSecRoute);
-app.use("/api/v1/myProfile/", userProfileRoute);
+app.use("/api/v1/users/", userRoute);
+app.use("/api/v1/Myreservations/", userReservationRoute);
 app.use("/api/v1/sysdata/", systemDataRoutes);
 
 app.use((req, res, next) => {

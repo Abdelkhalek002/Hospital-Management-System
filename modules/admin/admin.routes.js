@@ -5,10 +5,7 @@ import reservationRoute from "../reservation/reservation-admin.routes.js";
 
 import * as adminController from "./admin.controller.js";
 
-import {
-  addNewAdminValidator,
-  resetPasswordValidator,
-} from "./admin.validator.js";
+import { addNewAdminValidator } from "./admin.validator.js";
 
 import * as authMiddleware from "../../middlewares/auth.middleware.js";
 import limiter from "../../services/rate-limit.service.js";
@@ -40,20 +37,6 @@ router
   .route("/users/:student_id")
   .put(adminController.updateUserProfile)
   .delete(adminController.deleteUserProfile);
-
-router
-  .route("/:user_id")
-  .patch(
-    authMiddleware.allowedTo(
-      roles.COUNTER,
-      roles.TRANSFER_CLERK,
-      roles.BADR_HOSPITAL_ADMIN,
-      roles.OBSERVER,
-      roles.SECOND_MANAGER,
-    ),
-    resetPasswordValidator,
-    adminController.resetPassword,
-  );
 
 router.get("/filter", adminController.filterStudents);
 

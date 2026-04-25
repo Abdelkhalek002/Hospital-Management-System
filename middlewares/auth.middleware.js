@@ -1,7 +1,5 @@
 import asyncHandler from "express-async-handler";
-import jwt from "jsonwebtoken";
 import ApiError from "../utils/api-error.js";
-import db from "../config/db.js";
 import * as authService from "../modules/auth/auth.service.js";
 import { roles } from "../utils/roles.js";
 import { StatusCode } from "../utils/status-codes.js";
@@ -41,7 +39,7 @@ const allowedTo = (...roles) =>
   });
 
 export const allowedToSuper = asyncHandler(async (req, res, next) => {
-  if (!req.user.email.endsWith("@hsh.io")) {
+  if (!req.user.email.endsWith(process.env.SUPER_ADMIN_Email_DOMAIN)) {
     return next(
       new ApiError(
         "You are not authorized to access this route!",
@@ -52,17 +50,16 @@ export const allowedToSuper = asyncHandler(async (req, res, next) => {
   next();
 });
 
-const allowedToUser = (...type) =>
-  asyncHandler(async (req, res, next) => {
-    if (!type.includes(req.user[0].type)) {
-      return next(
-        new ApiError(
-          "You are not authorized to access this route!",
-          StatusCode.FORBIDDEN,
-        ),
-      );
-    }
-    next();
-  });
+const restrictToUser = asyncHandler(async (req, res, next) => {
+  if (!req.user.email.endsWith(process.env.User_Email_DOMAIN)) {
+    return next(
+      new ApiError(
+        "You are not authorized to access this route!",
+        StatusCode.FORBIDDEN,
+      ),
+    );
+  }
+  next();
+});
 
-export { protect, allowedTo, allowedToUser };
+export { protect, allowedTo, restrictToUser };

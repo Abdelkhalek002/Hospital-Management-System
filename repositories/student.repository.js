@@ -49,6 +49,20 @@ class Student {
 
     return result;
   }
+  async getOne(id) {
+    const sql = `SELECT 
+                  s.id, s.username, s.email, s.user_image_file AS photo,
+                  l.level_name AS level, f.faculty_name AS faculty,
+                  g.gov_name AS governorate, n.nationality_name AS nationality
+                  FROM students s
+                    INNER JOIN levels l         ON s.level_id = l.id
+                    INNER JOIN governorates g   ON s.gov_id = g.id
+                    INNER JOIN nationality n    ON s.nationality_id = n.id
+                    INNER JOIN faculties f      ON s.faculty_id = f.id
+                  WHERE s.id = ?;`;
+    const result = await queryOne(sql, [id]);
+    return result;
+  }
 }
 
 export default Student;

@@ -3,7 +3,7 @@ import * as controller from "../controllers/governorates.js";
 import limiter from "../../../services/rate-limit.service.js";
 import {
   protect,
-  allowedToUser,
+  restrictToUser,
 } from "../../../middlewares/auth.middleware.js";
 import { roles } from "../../../utils/roles.js";
 

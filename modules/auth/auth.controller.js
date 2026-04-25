@@ -87,11 +87,11 @@ export const login = asyncHandler(async (req, res) => {
     });
   }
 
-  if (email.endsWith("@hsh.io")) {
+  if (email.endsWith(process.env.SUPER_ADMIN_Email_DOMAIN)) {
     loginFn = superAdminLogin;
-  } else if (email.includes("@admin.io")) {
+  } else if (email.endsWith(process.env.ADMIN_Email_DOMAIN)) {
     loginFn = adminLogin;
-  } else if (email.endsWith("@fci.helwan.edu.eg")) {
+  } else if (email.endsWith(process.env.User_Email_DOMAIN)) {
     loginFn = studentLogin;
   } else {
     throw new ApiError("Login failed", StatusCode.UNAUTHORIZED);

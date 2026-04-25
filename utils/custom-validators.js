@@ -20,21 +20,21 @@ export const isVerified = async (email) => {
 
 // To validate Helwan University account
 export const isAllowedEmail = (value) => {
-  return value.split("@")[1].endsWith("fci.helwan.edu.eg");
+  return value.split("@")[1].endsWith(process.env.User_Email_DOMAIN);
 };
 
 export const isAdminAllowedEmail = (value) => {
   return (
-    value.split("@")[1].endsWith("hsh.io") ||
-    value.split("@")[1].endsWith("admin.io")
+    value.split("@")[1].endsWith() ||
+    value.split("@")[1].endsWith(process.env.ADMIN_DOMAIN)
   );
 };
 
 export const isAllowedEmailForLogin = (value) => {
   return (
-    value.split("@")[1].endsWith("hsh.io") ||
-    value.split("@")[1].endsWith("admin.io") ||
-    value.split("@")[1].endsWith("fci.helwan.edu.eg")
+    value.split("@")[1].endsWith(process.env.SUPER_ADMIN_Email_DOMAIN) ||
+    value.split("@")[1].endsWith(process.env.ADMIN_DOMAIN) ||
+    value.split("@")[1].endsWith(process.env.User_Email_DOMAIN)
   );
 };
 
