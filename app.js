@@ -14,7 +14,7 @@ import adminReservationRoute from "./modules/reservation/reservation-admin.route
 import authRoute from "./modules/auth/auth.routes.js";
 import adminRoute from "./modules/admin/admin.routes.js";
 import superAdminRoute from "./modules/super-admin/super-admin.routes.js";
-import userRoute from "./modules/users/user.routes.js";
+import studentRoute from "./modules/students/student.routes.js";
 import systemDataRoutes from "./modules/system-data/routes/index.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -48,7 +48,7 @@ app.use("/api/v1/auth/", authRoute); // DONE
 app.use("/api/v1/super-admins/", superAdminRoute); // DONE
 app.use("/api/v1/admins/", adminRoute);
 app.use("/api/v1/reservations/", adminReservationRoute);
-app.use("/api/v1/users/", userRoute);
+app.use("/api/v1/users/", studentRoute);
 app.use("/api/v1/Myreservations/", userReservationRoute);
 app.use("/api/v1/sysdata/", systemDataRoutes);
 

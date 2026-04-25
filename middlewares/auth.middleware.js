@@ -24,22 +24,13 @@ export const protect = asyncHandler(async (req, res, next) => {
   next();
 });
 
-export const allowedToSuper = asyncHandler(async (req, res, next) => {
-  if (!req.user.email.endsWith(process.env.SUPER_ADMIN_Email_DOMAIN)) {
-    return next(
-      new ApiError(
-        "You are not authorized to access this route!",
-        StatusCode.FORBIDDEN,
-      ),
-    );
-  }
-  next();
-});
-
-export const allowedTo = (...roles) =>
+export const allowedTo = (...allowedRoles) =>
   asyncHandler(async (req, res, next) => {
-    console.log(req.user);
-    if (!roles.includes(req.user.role)) {
+    const isSuperAdmin = req.user.email.endsWith(
+      process.env.SUPER_ADMIN_EMAIL_DOMAIN,
+    );
+    const isAllowedRole = allowedRoles.includes(req.user.role);
+    if (!isSuperAdmin && !isAllowedRole) {
       return next(
         new ApiError(
           "You are not authorized to access this route!",
@@ -51,7 +42,7 @@ export const allowedTo = (...roles) =>
   });
 
 export const restrictToUser = asyncHandler(async (req, res, next) => {
-  if (!req.user.email.endsWith(process.env.User_Email_DOMAIN)) {
+  if (!req.user.email.endsWith(process.env.USER_EMAIL_DOMAIN)) {
     return next(
       new ApiError(
         "You are not authorized to access this route!",

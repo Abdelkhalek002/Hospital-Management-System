@@ -3,11 +3,11 @@ import jwt from "jsonwebtoken";
 
 // IMPORT REPOSITORIES
 import Base from "../../repositories/base.repository.js";
-import Student from "../../repositories/student.repository.js";
+import Student from "../students/student.repository.js";
 import User from "../../repositories/user.repository.js";
 
 // IMPORT SERVICES
-import { signToken } from "./jwt.service.js";
+import { signToken, verifyToken } from "./jwt.service.js";
 import * as emailService from "../../services/email.service.js";
 
 // IMPORT UTILITIES
@@ -67,7 +67,7 @@ export const signup = async (studentData) => {
   return result;
 };
 
-export const performLogin = async (userType, email, password) => {
+export const login = async (userType, email, password) => {
   // 1. Validate userType
   if (!Object.values(UserType).includes(userType)) {
     throw new ApiError("Invalid user type", StatusCode.BAD_REQUEST);
@@ -78,6 +78,7 @@ export const performLogin = async (userType, email, password) => {
 
   // 3. Compare passwords
   const matched = await checkPassword(password, user.password);
+
   if (!matched)
     throw new ApiError("كلمة المرور غير صحيحة", StatusCode.UNAUTHORIZED);
 
@@ -100,18 +101,14 @@ export const logout = async ({ res, userType, userId, clearCookieOptions }) => {
 
 export const protect = async (token) => {
   // 1. verify user from token
-  const decoded = jwt.verify(token, process.env.JWT_SECRET);
+  const decoded = await verifyToken(token, process.env.JWT_SECRET);
 
   // 2. find user by email
-  const currentUser = await new User(decoded.userType).findByEmail(
-    decoded.email,
-  );
+  const currentUser = await new User(decoded.type).findByEmail(decoded.email);
   if (!currentUser || currentUser.length === 0) {
-    return next(
-      new ApiError(
-        "The user that belongs to this token no longer exists",
-        StatusCode.UNAUTHORIZED,
-      ),
+    throw new ApiError(
+      "The user that belongs to this token no longer exists",
+      StatusCode.UNAUTHORIZED,
     );
   }
 
@@ -121,10 +118,10 @@ export const protect = async (token) => {
       new Date(currentUser.password_changed_at).getTime() / 1000,
     );
     if (passChangedTimestamp > decoded.iat) {
-      return res.status(StatusCode.UNAUTHORIZED).json({
-        status: "error",
-        message: "User recently changed their password. Please Login again.",
-      });
+      throw new ApiError(
+        "User recently changed their password. Please Login again.",
+        StatusCode.UNAUTHORIZED,
+      );
     }
   }
   return currentUser;

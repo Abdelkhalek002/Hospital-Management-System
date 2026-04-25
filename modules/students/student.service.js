@@ -1,5 +1,5 @@
 import Base from "../../repositories/base.repository.js";
-import Student from "../../repositories/student.repository.js";
+import Student from "./student.repository.js";
 import ApiError from "../../utils/api-error.js";
 import { StatusCode } from "../../utils/status-codes.js";
 
@@ -18,4 +18,20 @@ export const updateMe = async (id, data) => {
   // 2. update data
   const result = await new Student().update(id, data);
   return result;
+};
+
+export const getOne = async (searchKey) => {
+  const sql = "SELECT * FROM students WHERE user_id = ?";
+  db.query(sql, [user_id], (err, result) => {
+    if (err) {
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).send(err);
+    } else {
+      console.log(result);
+      if (result.length === 0) {
+        res.status(StatusCode.NOT_FOUND).json({ message: "الادمن غير موجود" });
+      } else {
+        res.status(StatusCode.OK).json(result);
+      }
+    }
+  });
 };

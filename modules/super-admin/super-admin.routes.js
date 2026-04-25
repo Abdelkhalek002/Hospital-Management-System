@@ -1,23 +1,19 @@
 import express from "express";
 import * as controller from "./super-admin.controller.js";
 import { createAdminValidator } from "./super-admin.validator.js";
-import {
-  protect,
-  allowedToSuper,
-  restrictToUser,
-} from "../../middlewares/auth.middleware.js";
+import { protect, restrictToUser } from "../../middlewares/auth.middleware.js";
 import { UserType } from "../../utils/user-types.js";
 import { roles } from "../../utils/roles.js";
 const router = express.Router();
 
-router.use(protect, allowedToSuper);
+router.use(protect);
 
 router
-  .route("/addSuper")
-  .post(createAdminValidator, controller.createSuperAdmin);
-router.route("/addAdmin").post(controller.addNewAdmin);
+  .route("/")
+  .post(createAdminValidator, controller.createSuperAdmin)
+  .get(controller.getAllAdmin);
 
-router.route("/all").get(controller.getAllAdmin);
+router.route("/addAdmin").post(controller.addNewAdmin);
 
 router
   .route("/:user_id")

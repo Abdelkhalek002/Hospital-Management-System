@@ -8,7 +8,6 @@ import { protect, allowedTo } from "../../middlewares/auth.middleware.js";
 import { roles } from "../../utils/roles.js";
 
 router.use(authMiddleware.protect);
-router.use(authMiddleware.allowedToSuper);
 
 router.get("/byMonth", reservationController.getReservationsPerMonth);
 

@@ -4,12 +4,20 @@ import ApiError from "../../utils/api-error.js";
 import { StatusCode } from "../../utils/status-codes.js";
 
 export const signToken = (user, expiresIn) => {
-  const { id, email } = user;
-  const userType = user.userType;
-  const token = jwt.sign({ id, email, userType }, process.env.JWT_SECRET, {
-    expiresIn,
-  });
-  return token;
+  const { id, email, role } = user;
+  const type = user.userType;
+  if (type === "super_admins" || type === "admins") {
+    const token = jwt.sign({ id, email, type, role }, process.env.JWT_SECRET, {
+      expiresIn,
+    });
+    return token;
+  }
+  if (type === "students") {
+    const token = jwt.sign({ id, email, type }, process.env.JWT_SECRET, {
+      expiresIn,
+    });
+    return token;
+  }
 };
 
 export const verifyToken = async (token, secret) => {

@@ -8,6 +8,7 @@ import { StatusCode } from "../../utils/status-codes.js";
 import { UserType } from "../../utils/user-types.js";
 import { pick } from "../../utils/pick-from-body-request.js";
 import ApiError from "../../utils/api-error.js";
+import { verifyToken } from "./jwt.service.js";
 
 dotenv.config();
 
@@ -64,21 +65,13 @@ export const login = asyncHandler(async (req, res) => {
   let loginFn;
 
   const studentLogin = async (studentEmail, studentPassword) =>
-    await authService.performLogin(
-      UserType.STUDENT,
-      studentEmail,
-      studentPassword,
-    );
+    await authService.login(UserType.STUDENT, studentEmail, studentPassword);
 
   const adminLogin = async (adminEmail, adminPassword) =>
-    await authService.performLogin(UserType.ADMIN, adminEmail, adminPassword);
+    await authService.login(UserType.ADMIN, adminEmail, adminPassword);
 
   const superAdminLogin = async (superEmail, superPassword) =>
-    await authService.performLogin(
-      UserType.SUPER_ADMIN,
-      superEmail,
-      superPassword,
-    );
+    await authService.login(UserType.SUPER_ADMIN, superEmail, superPassword);
 
   if (!email || !password) {
     return res.status(StatusCode.BAD_REQUEST).json({
@@ -87,11 +80,11 @@ export const login = asyncHandler(async (req, res) => {
     });
   }
 
-  if (email.endsWith(process.env.SUPER_ADMIN_Email_DOMAIN)) {
+  if (email.endsWith(process.env.SUPER_ADMIN_EMAIL_DOMAIN)) {
     loginFn = superAdminLogin;
-  } else if (email.endsWith(process.env.ADMIN_Email_DOMAIN)) {
+  } else if (email.endsWith(process.env.ADMIN_EMAIL_DOMAIN)) {
     loginFn = adminLogin;
-  } else if (email.endsWith(process.env.User_Email_DOMAIN)) {
+  } else if (email.endsWith(process.env.USER_EMAIL_DOMAIN)) {
     loginFn = studentLogin;
   } else {
     throw new ApiError("Login failed", StatusCode.UNAUTHORIZED);
@@ -123,7 +116,7 @@ export const logout = asyncHandler(async (req, res) => {
   let decoded;
   if (token) {
     try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET);
+      decoded = await verifyToken(token, process.env.JWT_SECRET);
     } catch (error) {
       throw new ApiError("Invalid or expired token", StatusCode.UNAUTHORIZED);
     }

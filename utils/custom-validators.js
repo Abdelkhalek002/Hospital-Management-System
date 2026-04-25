@@ -1,5 +1,5 @@
 // Importing dependencies
-import Student from "../repositories/student.repository.js";
+import Student from "../modules/students/student.repository.js";
 
 // To check if the code is in Arabic or not
 export const isArabic = (value) => {
@@ -20,7 +20,7 @@ export const isVerified = async (email) => {
 
 // To validate Helwan University account
 export const isAllowedEmail = (value) => {
-  return value.split("@")[1].endsWith(process.env.User_Email_DOMAIN);
+  return value.split("@")[1].endsWith(process.env.USER_EMAIL_DOMAIN);
 };
 
 export const isAdminAllowedEmail = (value) => {
@@ -32,9 +32,9 @@ export const isAdminAllowedEmail = (value) => {
 
 export const isAllowedEmailForLogin = (value) => {
   return (
-    value.split("@")[1].endsWith(process.env.SUPER_ADMIN_Email_DOMAIN) ||
-    value.split("@")[1].endsWith(process.env.ADMIN_DOMAIN) ||
-    value.split("@")[1].endsWith(process.env.User_Email_DOMAIN)
+    value.split("@")[1].endsWith(process.env.SUPER_ADMIN_EMAIL_DOMAIN) ||
+    value.split("@")[1].endsWith(process.env.ADMIN_EMAIL_DOMAIN) ||
+    value.split("@")[1].endsWith(process.env.USER_EMAIL_DOMAIN)
   );
 };
 

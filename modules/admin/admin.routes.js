@@ -14,29 +14,36 @@ import { roles } from "../../utils/roles.js";
 const router = express.Router();
 
 router.use(authMiddleware.protect);
-router.use(authMiddleware.allowedToSuper);
 
 // Transfer Route
-router.use("/transfers", transferRoute);
+router.use(
+  "/transfers",
+  authMiddleware.allowedTo(
+    roles.SECOND_MANAGER,
+    roles.TRANSFER_CLERK,
+    roles.COUNTER,
+  ),
+  transferRoute,
+);
 
 // Reservation Route
-router.use("/reservations", reservationRoute);
+router.use(
+  "/reservations",
+  authMiddleware.allowedTo(
+    roles.SECOND_MANAGER,
+    roles.MEDICAL_CHECK_MANAGER,
+    roles.COUNTER,
+  ),
+  reservationRoute,
+);
 
 // Statistics
-router.route("/stats").get(adminController.getStatistics);
-
-// GET ALL USER PROFILES
 router
-  .route("/users")
+  .route("/stats")
   .get(
-    authMiddleware.allowedTo(roles.COUNTER),
-    adminController.getAllUserProfiles,
+    authMiddleware.allowedTo(roles.SECOND_MANAGER),
+    adminController.getStatistics,
   );
-
-router
-  .route("/users/:student_id")
-  .put(adminController.updateUserProfile)
-  .delete(adminController.deleteUserProfile);
 
 router.get("/filter", adminController.filterStudents);
 
