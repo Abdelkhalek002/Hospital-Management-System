@@ -50,8 +50,12 @@ export const uploadRegistrationFiles = upload.fields([
   { name: "fees_file", maxCount: 1 },
 ]);
 
+export const uploadProfilePhoto = upload.single("user_image_file");
+
 // get uploaded files
-const getUploadedFile = (req, fieldName) => req.files?.[fieldName]?.[0];
+const getUploadedFile = (req, fieldName) =>
+  req.files?.[fieldName]?.[0] ??
+  (req.file?.fieldname === fieldName ? req.file : undefined);
 
 const ensureDirectory = async (directory) => {
   await fs.mkdir(directory, { recursive: true });
@@ -131,6 +135,21 @@ const createImmutableStudentKey = (requestBody) => {
   return createHash("sha256").update(nationalId).digest("hex").slice(0, 12);
 };
 
+const createImmutableUserPhotoKey = ({ user, username }) => {
+  const userId = String(user?.id ?? "").trim();
+  const safeUsername = String(username ?? "").trim();
+  const keySource = userId || safeUsername;
+
+  if (!keySource) {
+    throw new ApiError(
+      "Authenticated user information is required",
+      StatusCode.BAD_REQUEST,
+    );
+  }
+
+  return createHash("sha256").update(keySource).digest("hex").slice(0, 12);
+};
+
 const formatTimestampForFileName = () =>
   new Date().toISOString().replace(/[-:.TZ]/g, "");
 
@@ -186,21 +205,17 @@ export const resizeFiles = asyncHandler(async (req, _res, next) => {
   const username = ensureSafeUsername(req.body?.username);
   const studentDirectory = getStudentDirectory(username);
   let studentKey = null;
-
   await ensureDirectory(studentDirectory);
-
   for (const fieldName of registrationUploadFieldNames) {
     const file = getUploadedFile(req, fieldName);
     if (!file) {
       continue;
     }
-
     ensureValidJpegContent(file, fieldName);
     if (!studentKey) {
       studentKey = createImmutableStudentKey(req.body);
       req.body.student_upload_key = studentKey;
     }
-
     const fileName = await writeStudentFileCollisionSafe({
       studentDirectory,
       fieldName,
@@ -210,6 +225,34 @@ export const resizeFiles = asyncHandler(async (req, _res, next) => {
 
     req.body[fieldName] = path.posix.join("students", username, fileName);
   }
+  next();
+});
 
+export const resizeUserPhoto = asyncHandler(async (req, _res, next) => {
+  const username = ensureSafeUsername(req.body?.username ?? req.user?.username);
+  const studentDirectory = getStudentDirectory(username);
+  const fieldName = "user_image_file";
+
+  await ensureDirectory(studentDirectory);
+  const file = getUploadedFile(req, fieldName);
+  if (!file) {
+    next();
+    return;
+  }
+
+  ensureValidJpegContent(file, fieldName);
+  const studentKey = createImmutableUserPhotoKey({
+    user: req.user,
+    username,
+  });
+  req.body.student_upload_key = studentKey;
+
+  const fileName = await writeStudentFileCollisionSafe({
+    studentDirectory,
+    fieldName,
+    studentKey,
+    fileBuffer: file.buffer,
+  });
+  req.body[fieldName] = path.posix.join("students", username, fileName);
   next();
 });

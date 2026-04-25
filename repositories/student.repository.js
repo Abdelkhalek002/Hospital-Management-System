@@ -63,6 +63,22 @@ class Student {
     const result = await queryOne(sql, [id]);
     return result;
   }
+  async update(id, data) {
+    const sql = `UPDATE students 
+                 SET 
+                  username = ?, user_image_file = ?,
+                  birth_date = ?, gender = ?, gov_id = ?
+                 WHERE id = ?;`;
+    const result = await query(sql, [
+      data.username ?? null,
+      data.user_image_file ?? null,
+      data.birth_date ?? null,
+      data.gender ?? null,
+      data.gov_id ?? null,
+      id,
+    ]);
+    return result;
+  }
 }
 
 export default Student;
