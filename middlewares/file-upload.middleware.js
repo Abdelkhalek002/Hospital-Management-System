@@ -24,7 +24,7 @@ const fileFieldAliases = {
 const FILE_NAME_MAX_ATTEMPTS = 10;
 
 const multerFilter = (req, file, cb) => {
-  if (file.mimetype.endsWith("/jpeg")) {
+  if (file.mimetype.endsWith("/jpeg") || file.mimetype.endsWith("/jpg")) {
     cb(null, true);
   } else {
     cb(
@@ -61,33 +61,6 @@ const ensureDirectory = async (directory) => {
   await fs.mkdir(directory, { recursive: true });
 };
 
-const ensureSafeUsername = (username) => {
-  if (typeof username !== "string" || username.length === 0) {
-    throw new ApiError(
-      "Username is required for student uploads",
-      StatusCode.BAD_REQUEST,
-    );
-  }
-
-  const hasPathSeparators = username.includes("/") || username.includes("\\");
-  const isParentTraversal = username.includes("..");
-  const safeUsername = sanitizeFilename(username);
-
-  if (
-    hasPathSeparators ||
-    isParentTraversal ||
-    safeUsername.length === 0 ||
-    safeUsername !== username
-  ) {
-    throw new ApiError(
-      "Invalid username for upload directory",
-      StatusCode.BAD_REQUEST,
-    );
-  }
-
-  return username;
-};
-
 const getStudentDirectory = (username) => {
   const rootDirectory = path.resolve(STUDENTS_PARENT_DIRECTORY);
   const studentDirectory = path.resolve(
@@ -103,27 +76,6 @@ const getStudentDirectory = (username) => {
   }
 
   return studentDirectory;
-};
-
-const hasJpegMagicBytes = (buffer) => {
-  if (!Buffer.isBuffer(buffer) || buffer.length < 4) {
-    return false;
-  }
-
-  const startsWithJpegSignature = buffer[0] === 0xff && buffer[1] === 0xd8;
-  const endsWithJpegSignature =
-    buffer[buffer.length - 2] === 0xff && buffer[buffer.length - 1] === 0xd9;
-
-  return startsWithJpegSignature && endsWithJpegSignature;
-};
-
-const ensureValidJpegContent = (file, fieldName) => {
-  if (!hasJpegMagicBytes(file?.buffer)) {
-    throw new ApiError(
-      `Invalid file content for "${fieldName}". Only real JPEG images are allowed.`,
-      StatusCode.BAD_REQUEST,
-    );
-  }
 };
 
 const createImmutableStudentKey = (requestBody) => {
@@ -202,7 +154,7 @@ const writeStudentFileCollisionSafe = async ({
 };
 
 export const resizeFiles = asyncHandler(async (req, _res, next) => {
-  const username = ensureSafeUsername(req.body?.username);
+  const username = req.body?.username;
   const studentDirectory = getStudentDirectory(username);
   let studentKey = null;
   await ensureDirectory(studentDirectory);
@@ -211,7 +163,7 @@ export const resizeFiles = asyncHandler(async (req, _res, next) => {
     if (!file) {
       continue;
     }
-    ensureValidJpegContent(file, fieldName);
+
     if (!studentKey) {
       studentKey = createImmutableStudentKey(req.body);
       req.body.student_upload_key = studentKey;
@@ -229,7 +181,7 @@ export const resizeFiles = asyncHandler(async (req, _res, next) => {
 });
 
 export const resizeUserPhoto = asyncHandler(async (req, _res, next) => {
-  const username = ensureSafeUsername(req.body?.username ?? req.user?.username);
+  const username = req.user.username;
   const studentDirectory = getStudentDirectory(username);
   const fieldName = "user_image_file";
 
@@ -240,7 +192,6 @@ export const resizeUserPhoto = asyncHandler(async (req, _res, next) => {
     return;
   }
 
-  ensureValidJpegContent(file, fieldName);
   const studentKey = createImmutableUserPhotoKey({
     user: req.user,
     username,
@@ -253,6 +204,6 @@ export const resizeUserPhoto = asyncHandler(async (req, _res, next) => {
     studentKey,
     fileBuffer: file.buffer,
   });
-  req.body[fieldName] = path.posix.join("students", username, fileName);
+  req.body[fieldName] = path.posix.join(fileName);
   next();
 });

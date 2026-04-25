@@ -64,19 +64,19 @@ class Student {
     return result;
   }
   async update(id, data) {
-    const sql = `UPDATE students 
-                 SET 
-                  username = ?, user_image_file = ?,
-                  birth_date = ?, gender = ?, gov_id = ?
-                 WHERE id = ?;`;
-    const result = await query(sql, [
-      data.username ?? null,
-      data.user_image_file ?? null,
-      data.birth_date ?? null,
-      data.gender ?? null,
-      data.gov_id ?? null,
-      id,
-    ]);
+    const updates = [];
+    const values = [];
+
+    Object.keys(data).forEach((field) => {
+      updates.push(`${field} = ?`);
+      values.push(data[field] ?? null);
+    });
+
+    if (updates.length === 0) return null;
+
+    values.push(id);
+    const sql = `UPDATE students SET ${updates.join(", ")} WHERE id = ?`;
+    const result = await query(sql, values);
     return result;
   }
 }
