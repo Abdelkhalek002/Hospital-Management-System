@@ -3,7 +3,7 @@ import express from "express";
 import transferRoute from "../transfer/transfer.route.js";
 import reservationRoute from "../reservation/reservation-admin.routes.js";
 
-import * as adminController from "./admin.controller.js";
+import * as controller from "./admin.controller.js";
 
 import { addNewAdminValidator } from "./admin.validator.js";
 
@@ -14,6 +14,18 @@ import { roles } from "../../utils/roles.js";
 const router = express.Router();
 
 router.use(authMiddleware.protect);
+
+router.route("/").post(controller.createOne).get(controller.getAll);
+
+router
+  .route("/:id")
+  .get(controller.getOne)
+  .patch(controller.updateOne)
+  .delete(controller.deleteOne);
+
+router.route("/logs").get(controller.getLogs).delete(controller.deleteAllLogs);
+
+router.route(":id/logs").get(controller.getLog).delete(controller.deleteLog);
 
 // Transfer Route
 router.use(
@@ -37,18 +49,9 @@ router.use(
   reservationRoute,
 );
 
-// Statistics
+// Stats
 router
   .route("/stats")
-  .get(
-    authMiddleware.allowedTo(roles.SECOND_MANAGER),
-    adminController.getStatistics,
-  );
-
-router.get("/filter", adminController.filterStudents);
-
-// SYSTEM FEATURES ROUTERS
-router.route("/search").post(adminController.searchStudent);
-router.route("/advancedSearch").post(adminController.advancedSearch);
+  .get(authMiddleware.allowedTo(roles.SECOND_MANAGER), controller.getStats);
 
 export default router;

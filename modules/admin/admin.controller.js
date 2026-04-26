@@ -1,230 +1,281 @@
 import asyncHandler from "express-async-handler";
-import bcrypt from "bcrypt";
-import db from "../../config/db.js";
 import { StatusCode } from "../../utils/status-codes.js";
-import { roles } from "../../utils/roles.js";
-import * as service from "./admin.service.js";
 import Base from "../../repositories/base.repository.js";
+import * as service from "./admin.service.js";
+import { auditLog } from "../../utils/audit-log.js";
+import { pick } from "../../utils/pick-from-body-request.js";
+import jwt from "jsonwebtoken";
 
-// System Stats
-export const getStatistics = asyncHandler(async (req, res) => {
-  const result = await new Base().getStats();
-  res.status(StatusCode.OK).json({
-    msg: "success",
-    data: result,
+export const createOne = asyncHandler(async (req, res) => {
+  // 1. pick valid data only from req.body
+  const allowedFields = ["username", "email", "password", "role"];
+  const pick = (obj, fields) =>
+    fields.reduce((acc, field) => {
+      if (obj[field] !== undefined) acc[field] = obj[field];
+      return acc;
+    }, {});
+  const data = pick(req.body, allowedFields);
+
+  // 2. create admin
+  const result = await service.createOne(data);
+
+  // 3. record action
+  const auditData = {
+    adminId: req.user.id,
+    method: "اضافة ادمن جديد",
+    createdAt: new Date().toISOString(),
+  };
+  await auditLog(auditData);
+  // 4. send response
+  return res.status(StatusCode.CREATED).json({
+    status: "success",
+    message: `تم إضافة أدمن جديد`,
   });
 });
 
-//search for students method
-export const searchStudent = asyncHandler(async (req, res) => {
-  const { searchKey } = req.query;
-  const sql =
-    "SELECT * FROM students WHERE userName LIKE ? OR national_id LIKE ?";
-  db.query(sql, [`%${searchKey}%`, `%${searchKey}%`], (err, results) => {
-    if (err) {
-      res.status(400).json({ msg: err.message });
-    } else {
-      if (results.length === 0) {
-        res.status(404).json({ msg: "No students found" });
+export const updateOne = asyncHandler(async (req, res) => {
+  const user_id = req.params.user_id;
+  const { userName, email, role } = req.body;
+
+  // Check if the admin exists
+  const checkSql = "SELECT * FROM admins WHERE user_id = ?";
+  db.query(checkSql, [user_id], (checkErr, checkResult) => {
+    if (checkErr) {
+      return res.status(StatusCode.INTERNAL_SERVER_ERROR).send(checkErr);
+    }
+    if (checkResult.length === 0) {
+      return res
+        .status(StatusCode.NOT_FOUND)
+        .json({ error: "الادمن غير موجود" });
+    }
+
+    // Update admin details
+    const updateSql =
+      "UPDATE admins SET userName = ?, email = ?, role = ? WHERE user_id = ?";
+    db.query(updateSql, [userName, email, role, user_id], (err, result) => {
+      if (err) {
+        return res.status(StatusCode.INTERNAL_SERVER_ERROR).send(err);
       } else {
-        res.status(200).json({ data: results });
+        // Create audit record
+        const auditData = {
+          timestamp: new Date().toISOString(),
+          method: "تعديل الادمن",
+          body: { user_id, userName, email, role },
+          adminName: req.user[0].name,
+          admin_id: req.user[0].superAdmin_id,
+        };
+        const auditSql =
+          "INSERT INTO admin_log (admin_id, admin_name, timestamp, method, body) VALUES (?, ?, ?, ?, ?)";
+        db.query(
+          auditSql,
+          [
+            auditData.admin_id,
+            auditData.adminName,
+            auditData.timestamp,
+            auditData.method,
+            JSON.stringify(auditData.body),
+          ],
+          (auditErr, auditResult) => {
+            if (auditErr) {
+              console.error("Error creating audit record:", auditErr);
+              return res.status(StatusCode.SERVICE_UNAVAILABLE).send(auditErr);
+            }
+            console.log("Audit record created successfully:", auditResult);
+            res
+              .status(StatusCode.OK)
+              .json({ message: "تم تعديل بيانات الادمن بنجاج", auditData });
+          },
+        );
+      }
+    });
+  });
+});
+
+export const getOne = asyncHandler(async (req, res) => {
+  const { user_id } = req.params;
+  const sql = "SELECT * FROM admins WHERE user_id = ?";
+
+  db.query(sql, [user_id], (err, result) => {
+    if (err) {
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).send(err);
+    } else {
+      console.log(result);
+      if (result.length === 0) {
+        res.status(StatusCode.NOT_FOUND).json({ message: "الادمن غير موجود" });
+      } else {
+        res.status(StatusCode.OK).json(result);
       }
     }
   });
 });
 
-//advanced search method
-export const advancedSearch = asyncHandler(async (req, res) => {
-  const queryParams = [];
-  let query = `
-  SELECT students.*, medical_examinations.*, clinics.clinicName AS clinic_name
-  FROM students
-  LEFT JOIN medical_examinations ON students.student_id = medical_examinations.student_id
-  LEFT JOIN clinics ON medical_examinations.clinic_id = clinics.clinic_id
-  WHERE`;
-  let conditions = [];
-
-  // Build the WHERE clause for the search query
-  for (const [key, value] of Object.entries(req.query)) {
-    if (key !== "page" && key !== "limit" && value) {
-      // Skip pagination params
-      conditions.push(`${key} LIKE ?`);
-      queryParams.push(`%${value}%`);
+export const getAll = asyncHandler(async (req, res) => {
+  const sql = "SELECT * FROM admins";
+  db.query(sql, (err, result) => {
+    if (err) {
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).send(err);
+    } else {
+      console.log("request created successfully");
+      res.status(StatusCode.OK).json(result);
     }
-  }
+  });
+});
 
-  // Check if any search criteria provided
-  if (conditions.length === 0) {
-    return res.status(StatusCode.NOT_FOUND).json({
-      message: "لا يوجد عنصر للبحث . برجاء اختيار عنصر واحد علي الاقل",
-    });
-  }
-  query += " " + conditions.join(" AND ");
-
-  query += " ORDER BY medical_examinations.id DESC";
-
-  // Pagination
+//--------------------------------LOGS-------------------------------------
+export const getLogs = asyncHandler(async (req, res) => {
+  // Parse query parameters for pagination
   const page = parseInt(req.query.page, 10) || 1;
   const limit = parseInt(req.query.limit, 10) || 10;
   const offset = (page - 1) * limit;
 
-  // Query to get the total count of results matching the search criteria
-  const countQuery = `
-  SELECT COUNT(*) AS count
-  FROM students
-  LEFT JOIN medical_examinations ON students.student_id = medical_examinations.student_id
-  WHERE ${conditions.join(" AND ")}`;
+  // Query to fetch total count of admin logs
+  const countSql = "SELECT COUNT(*) AS count FROM admin_log";
 
-  db.query(countQuery, queryParams, (err, countResults) => {
+  // Query to fetch paginated admin logs
+  const sql =
+    "SELECT * FROM admin_log ORDER BY adminLog_id DESC LIMIT ? OFFSET ?";
+
+  // Get the total count of admin logs
+  db.query(countSql, (err, countResults) => {
     if (err) {
-      return res
-        .status(StatusCode.INTERNAL_SERVER_ERROR)
-        .json({ message: "Database error", error: err });
+      console.error("Error fetching count of admin logs:", err);
+      return res.status(500).json({ error: "Internal Server Error" });
     }
 
     const totalCount = countResults[0].count;
     const totalPages = Math.ceil(totalCount / limit);
 
-    // Add pagination to the main query
-    query += " LIMIT ? OFFSET ?";
-    queryParams.push(limit, offset);
-
-    // Execute the search query with pagination
-    db.query(query, queryParams, (err, search) => {
-      if (err) {
-        return res
-          .status(StatusCode.INTERNAL_SERVER_ERROR)
-          .json({ message: "Database error", error: err });
+    db.query(sql, [limit, offset], (error, results) => {
+      if (error) {
+        console.error("Error fetching admin logs:", error);
+        return res.status(500).json({ error: "Internal Server Error" });
       }
 
-      // Handle the response
-      if (search.length === 0) {
-        return res
-          .status(StatusCode.NOT_FOUND)
-          .json({ msg: "لا يوجد نتائج بحث" });
-      } else {
-        // Format the dates
-        const formattedResults = search.map((result) => {
-          if (result.date) {
-            result.date = new Date(result.date).toLocaleString("en-US", {
-              timeZone: "Africa/Cairo",
-            });
-          }
-          if (result.birth_date) {
-            result.birth_date = new Date(result.birth_date).toLocaleString(
-              "en-US",
-              { timeZone: "Africa/Cairo" },
-            );
-          }
-          return result;
-        });
-
-        // Send the response
-        return res
-          .status(200)
-          .json({ totalPages, currentPage: page, data: formattedResults });
-      }
+      res.status(200).json({
+        totalPages,
+        currentPage: page,
+        adminLogs: results,
+      });
     });
   });
 });
 
-//filter students method
-export const filterStudents = asyncHandler(async (req, res) => {
-  const filters = req.query;
-  const values = [];
-  const conditions = [];
+export const deleteOne = asyncHandler(async (req, res) => {
+  const { user_id } = req.params;
 
-  Object.entries(filters).forEach(([key, value]) => {
-    conditions.push(`students.${key} = ?`);
-    values.push(value);
-  });
-
-  let sql =
-    "SELECT students.*, levels.levelName AS level_name, governorates.govName AS gov_name , nationality.nationalityName AS nationality_name FROM students";
-  sql += " LEFT JOIN levels ON students.level_id = levels.level_id";
-  sql += " LEFT JOIN governorates ON students.gov_id = governorates.gov_id";
-  sql +=
-    " LEFT JOIN nationality ON students.nationality_id = nationality.nationality_id";
-
-  if (conditions.length > 0) {
-    sql += " WHERE " + conditions.join(" AND ");
-  }
-
-  db.query(sql, values, (err, results) => {
-    if (err) {
-      res.status(400).json({ msg: err.message });
-    } else {
-      if (!results || results.length === 0) {
-        res.status(404).json({ msg: "No students found" });
-      } else {
-        res.status(200).json({ data: results });
-      }
+  const selectSql =
+    "SELECT userName, email, role FROM admins WHERE user_id = ?";
+  db.query(selectSql, [user_id], (selectErr, selectResult) => {
+    if (selectErr) {
+      return res.status(StatusCode.INTERNAL_SERVER_ERROR).send(selectErr);
     }
+    if (selectResult.length === 0) {
+      return res
+        .status(StatusCode.NOT_FOUND)
+        .json({ error: "الادمن غير موجود" });
+    }
+    const { userName, email, role } = selectResult[0];
+    const deleteSql = "DELETE FROM admins WHERE user_id = ?";
+    db.query(deleteSql, [user_id], (deleteErr) => {
+      if (deleteErr) {
+        return res.status(StatusCode.INTERNAL_SERVER_ERROR).send(deleteErr);
+      }
+      const auditData = {
+        timestamp: new Date().toISOString(),
+        method: "حذف ادمن",
+        body: { userName, email, role },
+        adminName: req.user[0].name,
+        admin_id: req.user[0].superAdmin_id,
+      };
+
+      const auditSql =
+        "INSERT INTO admin_log (admin_id, admin_name, timestamp, method, body) VALUES (?, ?, ?, ?, ?)";
+      db.query(
+        auditSql,
+        [
+          auditData.admin_id,
+          auditData.adminName,
+          auditData.timestamp,
+          auditData.method,
+          JSON.stringify(auditData.body),
+        ],
+        (auditErr, auditResult) => {
+          if (auditErr) {
+            console.error("Error creating audit record:", auditErr);
+          } else {
+            console.log("Audit record created successfully:", auditResult);
+          }
+        },
+      );
+      res
+        .status(StatusCode.OK)
+        .json({ message: "تم حذف الادمن بنجاح", auditData });
+    });
   });
 });
 
-// Search with multiple fields
-export const reservationSearch = asyncHandler(async (req, res) => {
-  const { searchKey } = req.query;
-  const sql =
-    "SELECT * FROM medical_examinations WHERE examType LIKE ? OR status LIKE ? OR transfered LIKE ? ";
-  db.query(
-    sql,
-    [`%${searchKey}%`, `%${searchKey}%`, `%${searchKey}%`, `%${searchKey}%`],
-    (err, results) => {
-      if (err) {
-        res.status(400).json({ msg: err.message });
-      } else {
-        if (results.length === 0) {
-          res.status(404).json({ msg: "No students found" });
-        } else {
-          res.status(200).json({ data: results });
-        }
-      }
-    },
-  );
+export const getLog = asyncHandler(async (req, res) => {
+  const { admin_id } = req.params;
+  const sql = "SELECT * FROM admin_log WHERE admin_id = ?";
+  db.query(sql, [admin_id], (err, result) => {
+    if (err) {
+      return res
+        .status(StatusCode.INTERNAL_SERVER_ERROR)
+        .json({ error: "فشل في استرجاع العمليات المسجلة" });
+    }
+    res.status(StatusCode.OK).json(result);
+  });
 });
 
-// Search students with multiple fields
-export const studentSearch = asyncHandler(async (req, res) => {
-  const { searchKey } = req.query;
-  const sql = `
-  SELECT 
-      * 
-  FROM 
-      students 
-  WHERE 
-      userName LIKE ? 
-      OR email LIKE ? 
-      OR national_id LIKE ? 
-      OR nationality_id LIKE ? 
-      OR level_id LIKE ? 
-      OR gov_id LIKE ? 
-      OR faculty_id LIKE ? 
-      OR phone_number LIKE ?
-`;
-  db.query(
-    sql,
-    [
-      `%${searchKey}%`,
-      `%${searchKey}%`,
-      `%${searchKey}%`,
-      `%${searchKey}%`,
-      `%${searchKey}%`,
-      `%${searchKey}%`,
-      `%${searchKey}%`,
-      `%${searchKey}%`,
-    ],
-    (err, results) => {
-      if (err) {
-        res.status(400).json({ msg: err.message });
-      } else {
-        if (results.length === 0) {
-          res.status(404).json({ msg: "No students found" });
-        } else {
-          res.status(200).json({ data: results });
-        }
+export const deleteAllLogs = asyncHandler(async (req, res) => {
+  const sql = "DELETE FROM admin_log";
+  db.query(sql, (err, result) => {
+    if (err) {
+      return res
+        .status(StatusCode.INTERNAL_SERVER_ERROR)
+        .json({ error: "فشل في حذف العمليات المسجلة" });
+    }
+    res.status(StatusCode.OK).json({ message: "تم حذف العمليات المسجلة" });
+  });
+});
+
+export const deleteLog = asyncHandler(async (req, res) => {
+  const { admin_id } = req.params;
+
+  const isExist = `SELECT * FROM admin_log WHERE admin_id = ?`;
+  db.query(isExist, [admin_id], (err, result) => {
+    if (err) {
+      return res
+        .status(StatusCode.INTERNAL_SERVER_ERROR)
+        .json({ error: "Database query error" });
+    }
+    // Check if result is undefined or empty
+    if (!result || result.length === 0) {
+      return res
+        .status(StatusCode.NOT_FOUND)
+        .json({ error: "العمليات الخاصة بهذا المستخدم غير موجودة" });
+    }
+
+    // If logs exist, proceed with deletion
+    const sql = "DELETE FROM admin_log WHERE admin_id=?";
+    db.query(sql, [admin_id], (deleteErr, deleteResult) => {
+      if (deleteErr) {
+        return res
+          .status(StatusCode.INTERNAL_SERVER_ERROR)
+          .json({ error: "Failed to clear admin logs" });
       }
-    },
-  );
+      return res
+        .status(StatusCode.OK)
+        .json({ message: "تم حذف العمليات المسجلة" });
+    });
+  });
+});
+
+//------------------------------STATS-----------------------------------------
+export const getStats = asyncHandler(async (req, res) => {
+  const result = await new Base().getStats();
+  res.status(StatusCode.OK).json({
+    msg: "success",
+    data: result,
+  });
 });

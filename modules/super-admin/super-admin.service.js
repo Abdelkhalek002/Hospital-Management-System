@@ -34,32 +34,3 @@ export const addOne = async (data) => {
   //await emailService.sendConfirmationMail(newAdmin);
   return newAdmin;
 };
-
-export const addNewAdmin = async (data) => {
-  // 1. check if username or email provided is already existed
-  const usernameExists = await new Base("admins").existsByField(
-    "username",
-    data.username,
-  );
-  if (usernameExists) throw new ApiError("username already exists");
-  const emailExists = await new Base("admins").existsByField(
-    "email",
-    data.email,
-  );
-  if (emailExists) throw new ApiError("email already exists");
-
-  // 2. hash password
-  const hashedPassword = await bcrypt.hash(data.password, 12);
-
-  // 3. build final payload
-  const finalData = {
-    ...data,
-    password: hashedPassword,
-  };
-
-  // 4. create admin
-  const newAdmin = await new Admin().create(finalData);
-
-  // 5. return result
-  return newAdmin;
-};
