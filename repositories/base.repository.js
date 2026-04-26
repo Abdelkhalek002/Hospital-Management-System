@@ -4,7 +4,6 @@ class Base {
   constructor(tableName) {
     this.table = tableName;
   }
-
   async execute(sql, params = []) {
     return await query(sql, params);
   }
@@ -141,6 +140,49 @@ class Base {
         value: statsRow.mostReservedClinicValue,
       },
     ];
+  }
+  async index({
+    page,
+    limit,
+    searchKey,
+    searchableColumns,
+    baseWhere = "1=1",
+    joins = "",
+    select = "*",
+    orderBy = "id DESC",
+  }) {
+    const search = this.buildSearch(searchableColumns, searchKey);
+
+    const whereClause = `
+    ${baseWhere}
+    AND ${search.clause}
+  `;
+
+    const params = [...search.params];
+
+    const countSql = `
+    SELECT COUNT(*) AS count
+    FROM ${this.table}
+    ${joins}
+    WHERE ${whereClause}
+  `;
+
+    const dataSql = `
+    SELECT ${select}
+    FROM ${this.table}
+    ${joins}
+    WHERE ${whereClause}
+    ORDER BY ${orderBy}
+    LIMIT ? OFFSET ?
+  `;
+
+    return this.paginate({
+      countSql,
+      dataSql,
+      params,
+      page,
+      limit,
+    });
   }
 }
 

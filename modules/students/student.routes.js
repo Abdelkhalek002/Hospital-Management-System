@@ -1,6 +1,6 @@
 import express from "express";
 
-import * as userController from "./student.controller.js";
+import * as controller from "./student.controller.js";
 import * as authMiddleware from "../../middlewares/auth.middleware.js";
 import * as fileUploader from "../../middlewares/file-upload.middleware.js";
 import { updateMeValidator } from "./student.validator.js";
@@ -13,13 +13,13 @@ router.use(protect);
 
 router
   .route("/me")
-  .get(restrictToUser, userController.getMe)
+  .get(restrictToUser, controller.getMe)
   .patch(
     restrictToUser,
     updateMeValidator,
     fileUploader.uploadProfilePhoto,
     fileUploader.resizeUserPhoto,
-    userController.updateMe,
+    controller.updateMe,
   );
 
 // Users Management
@@ -31,13 +31,9 @@ router.use(
   ),
 );
 
-router.route("/").get(userController.getAll);
+router.route("/").get(controller.getAll);
 router
   .route("/:id")
-  .get(
-    userController.getOne,
-    userController.updateOne,
-    userController.deleteOne,
-  );
+  .get(controller.getOne, controller.updateOne, controller.deleteOne);
 
 export default router;

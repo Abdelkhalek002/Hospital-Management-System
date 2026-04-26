@@ -1,7 +1,11 @@
 import { query, queryOne, transaction } from "../../config/db-helpers.js";
+import Base from "../../repositories/base.repository.js";
 
-class Student {
-  async verfied(email) {
+class Student extends Base {
+  constructor() {
+    super("students");
+  }
+  async isVerfied(email) {
     const sql = `SELECT verified FROM students WHERE email = ?`;
     const result = await queryOne(sql, [email]);
     return !!result;
@@ -63,7 +67,7 @@ class Student {
     const result = await queryOne(sql, [id]);
     return result;
   }
-  async update(id, data) {
+  async updateMe(id, data) {
     const updates = [];
     const values = [];
 
@@ -78,6 +82,10 @@ class Student {
     const sql = `UPDATE students SET ${updates.join(", ")} WHERE id = ?`;
     const result = await query(sql, values);
     return result;
+  }
+  async getAll() {
+    const sql = `SELECT * FROM students`;
+    return await query(sql);
   }
 }
 

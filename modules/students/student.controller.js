@@ -5,8 +5,8 @@ import { StatusCode } from "../../utils/status-codes.js";
 import { pick } from "../../utils/pick-from-body-request.js";
 
 export const getMe = asyncHandler(async (req, res) => {
-  const user = req.user;
-  const result = await service.getMe(user);
+  const id = req.user.id;
+  const result = await service.getOne(id);
   res.status(StatusCode.OK).json({ status: "success", result });
 });
 
@@ -32,48 +32,26 @@ export const updateMe = asyncHandler(async (req, res) => {
     .json({ status: "success", msg: "Data updated successfully", result });
 });
 
-export const getOne = asyncHandler(async (req, res) => {
-  const { user_id } = req.params;
+export const getAll = asyncHandler(async (req, res) => {
+  // 1. check if search key is valid
+  let allowedKeys = ["username", "email", "national_id", "phone_number"];
+  let searchKey, searchValue;
+  const entries = Object.entries(req.query);
+
+  if (entries.length > 0) {
+    let [searchKey, searchValue] = entries[0];
+  }
+
+  searchKey = pick(req.query, allowedKeys);
+
+  const result = await service.getAll(searchKey, searchValue);
+  res.status(StatusCode.OK).json({ status: "success", result });
 });
 
-export const getAll = asyncHandler(async (req, res) => {
-  //pagination
-  const page = parseInt(req.query.page, 10) || 1;
-  const limit = parseInt(req.query.limit, 10) || 10;
-  const offset = (page - 1) * limit; // Calculate offset based on page and limit
-
-  // Query to get the total count of students
-  const countSql = "SELECT COUNT(*) AS count FROM students";
-  db.query(countSql, (err, results) => {
-    if (err) {
-      console.error("Error fetching count of students:", err);
-      return res
-        .status(StatusCode.INTERNAL_SERVER_ERROR)
-        .json({ error: "Internal Server Error" });
-    }
-    const countResults = results;
-    const totalCount = countResults[0].count;
-    const totalPages = Math.ceil(totalCount / limit);
-
-    let sql =
-      "SELECT students.*, levels.levelName AS level_name, faculties.facultyName AS faculty_name,governorates.govName AS gov_name , nationality.nationalityName AS nationality_name FROM students";
-    sql += " LEFT JOIN levels ON students.level_id = levels.level_id";
-    sql += " LEFT JOIN governorates ON students.gov_id = governorates.gov_id";
-    sql +=
-      " LEFT JOIN nationality ON students.nationality_id = nationality.nationality_id";
-    sql += " LEFT JOIN faculties ON students.faculty_id = faculties.faculty_id";
-    sql += " LIMIT ? OFFSET ?";
-    db.query(sql, [limit, offset], (err, students) => {
-      if (err) {
-        res.status(StatusCode.INTERNAL_SERVER_ERROR).json(err);
-      } else {
-        console.info("request created successfully");
-        res
-          .status(StatusCode.OK)
-          .json({ totalPages, currentPage: page, students });
-      }
-    });
-  });
+export const getOne = asyncHandler(async (req, res) => {
+  const id = req.params.id;
+  const result = await service.getOne(id);
+  res.status(StatusCode.OK).json({ status: "success", result });
 });
 
 export const updateOne = asyncHandler(async (req, res) => {

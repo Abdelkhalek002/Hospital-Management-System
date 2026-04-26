@@ -14,8 +14,7 @@ export const isValidDate = (value) => {
 
 // To check if the account is verified
 export const isVerified = async (email) => {
-  const Student = new Student();
-  return Student.verfied(email);
+  return await new Student().isVerfied(email);
 };
 
 // To validate Helwan University account

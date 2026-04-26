@@ -11,9 +11,10 @@ class MedicalExamination extends Base {
     return !!result;
   }
 
-  async index({ page, limit, searchKey }) {
-    const search = this.buildSearch(
-      [
+  async index(params) {
+    return super.index({
+      ...params,
+      searchableColumns: [
         "medical_examinations.exam_type",
         "students.username",
         "students.email",
@@ -22,62 +23,28 @@ class MedicalExamination extends Base {
         "transfers.transfer_reason",
         "external_hospitals.hospital_name",
       ],
-      searchKey,
-    );
-
-    const whereClause = `
-      medical_examinations.status = "مقبول"
-      AND ${search.clause}
-    `;
-
-    const params = [...search.params];
-
-    const countSql = `
-      SELECT COUNT(*) AS count
-      FROM medical_examinations
+      baseWhere: `medical_examinations.status = "مقبول"`,
+      joins: `
       LEFT JOIN students ON medical_examinations.student_id = students.id
       LEFT JOIN clinics ON medical_examinations.clinic_id = clinics.id
       LEFT JOIN levels ON students.level_id = levels.id
       LEFT JOIN transfers ON transfers.medical_exam_id = medical_examinations.id
       LEFT JOIN external_hospitals ON transfers.hospital_id = external_hospitals.id
-      WHERE ${whereClause}
-    `;
-
-    const dataSql = `
-      SELECT 
-        medical_examinations.id,
-        medical_examinations.exam_type,
-        medical_examinations.date,
-
-        clinics.clinic_name,
-        levels.level_name,
-
-        students.id AS student_id,
-        students.username AS student_name,
-        students.email AS student_email,
-
-        transfers.id AS transfer_id,
-        transfers.transfer_reason,
-
-        external_hospitals.hospital_name AS transfered_to
-
-      FROM medical_examinations
-      LEFT JOIN clinics ON medical_examinations.clinic_id = clinics.id
-      LEFT JOIN students ON medical_examinations.student_id = students.id
-      LEFT JOIN levels ON students.level_id = levels.id
-      LEFT JOIN transfers ON transfers.medical_exam_id = medical_examinations.id
-      LEFT JOIN external_hospitals ON transfers.hospital_id = external_hospitals.id
-      WHERE ${whereClause}
-      ORDER BY medical_examinations.id DESC
-      LIMIT ? OFFSET ?
-    `;
-
-    return await this.paginate({
-      countSql,
-      dataSql,
-      params,
-      page,
-      limit,
+    `,
+      select: `
+      medical_examinations.id,
+      medical_examinations.exam_type,
+      medical_examinations.date,
+      clinics.clinic_name,
+      levels.level_name,
+      students.id AS student_id,
+      students.username AS student_name,
+      students.email AS student_email,
+      transfers.id AS transfer_id,
+      transfers.transfer_reason,
+      external_hospitals.hospital_name AS transfered_to
+    `,
+      orderBy: "medical_examinations.id DESC",
     });
   }
 }
