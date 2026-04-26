@@ -29,6 +29,8 @@ export const validateSignup = [
   body("national_id")
     .notEmpty()
     .withMessage("national id required")
+    .isNumeric()
+    .withMessage("only numeric values for national id")
     .isLength({ min: 14, max: 14 })
     .withMessage("national id should contain exactly 14 characters"),
   body("nationality_id").notEmpty().isNumeric(),

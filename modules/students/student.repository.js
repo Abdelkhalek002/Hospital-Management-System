@@ -67,7 +67,11 @@ class Student extends Base {
     const result = await queryOne(sql, [id]);
     return result;
   }
-  async updateMe(id, data) {
+  async getAll() {
+    const sql = `SELECT * FROM students`;
+    return await query(sql);
+  }
+  async updateOne(id, data) {
     const updates = [];
     const values = [];
 
@@ -82,10 +86,6 @@ class Student extends Base {
     const sql = `UPDATE students SET ${updates.join(", ")} WHERE id = ?`;
     const result = await query(sql, values);
     return result;
-  }
-  async getAll() {
-    const sql = `SELECT * FROM students`;
-    return await query(sql);
   }
 }
 

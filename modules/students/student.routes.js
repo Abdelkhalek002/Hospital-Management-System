@@ -3,7 +3,7 @@ import express from "express";
 import * as controller from "./student.controller.js";
 import * as authMiddleware from "../../middlewares/auth.middleware.js";
 import * as fileUploader from "../../middlewares/file-upload.middleware.js";
-import { updateMeValidator } from "./student.validator.js";
+import { updateValidator } from "./student.validator.js";
 import { restrictToUser, protect } from "../../middlewares/auth.middleware.js";
 import { roles } from "../../utils/roles.js";
 
@@ -16,7 +16,7 @@ router
   .get(restrictToUser, controller.getMe)
   .patch(
     restrictToUser,
-    updateMeValidator,
+    updateValidator,
     fileUploader.uploadProfilePhoto,
     fileUploader.resizeUserPhoto,
     controller.updateMe,
@@ -34,6 +34,12 @@ router.use(
 router.route("/").get(controller.getAll);
 router
   .route("/:id")
-  .get(controller.getOne, controller.updateOne, controller.deleteOne);
-
+  .get(controller.get)
+  .patch(
+    updateValidator,
+    fileUploader.uploadAdminStudentFiles,
+    fileUploader.resizeNationalIDFiles,
+    fileUploader.resizeFeesFile,
+    controller.update,
+  );
 export default router;

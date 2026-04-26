@@ -7,6 +7,7 @@ import asyncHandler from "express-async-handler";
 
 import ApiError from "../utils/api-error.js";
 import { StatusCode } from "../utils/status-codes.js";
+import Base from "../repositories/base.repository.js";
 
 const multerStorage = multer.memoryStorage();
 const STUDENTS_PARENT_DIRECTORY = path.join("uploads", "students");
@@ -18,6 +19,10 @@ const registrationUploadFieldNames = [
 ];
 const fileFieldAliases = {
   user_image_file: "profile",
+  national_id_file: "national-id",
+  fees_file: "fees",
+};
+const adminPatchUploadDirectories = {
   national_id_file: "national-id",
   fees_file: "fees",
 };
@@ -49,8 +54,14 @@ export const uploadRegistrationFiles = upload.fields([
   { name: "national_id_file", maxCount: 1 },
   { name: "fees_file", maxCount: 1 },
 ]);
+export const uploadAdminStudentFiles = upload.fields([
+  { name: "national_id_file", maxCount: 1 },
+  { name: "fees_file", maxCount: 1 },
+]);
 
 export const uploadProfilePhoto = upload.single("user_image_file");
+export const uploadNationalIDFiles = upload.single("national_id_file");
+export const uploadFeesFile = upload.single("fees_file");
 
 // get uploaded files
 const getUploadedFile = (req, fieldName) =>
@@ -80,11 +91,16 @@ const getStudentDirectory = (username) => {
 
 const createImmutableStudentKey = (requestBody) => {
   const nationalId = String(requestBody?.national_id ?? "").trim();
-  if (!nationalId) {
+  return createImmutableStudentKeyFromNationalId(nationalId);
+};
+
+const createImmutableStudentKeyFromNationalId = (nationalId) => {
+  const safeNationalId = String(nationalId ?? "").trim();
+  if (!safeNationalId) {
     throw new ApiError("National ID is required", StatusCode.BAD_REQUEST);
   }
 
-  return createHash("sha256").update(nationalId).digest("hex").slice(0, 12);
+  return createHash("sha256").update(safeNationalId).digest("hex").slice(0, 12);
 };
 
 const createImmutableUserPhotoKey = ({ user, username }) => {
@@ -113,11 +129,11 @@ const buildAuditFriendlyFileName = (fieldName, studentKey) => {
   return `${alias}-${studentKey}-${timestamp}-${randomSuffix}.jpeg`;
 };
 
-const getSafeOutputPath = (studentDirectory, fileName) => {
-  const outputPath = path.resolve(path.join(studentDirectory, fileName));
+const getSafeChildPath = (parentDirectory, ...pathSegments) => {
+  const outputPath = path.resolve(path.join(parentDirectory, ...pathSegments));
   const isInsideStudentDirectory =
-    outputPath === studentDirectory ||
-    outputPath.startsWith(`${studentDirectory}${path.sep}`);
+    outputPath === parentDirectory ||
+    outputPath.startsWith(`${parentDirectory}${path.sep}`);
 
   if (!isInsideStudentDirectory) {
     throw new ApiError("Invalid output path", StatusCode.BAD_REQUEST);
@@ -126,15 +142,48 @@ const getSafeOutputPath = (studentDirectory, fileName) => {
   return outputPath;
 };
 
+const getStudentUploadDirectory = (studentDirectory, uploadDirectoryName) =>
+  getSafeChildPath(
+    studentDirectory,
+    sanitizeFilename(String(uploadDirectoryName ?? "").trim()),
+  );
+
+const resolveTargetStudentForAdminUpload = async (req) => {
+  const studentId = String(req.params?.id ?? "").trim();
+  if (!studentId) {
+    throw new ApiError("Student ID is required", StatusCode.BAD_REQUEST);
+  }
+
+  const student = await new Base("students").findById(studentId);
+  if (!student) {
+    throw new ApiError("Student does not exist", StatusCode.NOT_FOUND);
+  }
+
+  const username = String(student.username ?? "").trim();
+  if (!username) {
+    throw new ApiError("Student username is required", StatusCode.BAD_REQUEST);
+  }
+
+  return student;
+};
+
 const writeStudentFileCollisionSafe = async ({
   studentDirectory,
   fieldName,
   studentKey,
   fileBuffer,
+  outputDirectory = studentDirectory,
 }) => {
+  const safeOutputDirectory = getSafeChildPath(
+    studentDirectory,
+    path.relative(studentDirectory, outputDirectory),
+  );
+
+  await ensureDirectory(safeOutputDirectory);
+
   for (let attempt = 0; attempt < FILE_NAME_MAX_ATTEMPTS; attempt += 1) {
     const fileName = buildAuditFriendlyFileName(fieldName, studentKey);
-    const outputPath = getSafeOutputPath(studentDirectory, fileName);
+    const outputPath = getSafeChildPath(safeOutputDirectory, fileName);
 
     try {
       await fs.writeFile(outputPath, fileBuffer, { flag: "wx" });
@@ -205,5 +254,50 @@ export const resizeUserPhoto = asyncHandler(async (req, _res, next) => {
     fileBuffer: file.buffer,
   });
   req.body[fieldName] = path.posix.join(fileName);
+  next();
+});
+
+const persistAdminPatchedStudentFile = async (req, fieldName) => {
+  const file = getUploadedFile(req, fieldName);
+  if (!file) {
+    return;
+  }
+
+  const student = await resolveTargetStudentForAdminUpload(req);
+  const username = student.username;
+  const studentDirectory = getStudentDirectory(username);
+  const uploadDirectoryName = adminPatchUploadDirectories[fieldName];
+  const uploadDirectory = getStudentUploadDirectory(
+    studentDirectory,
+    uploadDirectoryName,
+  );
+  const studentKey = createImmutableStudentKeyFromNationalId(
+    req.body?.national_id ?? student.national_id,
+  );
+
+  await ensureDirectory(studentDirectory);
+  const fileName = await writeStudentFileCollisionSafe({
+    studentDirectory,
+    fieldName,
+    studentKey,
+    fileBuffer: file.buffer,
+    outputDirectory: uploadDirectory,
+  });
+
+  req.body.student_upload_key = studentKey;
+  req.body[fieldName] = path.posix.join(
+    "students",
+    username,
+    uploadDirectoryName,
+    fileName,
+  );
+};
+
+export const resizeNationalIDFiles = asyncHandler(async (req, _res, next) => {
+  await persistAdminPatchedStudentFile(req, "national_id_file");
+  next();
+});
+export const resizeFeesFile = asyncHandler(async (req, _res, next) => {
+  await persistAdminPatchedStudentFile(req, "fees_file");
   next();
 });

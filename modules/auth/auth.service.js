@@ -21,18 +21,19 @@ const checkPassword = async function (candidatePassword, userPassword) {
 
 export const signup = async (studentData) => {
   //1. check if (email, national_id, phone_number) existes
-  const emailExists = await new Base("students").existsByField(
+  const emailExists = await new Student().existsByField(
     "email",
     studentData.email,
   );
   if (emailExists) throw new ApiError("Email already exists");
 
-  const nationalIdExists = await new Base("students").existsByField(
+  const nationalIdExists = await new Student().existsByField(
     "national_id",
     studentData.national_id,
   );
   if (nationalIdExists) throw new ApiError("National ID already exists");
-  const phoneNumberExists = await new Base("students").existsByField(
+
+  const phoneNumberExists = await new Student().existsByField(
     "phone_number",
     String(studentData.phone_number),
   );

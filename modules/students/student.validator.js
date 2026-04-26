@@ -3,7 +3,7 @@ import { body } from "express-validator";
 import handleValidationErrors from "../../middlewares/validator.middleware.js";
 import * as customValidators from "../../utils/custom-validators.js";
 
-export const updateMeValidator = [
+export const updateValidator = [
   body("username")
     .optional()
     .isLength({ min: 3 })
@@ -22,6 +22,20 @@ export const updateMeValidator = [
     .withMessage("Invalid gender data"),
 
   body("user_image_file").optional(),
+
+  body("national_id")
+    .optional()
+    .isNumeric()
+    .isLength({ min: 14, max: 14 })
+    .withMessage("national id should contain exactly 14 characters"),
+
+  body("phone_number").optional().isMobilePhone("ar-EG"),
+
+  body("faculty_id").optional().isNumeric().withMessage("Invalid faculty id"),
+
+  body("level_id").optional().isNumeric().withMessage("Invalid level id"),
+
+  body("nationality_id").optional().isNumeric(),
 
   handleValidationErrors,
 ];
