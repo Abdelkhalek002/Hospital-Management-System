@@ -3,6 +3,7 @@ import Base from "../../repositories/base.repository.js";
 import Admin from "./admin.repository.js";
 import * as emailService from "../../services/email.service.js";
 import ApiError from "../../utils/api-error.js";
+import { StatusCode } from "../../utils/status-codes.js";
 
 export const createOne = async (data) => {
   // 1. check if username or email provided is already existed
@@ -42,13 +43,33 @@ export const updateOne = async (id, data) => {
   return done;
 };
 export const getOne = async (data) => {
-  //
+  const admin = await new Admin().execute(
+    "SELECT id, username, email, role, is_active, is_confirmed, created_at, updated_at FROM admins WHERE id = ? LIMIT 1",
+    [data],
+  );
+
+  if (admin.length === 0) {
+    throw new ApiError("Admin does not exist", StatusCode.NOT_FOUND);
+  }
+
+  return admin[0];
 };
 export const getAll = async (data) => {
-  //
+  return await new Admin().getAll();
 };
 export const deleteOne = async (data) => {
-  //
+  const admin = await new Admin().execute(
+    "SELECT id, username, email, role FROM admins WHERE id = ? LIMIT 1",
+    [data],
+  );
+
+  if (admin.length === 0) {
+    throw new ApiError("Admin does not exist", StatusCode.NOT_FOUND);
+  }
+
+  await new Admin().execute("DELETE FROM admins WHERE id = ?", [data]);
+
+  return admin[0];
 };
 export const getLogs = async (data) => {
   //

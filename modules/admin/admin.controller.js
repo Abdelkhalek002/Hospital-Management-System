@@ -4,7 +4,6 @@ import Base from "../../repositories/base.repository.js";
 import * as service from "./admin.service.js";
 import { auditLog } from "../../utils/audit-log.js";
 import { pick } from "../../utils/pick-from-body-request.js";
-import jwt from "jsonwebtoken";
 
 export const createOne = asyncHandler(async (req, res) => {
   // 1. pick valid data only from req.body
@@ -51,89 +50,40 @@ export const updateOne = asyncHandler(async (req, res) => {
   });
 });
 
-//TODO: needs refactoring...
-
 export const getOne = asyncHandler(async (req, res) => {
-  const { user_id } = req.params;
-  const sql = "SELECT * FROM admins WHERE user_id = ?";
+  const { id } = req.params;
+  const result = await service.getOne(id);
 
-  db.query(sql, [user_id], (err, result) => {
-    if (err) {
-      res.status(StatusCode.INTERNAL_SERVER_ERROR).send(err);
-    } else {
-      console.log(result);
-      if (result.length === 0) {
-        res.status(StatusCode.NOT_FOUND).json({ message: "الادمن غير موجود" });
-      } else {
-        res.status(StatusCode.OK).json(result);
-      }
-    }
+  return res.status(StatusCode.OK).json({
+    status: "success",
+    data: result,
   });
 });
 
 export const getAll = asyncHandler(async (req, res) => {
-  const sql = "SELECT * FROM admins";
-  db.query(sql, (err, result) => {
-    if (err) {
-      res.status(StatusCode.INTERNAL_SERVER_ERROR).send(err);
-    } else {
-      console.log("request created successfully");
-      res.status(StatusCode.OK).json(result);
-    }
+  const result = await service.getAll();
+
+  return res.status(StatusCode.OK).json({
+    status: "success",
+    results: result.length,
+    data: result,
   });
 });
 
 export const deleteOne = asyncHandler(async (req, res) => {
-  const { user_id } = req.params;
+  const { id } = req.params;
+  const deletedAdmin = await service.deleteOne(id);
 
-  const selectSql =
-    "SELECT userName, email, role FROM admins WHERE user_id = ?";
-  db.query(selectSql, [user_id], (selectErr, selectResult) => {
-    if (selectErr) {
-      return res.status(StatusCode.INTERNAL_SERVER_ERROR).send(selectErr);
-    }
-    if (selectResult.length === 0) {
-      return res
-        .status(StatusCode.NOT_FOUND)
-        .json({ error: "الادمن غير موجود" });
-    }
-    const { userName, email, role } = selectResult[0];
-    const deleteSql = "DELETE FROM admins WHERE user_id = ?";
-    db.query(deleteSql, [user_id], (deleteErr) => {
-      if (deleteErr) {
-        return res.status(StatusCode.INTERNAL_SERVER_ERROR).send(deleteErr);
-      }
-      const auditData = {
-        timestamp: new Date().toISOString(),
-        method: "حذف ادمن",
-        body: { userName, email, role },
-        adminName: req.user[0].name,
-        admin_id: req.user[0].superAdmin_id,
-      };
+  await auditLog({
+    adminId: req.user.id,
+    method: "حذف ادمن",
+    createdAt: new Date().toISOString(),
+  });
 
-      const auditSql =
-        "INSERT INTO admin_log (admin_id, admin_name, timestamp, method, body) VALUES (?, ?, ?, ?, ?)";
-      db.query(
-        auditSql,
-        [
-          auditData.admin_id,
-          auditData.adminName,
-          auditData.timestamp,
-          auditData.method,
-          JSON.stringify(auditData.body),
-        ],
-        (auditErr, auditResult) => {
-          if (auditErr) {
-            console.error("Error creating audit record:", auditErr);
-          } else {
-            console.log("Audit record created successfully:", auditResult);
-          }
-        },
-      );
-      res
-        .status(StatusCode.OK)
-        .json({ message: "تم حذف الادمن بنجاح", auditData });
-    });
+  return res.status(StatusCode.OK).json({
+    status: "success",
+    message: "تم حذف الادمن بنجاح",
+    data: deletedAdmin,
   });
 });
 
