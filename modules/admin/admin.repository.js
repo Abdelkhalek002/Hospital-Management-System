@@ -21,6 +21,22 @@ class Admin extends Base {
     const result = await queryOne(sql, [email]);
     return result;
   }
+  async updateOne(id, data) {
+    const updates = [];
+    const values = [];
+
+    Object.keys(data).forEach((field) => {
+      updates.push(`${field} = ?`);
+      values.push(data[field] ?? null);
+    });
+
+    if (updates.length === 0) return null;
+
+    values.push(id);
+    const sql = `UPDATE ${this.table} SET ${updates.join(", ")} WHERE id = ?`;
+    const result = await query(sql, values);
+    return result;
+  }
   async getAll() {
     const sql = `SELECT username, email, role FROM admins`;
     const result = await query(sql);

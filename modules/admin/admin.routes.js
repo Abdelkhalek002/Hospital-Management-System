@@ -13,7 +13,10 @@ import { roles } from "../../utils/roles.js";
 
 const router = express.Router();
 
-router.use(authMiddleware.protect);
+router.use(
+  authMiddleware.protect,
+  authMiddleware.allowedTo(roles.SECOND_MANAGER),
+);
 
 router.route("/").post(controller.createOne).get(controller.getAll);
 
@@ -23,7 +26,7 @@ router
   .patch(controller.updateOne)
   .delete(controller.deleteOne);
 
-router.route("/logs").get(controller.getLogs).delete(controller.deleteAllLogs);
+router.route("/logs").get(controller.getLogs).delete(controller.deleteLogs);
 
 router.route(":id/logs").get(controller.getLog).delete(controller.deleteLog);
 
