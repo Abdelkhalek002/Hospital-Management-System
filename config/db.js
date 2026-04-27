@@ -1,12 +1,20 @@
-import mysql from "mysql";
+import mysql from "mysql2/promise";
 import dotenv from "dotenv";
-dotenv.config({ path: "config.env" });
+dotenv.config();
 
-const db = mysql.createConnection({
+const pool = mysql.createPool({
   host: process.env.DB_HOST || "localhost",
   user: process.env.DB_USER || "root",
   password: process.env.DB_PASSWORD || "",
-  database: process.env.NODE_ENV === 'testing' ? process.env.TEST_DB : process.env.NODE_ENV === 'development' ? process.env.DEV_DB : process.env.PROD_DB,
+  database:
+    process.env.NODE_ENV === "development"
+      ? process.env.TEST_DB
+      : process.env.PROD_DB,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
+  enableKeepAlive: true,
+  //keepAliveInitialDelayMs: 0,
 });
 
-export default db;
+export default pool;

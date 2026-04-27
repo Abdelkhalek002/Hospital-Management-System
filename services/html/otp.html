@@ -1,0 +1,85 @@
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap");
+
+  body {
+    background-color: #f3f8ff;
+    font-family: "Tajawal", sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 600px;
+    padding: 30px;
+    text-align: center;
+    background-color: #0c2d57;
+    border-radius: 20px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.2);
+  }
+
+  .header {
+    margin-bottom: 20px;
+  }
+
+  .header h1 {
+    color: #ffffff;
+    font-size: 22px;
+    margin: 0;
+    font-weight: 600;
+  }
+
+  .content {
+    margin-bottom: 20px;
+  }
+
+  .content p {
+    font-size: 15px;
+    color: #e0f7f4;
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  .otp-code {
+    display: inline-block;
+    font-size: 26px;
+    margin: 20px 0;
+    padding: 10px 18px;
+    color: #15f5ba;
+    font-weight: 700;
+    border: 2px solid #15f5ba;
+    border-radius: 12px;
+    letter-spacing: 4px;
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+
+  .footer .branding {
+    color: #ffffff;
+    font-weight: 500;
+    font-size: 14px;
+  }
+</style>
+
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>رمز التحقق لإعادة تعيين كلمة المرور</h1>
+    </div>
+
+    <div class="content">
+      <p>
+        نشكرك على اختيار مستشفى جامعة حلوان. لإتمام عملية إعادة تعيين كلمة
+        المرور، يرجى استخدام رمز التحقق التالي
+      </p>
+      <div class="otp-code">{{otp}}</div>
+    </div>
+
+    <div class="footer">
+      <p class="branding">صحتك تهمنا</p>
+    </div>
+  </div>
+</body>
