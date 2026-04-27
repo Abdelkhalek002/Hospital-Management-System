@@ -202,7 +202,7 @@ Database connection is configured in `config/db.js`.
 The repository includes an SQL dump:
 
 ```text
-config/test_hms_v1_2.sql
+config/Database.sql
 ```
 
 Core tables defined in that dump include:
