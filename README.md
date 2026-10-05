@@ -26,10 +26,12 @@ Base API prefix:
 
 - Node.js with ES modules
 - Express 5
+- Prisma ORM 7 (`@prisma/client`, `@prisma/adapter-mariadb`, `prisma`)
 - MySQL (`mysql2/promise`)
 - JWT authentication
 - Nodemailer
-- Multer for uploads
+- Multer for file uploads (with in-memory buffers and collision-safe disk persistence)
+- Sharp for image processing
 - Cron jobs via `cron`
 - Validation with `express-validator` and `joi`
 
@@ -42,8 +44,13 @@ Base API prefix:
 |-- config/
 |   |-- db.js
 |   |-- db-helpers.js
-|   `-- test_hms_v1_2.sql
+|   |-- prisma.js
+|   `-- Database.sql
 |-- middlewares/
+|   |-- auth.middleware.js
+|   |-- error.middleware.js
+|   |-- file-upload.middleware.js
+|   `-- validator.middleware.js
 |-- modules/
 |   |-- admin/
 |   |-- auth/
@@ -52,21 +59,26 @@ Base API prefix:
 |   |-- super-admin/
 |   |-- system-data/
 |   `-- transfer/
+|-- prisma/
+|   |-- schema.prisma
+|   `-- migrations/
 |-- repositories/
 |-- services/
 |-- uploads/
+|   |-- admins/
+|   `-- students/
 `-- utils/
 ```
 
 ## Architecture Notes
 
-The codebase is mostly organized in layered modules:
+The codebase is organized in layered modules:
 
-- `routes` define the HTTP endpoints
-- `controllers` handle request/response flow
-- `services` contain business logic
-- `repositories` contain database access helpers
-- `middlewares` handle auth, validation, uploads, and errors
+- `routes` define the HTTP endpoints and middleware chain
+- `controllers` handle request/response orchestration and status codes
+- `services` contain business logic, password hashing, and uniqueness checks
+- `repositories` contain database queries (`Base` repository, Prisma, and `db-helpers.js`)
+- `middlewares` handle auth, role verification, validation, file uploads, and global errors
 
 There is also a shared `Base` repository in `repositories/base.repository.js` that provides pagination, search building, and generic lookup helpers.
 
@@ -77,13 +89,13 @@ These are the route groups mounted in `app.js`:
 | Route prefix             | Purpose                                                     |
 | ------------------------ | ----------------------------------------------------------- |
 | `/api/v1/auth`           | signup, login, logout, activation, password reset           |
-| `/api/v1/super-admins`   | super-admin management                                      |
-| `/api/v1/admins`         | admin CRUD, transfers, admin-side reservations, logs, stats |
+| `/api/v1/super-admins`   | super-admin management (CRUD, unique accounts)              |
+| `/api/v1/admins`         | admin CRUD, photos, transfers, reservations, logs, stats    |
 | `/api/v1/reservations`   | admin reservation endpoints                                 |
 | `/api/v1/users`          | student self-service and student management                 |
 | `/api/v1/Myreservations` | student reservation endpoints                               |
 | `/api/v1/sysdata`        | clinics, faculties, governorates, hospitals, levels         |
-| `/api/v1/uploads`        | static access to uploaded files                             |
+| `/api/v1/uploads`        | static access to uploaded student and admin files           |
 
 ## Feature Summary
 
@@ -144,10 +156,17 @@ Admin side:
 
 Implemented under `modules/admin/` and `modules/transfer/`.
 
-- admin CRUD under `/api/v1/admins`
-- admin logs under `/api/v1/admins/logs`
-- stats under `/api/v1/admins/stats`
+- `GET /api/v1/admins` - returns complete list with `id`, status, timestamps, and dynamic `profile_photo_url`
+- `POST /api/v1/admins` - create new admin with validation, optional profile photo upload, and audit logging
+- `GET /api/v1/admins/:id` - get single admin profile with photo URL
+- `PUT /api/v1/admins/:id` and `PATCH /api/v1/admins/:id` - update admin details, handle photo replacement/removal and auto-cleanup
+- `DELETE /api/v1/admins/:id` - remove admin and clean up their stored photo file
+- `GET /api/v1/admins/logs` & `DELETE /api/v1/admins/logs` - paginated admin activity logs
+- `GET /api/v1/admins/:admin_id/logs` & `DELETE /api/v1/admins/:admin_id/logs` - logs for a specific admin
+- `GET /api/v1/admins/stats` - dashboard summary metrics and reservation statistics
 - transfer endpoints under `/api/v1/admins/transfers`
+
+Role validation supports both internal hash codes and friendly names (`counter`, `second_manager`, `viewer`, `observer`, `medical_check_manager`, `super_admin`).
 
 ### System Data
 
@@ -165,61 +184,49 @@ The `GET` endpoints are generally public, while create/update/delete operations 
 
 ## Uploads
 
-Student registration expects multipart form data with these file fields:
+Handled in `middlewares/file-upload.middleware.js`:
 
-- `user_image_file`
-- `national_id_file`
-- `fees_file`
-
-Important upload behavior:
-
-- accepted file types: `image/jpeg`, `image/jpg`
-- max file size: `2 MB`
-- files are written under `uploads/students/<username>/`
-- uploaded files are served from `/api/v1/uploads`
+- Student registration fields: `user_image_file`, `national_id_file`, `fees_file`
+- Admin profile photo fields: `profile_photo`, `photo`, `avatar`, `user_image_file`
+- Accepted file types: images (`image/jpeg`, `image/jpg`, `image/png`, `image/webp`) and PDFs (`application/pdf`)
+- Maximum file size: **10 MB** (exceeding files return an operational `400 Bad Request` with a clear message)
+- Student files are stored in `uploads/students/<username>/`
+- Admin profile photos are stored in `uploads/admins/`
+- Uploaded files are served statically from `/api/v1/uploads`
 
 ## Validation Rules
 
 From the current validators:
 
-- signup password must be 8 to 40 characters
-- signup password must start with an uppercase letter
-- allowed password characters are lowercase letters, numbers, `#`, and `@`
-- national ID must be numeric and exactly 14 digits
-- phone number is validated with the `ar-EG` mobile format
-- signup email must match the configured student domain
+- Admin signup/creation requires unique username and email, password (min 6 characters), and valid role from the whitelist
+- Super-admin signup requires password (8 to 40 characters) starting with an uppercase letter and standard email domain
+- Student national ID must be numeric and exactly 14 digits
+- Phone number is validated with the `ar-EG` mobile format
+- Daily reservation-cap check limits reservations per date
 
-Reservation notes from the current code:
+## Database & Prisma Migrations
 
-- reservation date is validated before insert
-- the code limits each student to one reservation per day
-- the daily reservation-cap check currently triggers at 20 records for a date
+Database connection is managed via `mysql2/promise` (`config/db.js`) and Prisma (`prisma/schema.prisma`).
 
-## Database
+Prisma commands available via npm scripts:
 
-Database connection is configured in `config/db.js`.
+```bash
+# Apply pending migrations and generate new ones from schema changes
+npm run prisma:migrate
 
-The repository includes an SQL dump:
+# Regenerate Prisma Client
+npm run prisma:generate
 
-```text
-config/Database.sql
+# Launch Prisma Studio GUI
+npm run prisma:studio
+
+# Pull schema from existing database
+npm run prisma:pull
 ```
 
-Core tables defined in that dump include:
-
-- `students`
-- `admins`
-- `super_admins`
-- `admin_log`
-- `medical_examinations`
-- `transfers`
-- `password_reset_otps`
-- `clinics`
-- `faculties`
-- `governorates`
-- `levels`
-- `nationality`
-- `external_hospitals`
+Migrations are version-controlled in `prisma/migrations/`:
+- `0_init`: baseline migration for existing schema
+- `20261005152652_add_profile_photo_to_admins`: added `profile_photo` column to `admins`
 
 ## Environment Variables
 
@@ -229,11 +236,12 @@ Create a `.env` file in the project root and define the variables used by the co
 PORT=7000
 NODE_ENV=development
 
+DATABASE_URL="mysql://root:password@localhost:3306/hms_test"
 DB_HOST=localhost
 DB_USER=root
 DB_PASSWORD=
-TEST_DB=
-PROD_DB=
+TEST_DB=hms_test
+PROD_DB=hms_prod
 
 JWT_SECRET=
 JWT_EXPIRE_TIME=
@@ -269,19 +277,15 @@ Notes:
 npm install
 ```
 
-### 2. Import the database
-
-Import:
-
-```text
-config/Database.sql
-```
-
-into your local MySQL server, then set the matching database name in `.env`.
-
-### 3. Configure environment variables
+### 2. Configure environment variables
 
 Create `.env` in the root and fill the values shown above.
+
+### 3. Run database migrations
+
+```bash
+npm run prisma:migrate
+```
 
 ### 4. Start the server
 
@@ -290,17 +294,6 @@ Development:
 ```bash
 npm start
 ```
-
-Alternative scripts currently present:
-
-```bash
-npm run dev
-npm test
-```
-
-Current `package.json` also declares:
-
-- Node engine: `24.11.1`
 
 ## Authentication
 
@@ -318,21 +311,17 @@ The app also sets a `jwt` cookie during signup.
 
 ## Error Handling
 
-Global error handling lives in `middlewares/error.middleware.js`.
+Global error handling lives in `middlewares/error.middleware.js`:
 
-- development mode returns detailed API error output
-- production mode returns sanitized responses for non-operational errors
-- JWT and Multer errors have dedicated handling branches
+- Development mode returns detailed error stack traces
+- Production mode returns sanitized responses for non-operational errors
+- Dedicated handlers for JWT errors (`JsonWebTokenError`, `TokenExpiredError`)
+- Dedicated handler for Multer errors (`MulterError`, file size limit returns `400 Bad Request`)
 
-## Current Status And Caveats
+## Current Status
 
-This repository has a solid backend foundation, but a few areas are still mid-refactor:
+- Admin module refactored to clean async/await repository/service pattern with profile photo uploads and dynamic URL generation
+- Super-admin module fully implemented with password hashing and uniqueness validation
+- Route ordering issues in admin router resolved (specific `/logs` and `/stats` precede parameterized routes)
+- Prisma migrations enabled and integrated alongside raw SQL helpers for schema evolution
 
-- `README.md` now documents the current code, not an idealized future state
-- some controllers still mix legacy callback-style SQL with newer repository helpers
-- `modules/super-admin/super-admin.controller.js` is incomplete and references an undefined service
-- parts of `modules/admin/admin.controller.js` still reference `db` without importing it
-- some naming differs between files, such as `id` vs `medicEx_id` and route casing like `/Myreservations`
-- there are dev dependencies for testing, but no runnable automated test suite is wired through the current scripts
-
-For local learning and extension, the project is easy to follow. For production use, the incomplete areas should be stabilized first.
