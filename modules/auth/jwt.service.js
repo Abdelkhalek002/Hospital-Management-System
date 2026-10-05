@@ -3,7 +3,11 @@ import { promisify } from "util";
 import ApiError from "../../utils/api-error.js";
 import { StatusCode } from "../../utils/status-codes.js";
 
-export const signToken = (user, expiresIn) => {
+export const signToken = (user, expiresIn = process.env.JWT_EXPIRE_TIME || "90d") => {
+  if (!process.env.JWT_SECRET) {
+    throw new ApiError("JWT_SECRET is not configured in environment variables", StatusCode.INTERNAL_SERVER_ERROR);
+  }
+
   const { id, email, role } = user;
   const type = user.userType;
   if (type === "super_admins" || type === "admins") {

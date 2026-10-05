@@ -6,19 +6,26 @@ class Admin extends Base {
     super("admins");
   }
   async create(data) {
-    const sql = `INSERT INTO admins (username, email, password, role) VALUES (?, ?, ?, ?)`;
+    const sql = `INSERT INTO admins (username, email, password, role, profile_photo) VALUES (?, ?, ?, ?, ?)`;
     const result = await query(sql, [
       data.username,
       data.email,
       data.password,
       data.role,
+      data.profile_photo ?? null,
     ]);
 
-    return result;
+    return {
+      id: result.insertId,
+      username: data.username,
+      email: data.email,
+      role: data.role,
+      profile_photo: data.profile_photo ?? null,
+    };
   }
-  async getOne(email) {
-    const sql = `SELECT 1 FROM admins email = ? LIMIT = 1`;
-    const result = await queryOne(sql, [email]);
+  async getOne(id) {
+    const sql = `SELECT id, username, email, role, profile_photo, is_active, is_confirmed, created_at, updated_at FROM admins WHERE id = ? LIMIT 1`;
+    const result = await queryOne(sql, [id]);
     return result;
   }
   async updateOne(id, data) {
@@ -38,8 +45,13 @@ class Admin extends Base {
     return result;
   }
   async getAll() {
-    const sql = `SELECT username, email, role FROM admins`;
+    const sql = `SELECT id, username, email, role, profile_photo, is_active, is_confirmed, created_at, updated_at FROM admins ORDER BY id DESC`;
     const result = await query(sql);
+    return result;
+  }
+  async deleteOne(id) {
+    const sql = `DELETE FROM admins WHERE id = ?`;
+    const result = await query(sql, [id]);
     return result;
   }
   async createLog(data) {

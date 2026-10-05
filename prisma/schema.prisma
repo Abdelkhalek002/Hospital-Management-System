@@ -1,0 +1,261 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model admin_log {
+  id         Int      @id @default(autoincrement())
+  admin_id   Int?
+  method     String   @db.VarChar(255)
+  created_at DateTime @default(now()) @db.Timestamp(0)
+  admins     admins?  @relation(fields: [admin_id], references: [id], map: "admin_log_ibfk_1")
+
+  @@index([admin_id], map: "admin_log_ibfk_1")
+}
+
+model admins {
+  id                  Int         @id @default(autoincrement())
+  username            String      @unique(map: "uq_admins_username") @db.VarChar(255)
+  email               String      @unique(map: "uq_admins_email") @db.VarChar(255)
+  role                admins_role
+  profile_photo       String?     @db.VarChar(255)
+  is_active           Boolean     @default(false)
+  is_confirmed        Boolean     @default(false)
+  password            String      @db.VarChar(255)
+  password_changed_at DateTime?   @db.DateTime(0)
+  created_at          DateTime    @default(now()) @db.Timestamp(0)
+  updated_at          DateTime    @default(now()) @db.Timestamp(0)
+  admin_log           admin_log[]
+}
+
+model clinics {
+  id                   Int                    @id @default(autoincrement())
+  clinic_name          String                 @unique(map: "uq_clinics_name") @db.VarChar(255)
+  created_at           DateTime               @default(now()) @db.Timestamp(0)
+  updated_at           DateTime               @default(now()) @db.Timestamp(0)
+  medical_examinations medical_examinations[]
+}
+
+model emergency_bookings {
+  id           Int      @id @default(autoincrement())
+  student_name String   @db.VarChar(255)
+  national_id  BigInt
+  type         String   @default("طوارئ") @db.VarChar(50)
+  created_at   DateTime @default(now()) @db.Timestamp(0)
+}
+
+model external_hospitals {
+  id            Int         @id @default(autoincrement())
+  hospital_name String      @unique(map: "uq_hospitals_name") @db.VarChar(255)
+  created_at    DateTime    @default(now()) @db.Timestamp(0)
+  updated_at    DateTime    @default(now()) @db.Timestamp(0)
+  transfers     transfers[]
+}
+
+model faculties {
+  id           Int        @id @default(autoincrement())
+  faculty_name String     @unique(map: "uq_faculties_name") @db.VarChar(255)
+  created_at   DateTime   @default(now()) @db.Timestamp(0)
+  updated_at   DateTime   @default(now()) @db.Timestamp(0)
+  students     students[]
+}
+
+model governorates {
+  id         Int        @id @default(autoincrement())
+  gov_name   String     @unique(map: "uq_governorates_name") @db.VarChar(255)
+  created_at DateTime   @default(now()) @db.Timestamp(0)
+  updated_at DateTime   @default(now()) @db.Timestamp(0)
+  students   students[]
+}
+
+model laboratory {
+  id                   Int                    @id @default(autoincrement())
+  student_id           Int
+  medical_exam_id      Int
+  medical_test_id      Int
+  test_result          laboratory_test_result
+  students             students               @relation(fields: [student_id], references: [id], onDelete: NoAction, map: "laboratory_ibfk_1")
+  medical_examinations medical_examinations   @relation(fields: [medical_exam_id], references: [id], onDelete: NoAction, map: "laboratory_ibfk_2")
+  medical_tests        medical_tests          @relation(fields: [medical_test_id], references: [id], onDelete: NoAction, map: "laboratory_ibfk_3")
+
+  @@index([medical_exam_id], map: "medical_exam_id")
+  @@index([medical_test_id], map: "medical_test_id")
+  @@index([student_id], map: "student_id")
+}
+
+model levels {
+  id         Int        @id @default(autoincrement())
+  level_name String     @unique(map: "uq_levels_name") @db.VarChar(255)
+  created_at DateTime   @default(now()) @db.Timestamp(0)
+  updated_at DateTime   @default(now()) @db.Timestamp(0)
+  students   students[]
+}
+
+model medical_examinations {
+  id         Int                            @id @default(autoincrement())
+  student_id Int
+  clinic_id  Int
+  exam_type  medical_examinations_exam_type @default(EMERGENCY)
+  status     medical_examinations_status    @default(PENDING)
+  date       DateTime                       @db.DateTime(0)
+  created_at DateTime                       @default(now()) @db.Timestamp(0)
+  updated_at DateTime                       @default(now()) @db.Timestamp(0)
+  laboratory laboratory[]
+  students   students                       @relation(fields: [student_id], references: [id], onDelete: NoAction, map: "medical_examinations_ibfk_1")
+  clinics    clinics                        @relation(fields: [clinic_id], references: [id], onDelete: NoAction, map: "medical_examinations_ibfk_2")
+  transfers  transfers[]
+
+  @@index([clinic_id], map: "clinic_id")
+  @@index([student_id], map: "student_id")
+}
+
+model medical_tests {
+  id         Int                     @id @default(autoincrement())
+  test_name  String                  @unique(map: "uq_medical_tests_name") @db.VarChar(255)
+  test_type  medical_tests_test_type
+  state      medical_tests_state
+  created_at DateTime                @default(now()) @db.Timestamp(0)
+  updated_at DateTime                @default(now()) @db.Timestamp(0)
+  laboratory laboratory[]
+}
+
+model nationality {
+  id               Int        @id @default(autoincrement())
+  nationality_name String     @unique(map: "uq_nationality_name") @db.VarChar(255)
+  created_at       DateTime   @default(now()) @db.Timestamp(0)
+  updated_at       DateTime   @default(now()) @db.Timestamp(0)
+  students         students[]
+}
+
+model password_reset_otps {
+  email          String   @id @db.VarChar(255)
+  otp_hash       String   @db.VarChar(255)
+  expires_at     DateTime @db.DateTime(0)
+  attempts_count Int      @default(0)
+  used           Boolean  @default(false)
+  last_sent_at   DateTime @default(now()) @db.DateTime(0)
+  created_at     DateTime @default(now()) @db.DateTime(0)
+  updated_at     DateTime @default(now()) @db.DateTime(0)
+}
+
+model students {
+  id                   Int                    @id @default(autoincrement())
+  username             String                 @db.VarChar(255)
+  email                String                 @unique(map: "uq_students_email") @db.VarChar(255)
+  password             String                 @db.VarChar(255)
+  national_id          BigInt                 @unique(map: "uq_students_national_id")
+  nationality_id       Int
+  level_id             Int
+  gov_id               Int
+  faculty_id           Int
+  otp                  String?                @db.Char(6)
+  otp_expires_at       DateTime?              @db.DateTime(0)
+  gender               students_gender
+  birth_date           DateTime               @db.Date
+  phone_number         String                 @unique(map: "uq_students_phone") @db.VarChar(255)
+  phone_otp            String                 @db.VarChar(255)
+  phone_otp_expires_at DateTime?              @db.DateTime(0)
+  verified             Boolean                @default(false)
+  is_active            Boolean                @default(false)
+  user_image_file      String                 @db.VarChar(255)
+  national_id_file     String                 @db.VarChar(255)
+  fees_file            String                 @db.VarChar(255)
+  password_changed_at  DateTime?              @db.DateTime(0)
+  created_at           DateTime               @default(now()) @db.Timestamp(0)
+  updated_at           DateTime               @default(now()) @db.Timestamp(0)
+  laboratory           laboratory[]
+  medical_examinations medical_examinations[]
+  nationality          nationality            @relation(fields: [nationality_id], references: [id], onDelete: NoAction, map: "students_ibfk_1")
+  levels               levels                 @relation(fields: [level_id], references: [id], onDelete: NoAction, map: "students_ibfk_2")
+  governorates         governorates           @relation(fields: [gov_id], references: [id], onDelete: NoAction, map: "students_ibfk_3")
+  faculties            faculties              @relation(fields: [faculty_id], references: [id], onDelete: NoAction, map: "students_ibfk_4")
+
+  @@index([faculty_id], map: "faculty_id")
+  @@index([gov_id], map: "gov_id")
+  @@index([level_id], map: "level_id")
+  @@index([nationality_id, level_id, gov_id, faculty_id], map: "nationality_id")
+}
+
+model super_admins {
+  id                  Int       @id @default(autoincrement())
+  username            String    @db.VarChar(255)
+  email               String    @unique(map: "uq_super_admins_email") @db.VarChar(255)
+  password            String    @db.VarChar(255)
+  role                String    @db.VarChar(255)
+  is_confirmed        Boolean   @default(false)
+  is_active           Boolean   @default(false)
+  password_changed_at DateTime? @db.DateTime(0)
+  otp                 String?   @db.Char(6)
+  otp_expires_at      DateTime? @db.DateTime(0)
+  created_at          DateTime  @default(now()) @db.Timestamp(0)
+  updated_at          DateTime  @default(now()) @db.Timestamp(0)
+}
+
+model transfers {
+  id                   Int                  @id @default(autoincrement())
+  medical_exam_id      Int
+  hospital_id          Int
+  transfer_reason      String               @db.VarChar(500)
+  notes                String?              @db.VarChar(500)
+  status               transfers_status     @default(pending)
+  created_at           DateTime             @default(now()) @db.Timestamp(0)
+  updated_at           DateTime             @default(now()) @db.Timestamp(0)
+  medical_examinations medical_examinations @relation(fields: [medical_exam_id], references: [id], onDelete: NoAction, map: "transfers_ibfk_1")
+  external_hospitals   external_hospitals   @relation(fields: [hospital_id], references: [id], onDelete: NoAction, map: "transfers_ibfk_2")
+
+  @@index([hospital_id], map: "hospital_id")
+  @@index([medical_exam_id], map: "medicExam_id")
+  @@index([medical_exam_id, hospital_id], map: "student_id")
+}
+
+enum medical_tests_test_type {
+  STOOL   @map("براز")
+  BLOOD   @map("دم")
+  CULTURE @map("مزرعة")
+  URINE   @map("بول")
+}
+
+enum admins_role {
+  hsh_2_sa_4
+  hsh_2_sm_6 @map("hsh_2!sm!6")
+  hsh_4_ob_5 @map("hsh_4*ob*5")
+  hsh__mcm_9 @map("hsh_$mcm$9")
+  hsh_3_co_0 @map("hsh_3#co#0")
+}
+
+enum medical_examinations_exam_type {
+  EMERGENCY @map("طواريْ")
+  FOLLOW_UP @map("متابعة")
+  NEW_EXAM  @map("كشف جديد")
+}
+
+enum medical_tests_state {
+  AVAILABLE   @map("متاح")
+  UNAVAILABLE @map("غير متاح")
+}
+
+enum laboratory_test_result {
+  POSITIVE @map("إيجابي")
+  NEGATIVE @map("سلبي")
+}
+
+enum medical_examinations_status {
+  ACCEPTED @map("مقبول")
+  PENDING  @map("تحت الانتظار")
+}
+
+enum transfers_status {
+  pending
+  accepted
+  completed
+  rejected
+}
+
+enum students_gender {
+  MALE   @map("ذكر")
+  FEMALE @map("أنثي")
+}

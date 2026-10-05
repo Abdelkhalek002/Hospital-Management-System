@@ -90,14 +90,20 @@ export const login = asyncHandler(async (req, res) => {
     throw new ApiError("Login failed", StatusCode.UNAUTHORIZED);
   }
 
-  const { token } = (await loginFn(email, password)) || {};
+  const { token, user } = (await loginFn(email, password)) || {};
   if (!token) {
     throw new ApiError("Login failed", StatusCode.UNAUTHORIZED);
   }
 
+  res.cookie("jwt", token, getCookieOptions(req));
   return res.status(StatusCode.OK).json({
     success: true,
     token,
+    payLoad: {
+      userId: user?.id,
+      role: user?.role,
+      type: user?.role ? "admin" : "user",
+    },
   });
 });
 

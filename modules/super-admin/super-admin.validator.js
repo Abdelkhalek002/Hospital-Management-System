@@ -26,3 +26,28 @@ export const createAdminValidator = [
     ),
   handleValidationErrors,
 ];
+
+export const updateAdminValidator = [
+  body("username")
+    .optional()
+    .notEmpty()
+    .withMessage("Username cannot be empty"),
+  body("email")
+    .optional()
+    .isEmail()
+    .withMessage("email is not valid")
+    .custom(customValidators.isAdminAllowedEmail)
+    .withMessage(
+      "Please provide standard email domain for super admin",
+    ),
+  body("password")
+    .optional()
+    .isLength({ min: 8 })
+    .withMessage("password must be at least 8 characters long")
+    .bail()
+    .matches(/^[A-Z][a-z0-9#@$]{7,39}$/)
+    .withMessage(
+      "Password should start with an uppercase letter and contain at least 8 characters with lowercase letters, numbers, and symbols.",
+    ),
+  handleValidationErrors,
+];

@@ -211,11 +211,13 @@ export const adminGetAllReservations = asyncHandler(async (req, res) => {
   const countSql = `
       SELECT COUNT(*) AS count 
       FROM medical_examinations 
-      LEFT JOIN students ON medical_examinations.student_id = students.student_id 
+      LEFT JOIN students ON medical_examinations.student_id = students.id 
+      LEFT JOIN clinics ON medical_examinations.clinic_id = clinics.id
+      LEFT JOIN levels ON students.level_id = levels.id
       WHERE 
-          medical_examinations.examType LIKE ? 
+          medical_examinations.exam_type LIKE ? 
           OR medical_examinations.status LIKE ? 
-          OR students.userName LIKE ? 
+          OR students.username LIKE ? 
           OR students.email LIKE ? 
           OR students.national_id LIKE ? 
           OR students.nationality_id LIKE ? 
@@ -223,37 +225,38 @@ export const adminGetAllReservations = asyncHandler(async (req, res) => {
           OR students.gov_id LIKE ? 
           OR students.faculty_id LIKE ? 
           OR students.phone_number LIKE ?
+          OR clinics.clinic_name LIKE ?
+          OR levels.level_name LIKE ?
   `;
 
   const sql = `
       SELECT 
           medical_examinations.*,  
-          clinics.clinicName AS clinic_name, 
-          levels.levelName AS level_name,
-          students.userName AS student_name,
+          clinics.clinic_name AS clinic_name, 
+          levels.level_name AS level_name,
+          students.username AS student_name,
           students.user_image_file,
           students.national_id_file AS national_id_img,
           students.fees_file AS fees_file,
           students.email AS student_email,
           students.national_id AS national_id,
-          transfers.transfer_id AS transfer_id,
-          external_hospitals.hospName AS transfered_to,
-          transfers.transferReason,
+          transfers.id AS transfer_id,
+          external_hospitals.hospital_name AS transfered_to,
+          transfers.transfer_reason AS transferReason,
           transfers.notes
 
       FROM 
           medical_examinations 
-          LEFT JOIN clinics ON medical_examinations.clinic_id = clinics.clinic_id
-          LEFT JOIN students ON medical_examinations.student_id = students.student_id
-          LEFT JOIN levels ON students.level_id = levels.level_id
-          LEFT JOIN transfers ON medical_examinations.id = transfers.medicEx_id
-          LEFT JOIN external_hospitals ON transfers.exHosp_id = external_hospitals.exHosp_id
-
+          LEFT JOIN clinics ON medical_examinations.clinic_id = clinics.id
+          LEFT JOIN students ON medical_examinations.student_id = students.id
+          LEFT JOIN levels ON students.level_id = levels.id
+          LEFT JOIN transfers ON medical_examinations.id = transfers.medical_exam_id
+          LEFT JOIN external_hospitals ON transfers.hospital_id = external_hospitals.id
 
       WHERE 
-          medical_examinations.examType LIKE ? 
+          medical_examinations.exam_type LIKE ? 
           OR medical_examinations.status LIKE ? 
-          OR students.userName LIKE ? 
+          OR students.username LIKE ? 
           OR students.email LIKE ? 
           OR students.national_id LIKE ? 
           OR students.nationality_id LIKE ? 
@@ -261,75 +264,35 @@ export const adminGetAllReservations = asyncHandler(async (req, res) => {
           OR students.gov_id LIKE ? 
           OR students.faculty_id LIKE ? 
           OR students.phone_number LIKE ?
-          OR clinics.clinicName LIKE ?
-          OR levels.levelName LIKE ?
+          OR clinics.clinic_name LIKE ?
+          OR levels.level_name LIKE ?
       ORDER BY
           medical_examinations.id DESC
       LIMIT ? OFFSET ?
   `;
-  // Get the total count of records matching the search criteria
-  db.query(
-    countSql,
-    [
-      searchParam,
-      searchParam,
-      searchParam,
-      searchParam,
-      searchParam,
-      searchParam,
-      searchParam,
-      searchParam,
-      searchParam,
-      searchParam,
-    ],
-    (err, countResults) => {
-      if (err) {
-        console.error("Error fetching count of examinations:", err);
-        return res.status(500).json({ error: "Internal Server Error" });
-      }
-      const totalCount = countResults[0].count;
-      const totalPages = Math.ceil(totalCount / limit);
-      // Get the paginated results with search criteria
-      db.query(
-        sql,
-        [
-          searchParam,
-          searchParam,
-          searchParam,
-          searchParam,
-          searchParam,
-          searchParam,
-          searchParam,
-          searchParam,
-          searchParam,
-          searchParam,
-          searchParam,
-          searchParam,
-          limit,
-          offset,
-        ],
-        (error, results) => {
-          if (error) {
-            console.error("Error fetching examinations data:", error);
-            return res.status(500).json({ error: "Internal Server Error" });
-          }
-          //converting the time-zone to Cairo time-zone
-          results.map((result) => {
-            result.date = new Date(result.date).toLocaleString("en-US", {
-              timeZone: "Africa/Cairo",
-            });
-            return result;
-          });
-          // Examinations found, return them
-          res.status(200).json({
-            totalPages,
-            currentPage: page,
-            results,
-          });
-        },
-      );
-    },
-  );
+
+  const searchConditions = Array(12).fill(searchParam);
+
+  const [countResults] = await db.query(countSql, searchConditions);
+  const totalCount = countResults[0]?.count || 0;
+  const totalPages = Math.ceil(totalCount / limit);
+
+  const [results] = await db.query(sql, [...searchConditions, limit, offset]);
+
+  // converting the time-zone to Cairo time-zone
+  results.forEach((result) => {
+    if (result.date) {
+      result.date = new Date(result.date).toLocaleString("en-US", {
+        timeZone: "Africa/Cairo",
+      });
+    }
+  });
+
+  return res.status(StatusCode.OK).json({
+    totalPages,
+    currentPage: page,
+    results,
+  });
 });
 
 //@desc     view list of emergency medical examinations
@@ -471,73 +434,49 @@ export const adminDeleteRequest = asyncHandler(async (req, res) => {
 export const createRequest = asyncHandler(async (req, res) => {
   const { student_id } = req.params;
   const { clinic_id, date, examType } = req.body;
-  //1-check if reservation limit reached
-  db.query(
-    "SELECT * FROM medical_examinations WHERE date = ?",
-    [req.body.date],
-    (err, results) => {
-      if (isLimitReached(err, results)) {
-        res
-          .status(StatusCode.BAD_REQUEST)
-          .json({ error: "reservations limit reached!" });
-      }
-      // check if the user has exceeded the limit of 1 reservations per day
-      db.query(
-        "SELECT COUNT(*) AS count FROM medical_examinations WHERE student_id = ? AND date = ?",
-        [student_id, date],
-        (err, result) => {
-          if (err) {
-            console.error("Error checking user reservations:", err);
-            return res
-              .status(StatusCode.INTERNAL_SERVER_ERROR)
-              .json({ error: "Internal Server Error" });
-          }
 
-          if (result[0].count >= 1) {
-            return res
-              .status(StatusCode.TOO_MANY_REQUESTS)
-              .json({ error: "تجاوزت الحد الاقصى للحجوزات اليومية" });
-          } else {
-            //2- check if user exists...
-            db.query(
-              "SELECT * FROM students WHERE student_id = ?",
-              [student_id],
-              (error, results) => {
-                if (error) {
-                  console.error("Error checking student existence:", error);
-                  return res
-                    .status(StatusCode.INTERNAL_SERVER_ERROR)
-                    .json({ error: "Internal Server Error" });
-                } else if (results.length === 0) {
-                  // student is not in system, return error response
-                  return res
-                    .status(StatusCode.BAD_REQUEST)
-                    .json({ error: `غير موجود  ${student_id}المستخدم ` });
-                }
-                //3- method code...
-                const sql =
-                  "INSERT INTO medical_examinations (student_id, clinic_id, date, examType) VALUES (?, ?, ?, ?)";
-                db.query(
-                  sql,
-                  [student_id, clinic_id, date, examType],
-                  (err, result) => {
-                    if (err) {
-                      res.status(StatusCode.INTERNAL_SERVER_ERROR).send(err);
-                    } else {
-                      console.log("request created successfully");
-                      res
-                        .status(StatusCode.CREATED)
-                        .json({ message: "تم حجز الكشف بنجاح" });
-                    }
-                  },
-                );
-              },
-            );
-          }
-        },
-      );
-    },
+  // 1- check if reservation limit reached
+  const [results] = await db.query(
+    "SELECT * FROM medical_examinations WHERE date = ?",
+    [date],
   );
+  if (isLimitReached(null, results)) {
+    return res
+      .status(StatusCode.BAD_REQUEST)
+      .json({ error: "reservations limit reached!" });
+  }
+
+  // check if user exceeded limit of 1 reservation per day
+  const [limitResult] = await db.query(
+    "SELECT COUNT(*) AS count FROM medical_examinations WHERE student_id = ? AND date = ?",
+    [student_id, date],
+  );
+
+  if (limitResult[0]?.count >= 1) {
+    return res
+      .status(StatusCode.TOO_MANY_REQUESTS)
+      .json({ error: "تجاوزت الحد الاقصى للحجوزات اليومية" });
+  }
+
+  // 2- check if user exists
+  const [students] = await db.query(
+    "SELECT * FROM students WHERE id = ?",
+    [student_id],
+  );
+  if (!students || students.length === 0) {
+    return res
+      .status(StatusCode.BAD_REQUEST)
+      .json({ error: `المستخدم ${student_id} غير موجود` });
+  }
+
+  // 3- insert reservation
+  const sql =
+    "INSERT INTO medical_examinations (student_id, clinic_id, date, exam_type) VALUES (?, ?, ?, ?)";
+  await db.query(sql, [student_id, clinic_id, date, examType]);
+
+  return res
+    .status(StatusCode.CREATED)
+    .json({ message: "تم حجز الكشف بنجاح" });
 });
 
 //@desc     modify medical examination request
@@ -546,36 +485,24 @@ export const createRequest = asyncHandler(async (req, res) => {
 export const updateRequest = asyncHandler(async (req, res) => {
   const { medicEx_id } = req.params;
   const { clinic_id, date, examType } = req.body;
-  //1-check if medical examination exists
-  db.query(
-    "SELECT * FROM medical_examinations WHERE  medicEx_id = ?",
+
+  const [results] = await db.query(
+    "SELECT * FROM medical_examinations WHERE id = ?",
     [medicEx_id],
-    (error, results) => {
-      if (error) {
-        console.error("Error checking examination existence:", error);
-        return res
-          .status(StatusCode.BAD_REQUEST)
-          .json({ error: "Internal Server Error" });
-      } else if (results.length === 0) {
-        // examination is not in system, return error response
-        return res.status(StatusCode.NOT_FOUND).json({
-          error: `الكشف رقم ${medicEx_id} غير موجود`,
-        });
-      }
-      //2- method code...
-      const sql =
-        "UPDATE medical_examinations SET clinic_id = ?, date = ?, examType = ? WHERE medicEx_id = ?";
-      db.query(sql, [clinic_id, date, examType, medicEx_id], (err, result) => {
-        if (err) {
-          res.status(StatusCode.BAD_REQUEST).send(err);
-        } else {
-          res
-            .status(StatusCode.CREATED)
-            .json({ message: "تم تعديل الحجز بنجاح", medicEx_id });
-        }
-      });
-    },
   );
+  if (!results || results.length === 0) {
+    return res.status(StatusCode.NOT_FOUND).json({
+      error: `الكشف رقم ${medicEx_id} غير موجود`,
+    });
+  }
+
+  const sql =
+    "UPDATE medical_examinations SET clinic_id = ?, date = ?, exam_type = ? WHERE id = ?";
+  await db.query(sql, [clinic_id, date, examType, medicEx_id]);
+
+  return res
+    .status(StatusCode.CREATED)
+    .json({ message: "تم تعديل الحجز بنجاح", medicEx_id });
 });
 
 //@desc     view medical examination request
@@ -583,34 +510,24 @@ export const updateRequest = asyncHandler(async (req, res) => {
 //@access   public
 export const viewRequest = asyncHandler(async (req, res) => {
   const { medicEx_id } = req.params;
-  // SQL query to fetch examination details along with clinic names
-  let sql = `
+  const sql = `
     SELECT 
       medical_examinations.*,  
-      clinics.clinicName AS clinic_name
+      clinics.clinic_name AS clinic_name
     FROM 
       medical_examinations 
-      LEFT JOIN clinics ON medical_examinations.clinic_id = clinics.clinic_id
+      LEFT JOIN clinics ON medical_examinations.clinic_id = clinics.id
     WHERE 
       medical_examinations.id = ?`;
 
-  // Check if medical exam exists
-  db.query(sql, [medicEx_id], (error, results) => {
-    if (error) {
-      console.error("Error checking examination existence:", error);
-      return res
-        .status(StatusCode.INTERNAL_SERVER_ERROR)
-        .json({ error: "Internal Server Error" });
-    } else if (results.length === 0) {
-      // Medical examination not found, return error response
-      return res.status(StatusCode.NOT_FOUND).json({
-        error: `الكشف رقم ${medicEx_id} غير موجود`,
-      });
-    } else {
-      // Medical examination found, return details
-      res.status(StatusCode.OK).json(results);
-    }
-  });
+  const [results] = await db.query(sql, [medicEx_id]);
+  if (!results || results.length === 0) {
+    return res.status(StatusCode.NOT_FOUND).json({
+      error: `الكشف رقم ${medicEx_id} غير موجود`,
+    });
+  }
+
+  return res.status(StatusCode.OK).json(results);
 });
 
 //@desc     view all my medical examinations
@@ -622,103 +539,79 @@ export const getMyReservations = asyncHandler(async (req, res) => {
   const limit = parseInt(req.query.limit, 10) || 10;
   const offset = (page - 1) * limit;
 
-  // Query to get the total count of medical examinations for the student
   const countSql =
     "SELECT COUNT(*) AS count FROM medical_examinations WHERE student_id = ?";
-  db.query(countSql, [student_id], (err, countResults) => {
-    if (err) {
-      console.error("Error fetching count of examinations:", err);
-      return res
-        .status(StatusCode.INTERNAL_SERVER_ERROR)
-        .json({ error: "Internal Server Error" });
+  const [countResults] = await db.query(countSql, [student_id]);
+  const totalCount = countResults[0]?.count || 0;
+  const totalPages = Math.ceil(totalCount / limit);
+
+  const sql = `
+    SELECT 
+      medical_examinations.*,  
+      clinics.clinic_name AS clinic_name, 
+      students.username AS student_name,
+      transfers.transfer_reason AS transferReason,
+      transfers.notes,
+      external_hospitals.hospital_name AS ex_hosp_name
+    FROM 
+      medical_examinations 
+      LEFT JOIN clinics ON medical_examinations.clinic_id = clinics.id
+      LEFT JOIN students ON medical_examinations.student_id = students.id
+      LEFT JOIN transfers ON medical_examinations.id = transfers.medical_exam_id
+      LEFT JOIN external_hospitals ON transfers.hospital_id = external_hospitals.id
+    WHERE 
+      medical_examinations.student_id = ?
+    ORDER BY
+      medical_examinations.id DESC
+    LIMIT ? OFFSET ?`;
+
+  const [results] = await db.query(sql, [student_id, limit, offset]);
+
+  if (!results || results.length === 0) {
+    return res
+      .status(StatusCode.BAD_REQUEST)
+      .json({ error: "Student has no examination record!" });
+  }
+
+  results.forEach((result) => {
+    if (result.date) {
+      result.date = new Date(result.date).toLocaleString("en-US", {
+        timeZone: "Africa/Cairo",
+      });
     }
-    const totalCount = countResults[0].count;
-    const totalPages = Math.ceil(totalCount / limit);
-    const sql = `
-      SELECT 
-        medical_examinations.*,  
-        clinics.clinicName AS clinic_name, 
-        students.userName AS student_name ,
-        transfers.transferReason,
-        transfers.notes,
-        external_hospitals.hospName AS ex_hosp_name
-      FROM 
-        medical_examinations 
-        LEFT JOIN clinics ON medical_examinations.clinic_id = clinics.clinic_id
-        LEFT JOIN students ON medical_examinations.student_id = students.student_id
-        LEFT JOIN transfers ON medical_examinations.id = transfers.medicEx_id
-        LEFT JOIN external_hospitals ON transfers.exHosp_id = external_hospitals.exHosp_id
+  });
 
-      WHERE 
-        medical_examinations.student_id = ?
-        ORDER BY
-        medical_examinations.id DESC
-      LIMIT ? OFFSET ?`;
-
-    // Execute the query
-    db.query(sql, [student_id, limit, offset], (error, results) => {
-      if (error) {
-        console.error("Error fetching examinations data:", error);
-        return res
-          .status(StatusCode.INTERNAL_SERVER_ERROR)
-          .json({ error: "Internal Server Error" });
-      } else if (results.length === 0) {
-        // No examination records found for the student
-        return res
-          .status(StatusCode.BAD_REQUEST)
-          .json({ error: "Student has no examination record!" });
-      } else {
-        results.map((result) => {
-          result.date = new Date(result.date).toLocaleString("en-US", {
-            timeZone: "Africa/Cairo",
-          });
-          return result;
-        });
-        // Examinations found, return them along with pagination info
-        res.status(StatusCode.OK).json({
-          totalPages,
-          currentPage: page,
-          results,
-        });
-      }
-    });
+  return res.status(StatusCode.OK).json({
+    totalPages,
+    currentPage: page,
+    results,
   });
 });
 
 //! Cancel req only if its not already accepted
 export const cancelRequest = asyncHandler(async (req, res) => {
   const { medicEx_id } = req.params;
-  // Check if the medical examination exists
-  const isExitQuery = "SELECT * FROM medical_examinations WHERE medicEx_id=?";
-  db.query(isExitQuery, [medicEx_id], (err, result) => {
-    if (err) {
-      return res.status(StatusCode.INTERNAL_SERVER_ERROR).send(err);
-    } else if (result.length === 0) {
-      return res
-        .status(StatusCode.NOT_FOUND)
-        .json({ error: "الكشف غير موجود" });
-    } else {
-      // Check if the examination has been accepted
-      if (result[0].status === "مقبول") {
-        return res
-          .status(StatusCode.BAD_REQUEST)
-          .json({ error: "لا يمكن الغاء الكشف لانه تم قبوله" });
-      } else {
-        // Delete the medical examination
-        const deleteQuery =
-          "DELETE FROM medical_examinations WHERE medicEx_id=?";
-        db.query(deleteQuery, [medicEx_id], (err, result) => {
-          if (err) {
-            return res.status(StatusCode.INTERNAL_SERVER_ERROR).send(err);
-          } else {
-            return res
-              .status(StatusCode.OK)
-              .json({ message: "تم الغاء الكشف بنجاح" });
-          }
-        });
-      }
-    }
-  });
+  const isExitQuery = "SELECT * FROM medical_examinations WHERE id = ?";
+  const [result] = await db.query(isExitQuery, [medicEx_id]);
+
+  if (!result || result.length === 0) {
+    return res
+      .status(StatusCode.NOT_FOUND)
+      .json({ error: "الكشف غير موجود" });
+  }
+
+  if (result[0].status === "مقبول") {
+    return res
+      .status(StatusCode.BAD_REQUEST)
+      .json({ error: "لا يمكن الغاء الكشف لانه تم قبوله" });
+  }
+
+  const deleteQuery = "DELETE FROM medical_examinations WHERE id = ?";
+  await db.query(deleteQuery, [medicEx_id]);
+
+  return res
+    .status(StatusCode.OK)
+    .json({ message: "تم الغاء الكشف بنجاح" });
 });
 
 // Get the number of reservations by each month from the beginning of the year

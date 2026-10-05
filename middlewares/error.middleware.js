@@ -41,21 +41,36 @@ const handleJWTExpiredError = () =>
     StatusCode.UNAUTHORIZED,
   );
 
-const handleMulterError = (name, msg) =>
-  new ApiError(`${name}: ${msg}`, StatusCode.INTERNAL_SERVER_ERROR);
+const handleMulterError = (error) => {
+  if (error.code === "LIMIT_FILE_SIZE") {
+    return new ApiError(
+      "حجم الملف كبير جداً، الحد الأقصى المسموح به هو 10 ميجابايت",
+      StatusCode.BAD_REQUEST,
+    );
+  }
+  return new ApiError(
+    `خطأ في رفع الملف: ${error.message}`,
+    StatusCode.BAD_REQUEST,
+  );
+};
 
 const globalError = (error, req, res, next) => {
   error.statusCode = error.statusCode || 500;
   error.status = error.status || "Error";
+
+  if (error.name === "MulterError") {
+    error = handleMulterError(error);
+  }
+
   if (process.env.NODE_ENV === "development") {
-    if (error.name === "MulterError")
-      error = handleMulterError(error.name, error.message);
     sendErrorDev(error, req, res);
   } else if (process.env.NODE_ENV === "production") {
     if (error.name === "JsonWebTokenError") error = handleJWTError();
     if (error.name === "TokenExpiredError") error = handleJWTExpiredError();
 
     sendErrorProd(error, req, res);
+  } else {
+    sendErrorDev(error, req, res);
   }
 };
 

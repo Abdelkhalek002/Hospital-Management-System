@@ -10,41 +10,40 @@
   "scripts": {
     "start": "cross-env NODE_ENV=development nodemon server.js",
     "test": "cross-env NODE_ENV=testing nodemon server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "postinstall": "prisma generate",
+    "prisma:studio": "prisma studio",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:generate": "prisma generate",
+    "prisma:pull": "prisma db pull"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@prisma/adapter-mariadb": "^7.10.0",
+    "@prisma/client": "^7.10.0",
     "bcrypt": "^6.0.0",
-    "body-parser": "^2.2.2",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "cron": "^4.4.0",
-    "crypto": "^1.0.1",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
     "express-async-handler": "^1.2.0",
     "express-rate-limit": "^8.3.1",
     "express-validator": "^7.3.1",
-    "joi": "^18.0.2",
     "jsonwebtoken": "^9.0.3",
+    "mariadb": "^3.5.4",
     "morgan": "^1.10.1",
     "multer": "^2.1.1",
     "mysql2": "^3.20.0",
     "nodemailer": "^8.0.2",
-    "nodemon": "^3.1.14",
-    "redis": "^5.11.0",
     "sanitize-filename": "^1.6.3",
     "sharp": "^0.34.5",
-    "slugify": "^1.6.8",
-    "util": "^0.12.5",
     "uuid": "^13.0.0"
   },
   "devDependencies": {
-    "@babel/core": "^7.29.0",
-    "@babel/preset-env": "^7.29.2",
-    "babel-jest": "^30.3.0",
     "cross-env": "^10.1.0",
-    "jest-mock": "^30.3.0"
+    "nodemon": "^3.1.14",
+    "prisma": "^7.10.0"
   }
 }

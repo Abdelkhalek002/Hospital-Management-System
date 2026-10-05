@@ -15,14 +15,28 @@ import authRoute from "./modules/auth/auth.routes.js";
 import adminRoute from "./modules/admin/admin.routes.js";
 import superAdminRoute from "./modules/super-admin/super-admin.routes.js";
 import studentRoute from "./modules/students/student.routes.js";
-import systemDataRoutes from "./modules/system-data/routes/index.js";
+import systemDataRoutes from "./modules/system-data/system-data.routes.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Start Express App
 const app = express();
-app.use(cors());
+
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://127.0.0.1:3000",
+  ...(process.env.CLIENT_URL ? [process.env.CLIENT_URL] : []),
+];
+
+app.use(
+  cors({
+    origin: allowedOrigins,
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  }),
+);
 app.use(cookieParser());
 app.use("/api/v1/uploads", express.static(path.join(process.cwd(), "uploads")));
 

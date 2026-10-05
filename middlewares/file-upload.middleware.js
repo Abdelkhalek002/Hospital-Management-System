@@ -29,12 +29,15 @@ const adminPatchUploadDirectories = {
 const FILE_NAME_MAX_ATTEMPTS = 10;
 
 const multerFilter = (req, file, cb) => {
-  if (file.mimetype.endsWith("/jpeg") || file.mimetype.endsWith("/jpg")) {
+  if (
+    file.mimetype.startsWith("image/") ||
+    file.mimetype.endsWith("/pdf")
+  ) {
     cb(null, true);
   } else {
     cb(
       new ApiError(
-        "Only JPG and JPEG files are allowed!",
+        "Only image files (JPG, PNG, WebP) and PDFs are allowed!",
         StatusCode.BAD_REQUEST,
       ),
       false,
@@ -45,7 +48,7 @@ const multerFilter = (req, file, cb) => {
 const upload = multer({
   storage: multerStorage,
   fileFilter: multerFilter,
-  limits: { fileSize: 2 * 1024 * 1024 },
+  limits: { fileSize: 10 * 1024 * 1024 },
 });
 
 // Upload files
@@ -62,6 +65,43 @@ export const uploadAdminStudentFiles = upload.fields([
 export const uploadProfilePhoto = upload.single("user_image_file");
 export const uploadNationalIDFiles = upload.single("national_id_file");
 export const uploadFeesFile = upload.single("fees_file");
+
+export const uploadAdminPhoto = upload.fields([
+  { name: "profile_photo", maxCount: 1 },
+  { name: "photo", maxCount: 1 },
+  { name: "avatar", maxCount: 1 },
+  { name: "user_image_file", maxCount: 1 },
+]);
+
+export const processAdminPhoto = asyncHandler(async (req, _res, next) => {
+  const file =
+    req.files?.profile_photo?.[0] ||
+    req.files?.photo?.[0] ||
+    req.files?.avatar?.[0] ||
+    req.files?.user_image_file?.[0] ||
+    req.file;
+
+  if (file) {
+    const adminId = String(req.params?.id || req.user?.id || "admin");
+    const mimeSubtype = file.mimetype.split("/")[1] || "jpeg";
+    const ext = mimeSubtype === "jpeg" ? "jpg" : mimeSubtype;
+    const fileName = `admin-${adminId}-${Date.now()}-${randomBytes(3).toString("hex")}.${ext}`;
+    const targetDir = path.join("uploads", "admins");
+
+    await ensureDirectory(targetDir);
+    await fs.writeFile(path.join(targetDir, fileName), file.buffer);
+
+    req.body.profile_photo = fileName;
+  } else if (
+    req.body.profile_photo === "null" ||
+    req.body.profile_photo === "undefined" ||
+    req.body.profile_photo === ""
+  ) {
+    req.body.profile_photo = null;
+  }
+
+  next();
+});
 
 // get uploaded files
 const getUploadedFile = (req, fieldName) =>

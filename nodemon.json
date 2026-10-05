@@ -1,0 +1,14 @@
+{
+  "watch": [
+    "server.js",
+    "app.js",
+    "config",
+    "modules",
+    "middlewares",
+    "repositories",
+    "services",
+    "utils",
+    ".env"
+  ],
+  "ext": "js,mjs,json,env"
+}
