@@ -8,7 +8,7 @@ const pool = mysql.createPool({
   password: process.env.DB_PASSWORD || "",
   database:
     process.env.NODE_ENV === "development"
-      ? process.env.TEST_DB
+      ? process.env.DEV_DB
       : process.env.PROD_DB,
   waitForConnections: true,
   connectionLimit: 10,

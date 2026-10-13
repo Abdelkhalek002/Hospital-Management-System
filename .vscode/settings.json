@@ -11,7 +11,7 @@
       "port": 33060,
       "driver": "MySQL",
       "name": "test",
-      "database": "test_db",
+      "database": "hms_dev",
       "username": "root",
       "connectionTimeout": 30
     }

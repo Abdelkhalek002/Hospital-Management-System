@@ -432,7 +432,7 @@ export const adminDeleteRequest = asyncHandler(async (req, res) => {
 //@route    POST  /api/v1/myreservations
 //@access   public
 export const createRequest = asyncHandler(async (req, res) => {
-  const { student_id } = req.params;
+  const student_id = req.user.id;
   const { clinic_id, date, examType } = req.body;
 
   // 1- check if reservation limit reached
@@ -534,7 +534,7 @@ export const viewRequest = asyncHandler(async (req, res) => {
 //@route    GET  /api/v1/myreservations
 //@access   public
 export const getMyReservations = asyncHandler(async (req, res) => {
-  const { student_id } = req.params;
+  const student_id = req.user?.id || req.params?.student_id;
   const page = parseInt(req.query.page, 10) || 1;
   const limit = parseInt(req.query.limit, 10) || 10;
   const offset = (page - 1) * limit;
@@ -567,13 +567,7 @@ export const getMyReservations = asyncHandler(async (req, res) => {
 
   const [results] = await db.query(sql, [student_id, limit, offset]);
 
-  if (!results || results.length === 0) {
-    return res
-      .status(StatusCode.BAD_REQUEST)
-      .json({ error: "Student has no examination record!" });
-  }
-
-  results.forEach((result) => {
+  (results || []).forEach((result) => {
     if (result.date) {
       result.date = new Date(result.date).toLocaleString("en-US", {
         timeZone: "Africa/Cairo",
@@ -584,7 +578,7 @@ export const getMyReservations = asyncHandler(async (req, res) => {
   return res.status(StatusCode.OK).json({
     totalPages,
     currentPage: page,
-    results,
+    results: results || [],
   });
 });
 

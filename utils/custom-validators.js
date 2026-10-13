@@ -24,8 +24,8 @@ export const isAllowedEmail = (value) => {
 
 export const isAdminAllowedEmail = (value) => {
   return (
-    value.split("@")[1].endsWith() ||
-    value.split("@")[1].endsWith(process.env.ADMIN_DOMAIN)
+    value.split("@")[1].endsWith(process.env.SUPER_ADMIN_EMAIL_DOMAIN) ||
+    value.split("@")[1].endsWith(process.env.ADMIN_EMAIL_DOMAIN)
   );
 };
 

@@ -9,7 +9,7 @@ import { createRequestValidator } from "./reservation.validator.js";
 const router = express.Router();
 
 router
-  .route("/:student_id")
+  .route("/")
   .post(
     protect,
     restrictToUser,

@@ -124,13 +124,13 @@ export const logout = asyncHandler(async (req, res) => {
     try {
       decoded = await verifyToken(token, process.env.JWT_SECRET);
     } catch (error) {
-      throw new ApiError("Invalid or expired token", StatusCode.UNAUTHORIZED);
+      decoded = jwt.decode(token);
     }
   }
 
   await authService.logout({
     res,
-    userType: decoded?.userType,
+    userType: decoded?.userType || decoded?.type,
     userId: decoded?.id,
     clearCookieOptions: getClearCookieOptions(req),
   });

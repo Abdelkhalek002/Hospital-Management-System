@@ -13,8 +13,8 @@ const router = express.Router();
 router
   .route("/signup")
   .post(
-    authValidator.validateSignup,
     fileUploader.uploadRegistrationFiles,
+    authValidator.validateSignup,
     fileUploader.resizeFiles,
     authController.signup,
   );

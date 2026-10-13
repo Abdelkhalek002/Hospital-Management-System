@@ -56,8 +56,13 @@ class Student extends Base {
   async getOne(id) {
     const sql = `SELECT 
                   s.id, s.username, s.email, s.user_image_file AS photo,
-                  l.level_name AS level, f.faculty_name AS faculty,
-                  g.gov_name AS governorate, n.nationality_name AS nationality
+                  s.user_image_file, s.phone_number, s.national_id, s.gender,
+                  s.birth_date, s.is_active, s.verified,
+                  s.level_id, s.faculty_id, s.gov_id, s.nationality_id,
+                  l.level_name AS level, l.level_name,
+                  f.faculty_name AS faculty, f.faculty_name,
+                  g.gov_name AS governorate, g.gov_name,
+                  n.nationality_name AS nationality, n.nationality_name
                   FROM students s
                     INNER JOIN levels l         ON s.level_id = l.id
                     INNER JOIN governorates g   ON s.gov_id = g.id

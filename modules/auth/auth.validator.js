@@ -1,5 +1,5 @@
 // IMPORTING DEPENDENCIES
-import { body } from "express-validator";
+import { body, check } from "express-validator";
 import handleValidationErrors from "../../middlewares/validator.middleware.js";
 import * as customValidators from "../../utils/custom-validators.js";
 
@@ -22,7 +22,7 @@ export const validateSignup = [
     .isLength({ min: 8 })
     .withMessage("password should be 8 characters at least")
     .bail()
-    .matches(/^[A-Z][a-z0-9#@]{7,39}$/)
+    .matches(/^[A-Z][a-z0-9#@$]{7,39}$/)
     .withMessage(
       "Password should start with an uppercase letter and contain 8 to 40 characters with lowercase letters, numbers, or symbols #, @.",
     ),
@@ -40,21 +40,43 @@ export const validateSignup = [
   body("gender")
     .notEmpty()
     .withMessage("gender required")
+    .customSanitizer((val) => (val === "أنثى" ? "أنثي" : val))
     .custom(customValidators.isArabic)
     .withMessage(`Gender format is not in Arabic!`)
-    .isIn("ذكر", "أنثي"),
-  body("birth_date").isDate(),
+    .isIn(["ذكر", "أنثي"])
+    .withMessage("Gender must be either ذكر or أنثي"),
+  body("birth_date")
+    .notEmpty()
+    .withMessage("birth date is required")
+    .isDate()
+    .withMessage("birth date must be a valid date (YYYY-MM-DD)"),
   body("phone_number")
     .notEmpty()
     .withMessage("phone number required")
     .isMobilePhone("ar-EG"),
-  body("user_image_file")
-    .notEmpty()
-    .withMessage("user profile photo is required"),
-  body("national_id_file")
-    .notEmpty()
-    .withMessage("national id file is required"),
-  body("fees_file").notEmpty().withMessage("fees file is required"),
+  check("user_image_file").custom((_, { req }) => {
+    const hasFile =
+      req.files?.user_image_file?.[0] || req.body?.user_image_file;
+    if (!hasFile) {
+      throw new Error("user profile photo is required");
+    }
+    return true;
+  }),
+  check("national_id_file").custom((_, { req }) => {
+    const hasFile =
+      req.files?.national_id_file?.[0] || req.body?.national_id_file;
+    if (!hasFile) {
+      throw new Error("national id file is required");
+    }
+    return true;
+  }),
+  check("fees_file").custom((_, { req }) => {
+    const hasFile = req.files?.fees_file?.[0] || req.body?.fees_file;
+    if (!hasFile) {
+      throw new Error("fees file is required");
+    }
+    return true;
+  }),
 
   handleValidationErrors,
 ];

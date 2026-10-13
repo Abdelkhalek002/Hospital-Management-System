@@ -10,7 +10,7 @@ dbPool
   .then((connection) => {
     const dbName =
       process.env.NODE_ENV === "development"
-        ? process.env.TEST_DB
+        ? process.env.DEV_DB
         : process.env.PROD_DB;
     console.log(`(${dbName}) Database Connected!`);
     connection.release();
