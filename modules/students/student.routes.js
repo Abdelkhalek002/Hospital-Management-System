@@ -14,20 +14,23 @@ router.use(protect);
 router
   .route("/me")
   .get(restrictToUser, controller.getMe)
-  .patch(
+  .put(
     restrictToUser,
-    updateValidator,
     fileUploader.uploadProfilePhoto,
     fileUploader.resizeUserPhoto,
+    updateValidator,
     controller.updateMe,
   );
 
 // Users Management
 router.use(
   authMiddleware.allowedTo(
+    roles.SUPER_ADMIN,
     roles.SECOND_MANAGER,
     roles.MEDICAL_CHECK_MANAGER,
     roles.COUNTER,
+    roles.OBSERVER,
+    roles.TRANSFER_CLERK,
   ),
 );
 

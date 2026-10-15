@@ -17,23 +17,31 @@ export const isVerified = async (email) => {
   return await new Student().isVerfied(email);
 };
 
+export const matchesDomain = (email, configuredDomain) => {
+  if (!email || !configuredDomain) return false;
+  const target = configuredDomain.replace(/^@/, "").toLowerCase().trim();
+  if (!target) return false;
+  const emailDomain = (email.split("@")[1] || "").toLowerCase().trim();
+  return emailDomain === target || emailDomain.endsWith("." + target);
+};
+
 // To validate Helwan University account
 export const isAllowedEmail = (value) => {
-  return value.split("@")[1].endsWith(process.env.USER_EMAIL_DOMAIN);
+  return matchesDomain(value, process.env.USER_EMAIL_DOMAIN);
 };
 
 export const isAdminAllowedEmail = (value) => {
   return (
-    value.split("@")[1].endsWith(process.env.SUPER_ADMIN_EMAIL_DOMAIN) ||
-    value.split("@")[1].endsWith(process.env.ADMIN_EMAIL_DOMAIN)
+    matchesDomain(value, process.env.SUPER_ADMIN_EMAIL_DOMAIN) ||
+    matchesDomain(value, process.env.ADMIN_EMAIL_DOMAIN)
   );
 };
 
 export const isAllowedEmailForLogin = (value) => {
   return (
-    value.split("@")[1].endsWith(process.env.SUPER_ADMIN_EMAIL_DOMAIN) ||
-    value.split("@")[1].endsWith(process.env.ADMIN_EMAIL_DOMAIN) ||
-    value.split("@")[1].endsWith(process.env.USER_EMAIL_DOMAIN)
+    matchesDomain(value, process.env.SUPER_ADMIN_EMAIL_DOMAIN) ||
+    matchesDomain(value, process.env.ADMIN_EMAIL_DOMAIN) ||
+    matchesDomain(value, process.env.USER_EMAIL_DOMAIN)
   );
 };
 

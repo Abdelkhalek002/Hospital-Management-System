@@ -10,15 +10,21 @@ export const get = async (id) => {
 };
 
 export const updateMe = async (id, data) => {
-  // 1. check governorate providence and existence
-  if (data.hasOwnProperty("gov_id")) {
-    const govExists = await new Base("governorates").findById(data.gov_id);
-    if (!govExists)
-      throw new ApiError("Invalid governorate Data", StatusCode.BAD_REQUEST);
+  const studentRepo = new Student();
+
+  // 1. Check if student exists
+  const student = await studentRepo.findById(id);
+  if (!student) {
+    throw new ApiError("Student does not exist", StatusCode.NOT_FOUND);
   }
-  // 2. update data
-  const result = await new Student().updateMe(id, data);
-  return result;
+
+  // 2. Update data
+  if (Object.keys(data).length > 0) {
+    await studentRepo.updateOne(id, data);
+  }
+
+  // 3. Return updated student profile
+  return await studentRepo.getOne(id);
 };
 
 export const getAll = async () => {

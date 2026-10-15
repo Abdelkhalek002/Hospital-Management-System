@@ -122,7 +122,7 @@ Login routing is selected by email domain:
 Implemented under `modules/students/`.
 
 - `GET /api/v1/users/me`
-- `PATCH /api/v1/users/me`
+- `PUT /api/v1/users/me`
 - `GET /api/v1/users`
 - `GET /api/v1/users/:id`
 - `PATCH /api/v1/users/:id`
@@ -235,12 +235,14 @@ Create a `.env` file in the project root and define the variables used by the co
 ```env
 PORT=7000
 NODE_ENV=development
+CLIENT_URL=http://localhost:3000
+CORS_ORIGIN=http://localhost:3000
 
-DATABASE_URL="mysql://root:password@localhost:3306/hms_test"
+DATABASE_URL="mysql://root:password@localhost:3306/hms_dev"
 DB_HOST=localhost
 DB_USER=root
 DB_PASSWORD=
-TEST_DB=hms_test
+Dev_DB=hms_dev
 PROD_DB=hms_prod
 
 JWT_SECRET=

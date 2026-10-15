@@ -3,6 +3,7 @@ import ApiError from "../utils/api-error.js";
 import * as authService from "../modules/auth/auth.service.js";
 import { roles } from "../utils/roles.js";
 import { StatusCode } from "../utils/status-codes.js";
+import { matchesDomain } from "../utils/custom-validators.js";
 
 export const protect = asyncHandler(async (req, res, next) => {
   let token;
@@ -26,9 +27,10 @@ export const protect = asyncHandler(async (req, res, next) => {
 
 export const allowedTo = (...allowedRoles) =>
   asyncHandler(async (req, res, next) => {
-    const isSuperAdmin = req.user.email.endsWith(
-      process.env.SUPER_ADMIN_EMAIL_DOMAIN,
-    );
+    const isSuperAdmin =
+      req.user?.role === roles.SUPER_ADMIN ||
+      req.user?.role === "super_admin" ||
+      matchesDomain(req.user?.email, process.env.SUPER_ADMIN_EMAIL_DOMAIN);
     const isAllowedRole = allowedRoles.includes(req.user.role);
     if (!isSuperAdmin && !isAllowedRole) {
       return next(
@@ -42,7 +44,7 @@ export const allowedTo = (...allowedRoles) =>
   });
 
 export const restrictToUser = asyncHandler(async (req, res, next) => {
-  if (!req.user.email.endsWith(process.env.USER_EMAIL_DOMAIN)) {
+  if (!matchesDomain(req.user.email, process.env.USER_EMAIL_DOMAIN)) {
     return next(
       new ApiError(
         "You are not authorized to access this route!",

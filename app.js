@@ -23,11 +23,20 @@ const __dirname = path.dirname(__filename);
 // Start Express App
 const app = express();
 
-const allowedOrigins = [
-  "http://localhost:3000",
-  "http://127.0.0.1:3000",
+const envOrigins = [
+  ...(process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(",") : []),
   ...(process.env.CLIENT_URL ? [process.env.CLIENT_URL] : []),
-];
+]
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+const allowedOrigins = Array.from(
+  new Set([
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    ...envOrigins,
+  ]),
+);
 
 app.use(
   cors({

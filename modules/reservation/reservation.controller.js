@@ -160,7 +160,7 @@ export const viewRequest = asyncHandler(async (req, res) => {
 //@route    GET /api/v1/myreservations
 //@access   public
 export const getMyReservations = asyncHandler(async (req, res) => {
-  const student_id = req.user?.id || req.params?.student_id;
+  const student_id = req.query?.student_id || req.params?.student_id || req.user?.id;
   const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
   const limit = Math.min(parseInt(req.query.limit, 10) || 10, 100);
 

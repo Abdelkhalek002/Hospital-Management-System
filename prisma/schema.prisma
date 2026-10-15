@@ -152,13 +152,9 @@ model students {
   level_id             Int
   gov_id               Int
   faculty_id           Int
-  otp                  String?                @db.Char(6)
-  otp_expires_at       DateTime?              @db.DateTime(0)
   gender               students_gender
   birth_date           DateTime               @db.Date
   phone_number         String                 @unique(map: "uq_students_phone") @db.VarChar(255)
-  phone_otp            String                 @db.VarChar(255)
-  phone_otp_expires_at DateTime?              @db.DateTime(0)
   verified             Boolean                @default(false)
   is_active            Boolean                @default(false)
   user_image_file      String                 @db.VarChar(255)
@@ -189,8 +185,6 @@ model super_admins {
   is_confirmed        Boolean   @default(false)
   is_active           Boolean   @default(false)
   password_changed_at DateTime? @db.DateTime(0)
-  otp                 String?   @db.Char(6)
-  otp_expires_at      DateTime? @db.DateTime(0)
   created_at          DateTime  @default(now()) @db.Timestamp(0)
   updated_at          DateTime  @default(now()) @db.Timestamp(0)
 }

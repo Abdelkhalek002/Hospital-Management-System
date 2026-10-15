@@ -9,6 +9,7 @@ import { UserType } from "../../utils/user-types.js";
 import { pick } from "../../utils/pick-from-body-request.js";
 import ApiError from "../../utils/api-error.js";
 import { verifyToken } from "./jwt.service.js";
+import { matchesDomain } from "../../utils/custom-validators.js";
 
 dotenv.config();
 
@@ -80,11 +81,11 @@ export const login = asyncHandler(async (req, res) => {
     });
   }
 
-  if (email.endsWith(process.env.SUPER_ADMIN_EMAIL_DOMAIN)) {
+  if (matchesDomain(email, process.env.SUPER_ADMIN_EMAIL_DOMAIN)) {
     loginFn = superAdminLogin;
-  } else if (email.endsWith(process.env.ADMIN_EMAIL_DOMAIN)) {
+  } else if (matchesDomain(email, process.env.ADMIN_EMAIL_DOMAIN)) {
     loginFn = adminLogin;
-  } else if (email.endsWith(process.env.USER_EMAIL_DOMAIN)) {
+  } else if (matchesDomain(email, process.env.USER_EMAIL_DOMAIN)) {
     loginFn = studentLogin;
   } else {
     throw new ApiError("Login failed", StatusCode.UNAUTHORIZED);

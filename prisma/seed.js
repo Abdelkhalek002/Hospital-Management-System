@@ -1,4 +1,6 @@
 import prisma from "../config/prisma.js";
+import bcrypt from "bcrypt";
+import { roles } from "../utils/roles.js";
 
 async function main() {
   console.log("🌱 Starting database seeding...");
@@ -21,10 +23,10 @@ async function main() {
 
   // 2. Seed Levels
   const levels = [
-    { level_name: "مستوى 1" },
-    { level_name: "مستوى 2" },
-    { level_name: "مستوى 3" },
-    { level_name: "مستوى 4" },
+    { level_name: "فرقة أولي" },
+    { level_name: "فرقة تانية" },
+    { level_name: "فرقة تالتة" },
+    { level_name: "فرقة رابعة" },
   ];
 
   for (const level of levels) {
@@ -133,6 +135,24 @@ async function main() {
       create: faculty,
     });
   }
+
+  // 7. Seed Super Admin
+  const hashedPassword = await bcrypt.hash("Test1234$", 12);
+  await prisma.super_admins.upsert({
+    where: { email: "superadmin@hsh.com" },
+    update: {
+      password: hashedPassword,
+      role: roles.SUPER_ADMIN,
+    },
+    create: {
+      username: "superadmin",
+      email: "superadmin@hsh.com",
+      password: hashedPassword,
+      role: roles.SUPER_ADMIN,
+      is_confirmed: true,
+      is_active: false,
+    },
+  });
 
   console.log("✅ Seeding completed successfully!");
 }

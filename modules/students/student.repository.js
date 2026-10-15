@@ -8,7 +8,7 @@ class Student extends Base {
   async isVerfied(email) {
     const sql = `SELECT verified FROM students WHERE email = ?`;
     const result = await queryOne(sql, [email]);
-    return !!result;
+    return Boolean(result?.verified);
   }
   async create(studentData) {
     const sql = `
@@ -56,25 +56,48 @@ class Student extends Base {
   async getOne(id) {
     const sql = `SELECT 
                   s.id, s.username, s.email, s.user_image_file AS photo,
-                  s.user_image_file, s.phone_number, s.national_id, s.gender,
+                  s.user_image_file, s.national_id_file, s.fees_file,
+                  s.phone_number, s.national_id, s.gender,
                   s.birth_date, s.is_active, s.verified,
                   s.level_id, s.faculty_id, s.gov_id, s.nationality_id,
                   l.level_name AS level, l.level_name,
                   f.faculty_name AS faculty, f.faculty_name,
                   g.gov_name AS governorate, g.gov_name,
-                  n.nationality_name AS nationality, n.nationality_name
+                  n.nationality_name AS nationality, n.nationality_name,
+                  s.created_at, s.updated_at
                   FROM students s
-                    INNER JOIN levels l         ON s.level_id = l.id
-                    INNER JOIN governorates g   ON s.gov_id = g.id
-                    INNER JOIN nationality n    ON s.nationality_id = n.id
-                    INNER JOIN faculties f      ON s.faculty_id = f.id
+                    LEFT JOIN levels l         ON s.level_id = l.id
+                    LEFT JOIN governorates g   ON s.gov_id = g.id
+                    LEFT JOIN nationality n    ON s.nationality_id = n.id
+                    LEFT JOIN faculties f      ON s.faculty_id = f.id
                   WHERE s.id = ?;`;
     const result = await queryOne(sql, [id]);
     return result;
   }
-  async getAll() {
-    const sql = `SELECT * FROM students`;
-    return await query(sql);
+  async getAll(searchKey, searchValue) {
+    let sql = `SELECT 
+                  s.id, s.username, s.email, s.user_image_file AS photo,
+                  s.user_image_file, s.national_id_file, s.fees_file,
+                  s.phone_number, s.national_id, s.gender,
+                  s.birth_date, s.is_active, s.verified,
+                  s.level_id, s.faculty_id, s.gov_id, s.nationality_id,
+                  l.level_name AS level, l.level_name,
+                  f.faculty_name AS faculty, f.faculty_name,
+                  g.gov_name AS governorate, g.gov_name,
+                  n.nationality_name AS nationality, n.nationality_name,
+                  s.created_at, s.updated_at
+                  FROM students s
+                    LEFT JOIN levels l         ON s.level_id = l.id
+                    LEFT JOIN governorates g   ON s.gov_id = g.id
+                    LEFT JOIN nationality n    ON s.nationality_id = n.id
+                    LEFT JOIN faculties f      ON s.faculty_id = f.id`;
+    const params = [];
+    if (searchKey && searchValue) {
+      sql += ` WHERE s.${searchKey} LIKE ?`;
+      params.push(`%${searchValue}%`);
+    }
+    sql += ` ORDER BY s.id DESC;`;
+    return await query(sql, params);
   }
   async updateOne(id, data) {
     const updates = [];

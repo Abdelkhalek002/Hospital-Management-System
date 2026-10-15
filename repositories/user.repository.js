@@ -28,12 +28,12 @@ class User extends Base {
   }
   async findByEmail(email) {
     if (this.table === "super_admins" || this.table === "admins") {
-      const sql = `SELECT username, email, password, role, id FROM ${this.table} WHERE email = ? LIMIT 1`;
+      const sql = `SELECT username, email, password, role, id, password_changed_at FROM ${this.table} WHERE email = ? LIMIT 1`;
       const result = await queryOne(sql, [email]);
       return result;
     }
     if (this.table === "students") {
-      const sql = `SELECT username, email, password, id FROM ${this.table} WHERE email = ? LIMIT 1`;
+      const sql = `SELECT username, email, password, id, password_changed_at FROM ${this.table} WHERE email = ? LIMIT 1`;
       const result = await queryOne(sql, [email]);
       return result;
     }

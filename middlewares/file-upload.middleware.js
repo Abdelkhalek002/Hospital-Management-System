@@ -62,7 +62,12 @@ export const uploadAdminStudentFiles = upload.fields([
   { name: "fees_file", maxCount: 1 },
 ]);
 
-export const uploadProfilePhoto = upload.single("user_image_file");
+export const uploadProfilePhoto = upload.fields([
+  { name: "user_image_file", maxCount: 1 },
+  { name: "userImage_file", maxCount: 1 },
+  { name: "photo", maxCount: 1 },
+  { name: "profile_photo", maxCount: 1 },
+]);
 export const uploadNationalIDFiles = upload.single("national_id_file");
 export const uploadFeesFile = upload.single("fees_file");
 
@@ -293,7 +298,9 @@ export const resizeUserPhoto = asyncHandler(async (req, _res, next) => {
     studentKey,
     fileBuffer: file.buffer,
   });
-  req.body[fieldName] = path.posix.join(fileName);
+  req.body[fieldName] = path.posix.join("students", username, fileName);
+  req.body.photo = req.body[fieldName];
+  req.body.userImage_file = req.body[fieldName];
   next();
 });
 
