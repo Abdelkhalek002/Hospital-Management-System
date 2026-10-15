@@ -240,6 +240,7 @@ enum laboratory_test_result {
 enum medical_examinations_status {
   ACCEPTED @map("مقبول")
   PENDING  @map("تحت الانتظار")
+  REJECTED @map("مرفوض")
 }
 
 enum transfers_status {

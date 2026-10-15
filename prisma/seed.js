@@ -154,6 +154,226 @@ async function main() {
     },
   });
 
+  // 8. Seed Sample Students
+  const defaultLevel = (await prisma.levels.findFirst()) || { id: 1 };
+  const defaultGov = (await prisma.governorates.findFirst()) || { id: 1 };
+  const defaultFaculty = (await prisma.faculties.findFirst()) || { id: 1 };
+  const defaultNationality = (await prisma.nationality.findFirst()) || { id: 1 };
+
+  const studentPassword = await bcrypt.hash("Test1234$", 12);
+
+  let student1 = await prisma.students.findUnique({
+    where: { email: "user@fci.helwan.edu.eg" },
+  });
+
+  if (!student1) {
+    student1 = await prisma.students.create({
+      data: {
+        username: "abdelkhalek",
+        email: "user@fci.helwan.edu.eg",
+        password: studentPassword,
+        national_id: BigInt("12343678916932"),
+        nationality_id: defaultNationality.id,
+        level_id: defaultLevel.id,
+        gov_id: defaultGov.id,
+        faculty_id: defaultFaculty.id,
+        gender: "MALE",
+        birth_date: new Date("2002-11-05"),
+        phone_number: "01134327898",
+        verified: true,
+        is_active: true,
+        user_image_file: "uploads/default.png",
+        national_id_file: "uploads/default-id.png",
+        fees_file: "uploads/default-fees.png",
+      },
+    });
+  }
+
+  let student2 = await prisma.students.findUnique({
+    where: { email: "mariam@fci.helwan.edu.eg" },
+  });
+
+  if (!student2) {
+    student2 = await prisma.students.create({
+      data: {
+        username: "bedo",
+        email: "bedo@fci.helwan.edu.eg",
+        password: studentPassword,
+        national_id: BigInt("30209151234568"),
+        nationality_id: defaultNationality.id,
+        level_id: defaultLevel.id,
+        gov_id: defaultGov.id,
+        faculty_id: defaultFaculty.id,
+        gender: "MALE",
+        birth_date: new Date("2003-09-15"),
+        phone_number: "01098765432",
+        verified: true,
+        is_active: true,
+        user_image_file: "uploads/default.png",
+        national_id_file: "uploads/default-id.png",
+        fees_file: "uploads/default-fees.png",
+      },
+    });
+  }
+
+  // 9. Seed Clinics & Hospitals references for Reservations
+  const internalClinic = await prisma.clinics.findFirst({
+    where: { clinic_name: { contains: "باطنة" } },
+  });
+  const eyeClinic = await prisma.clinics.findFirst({
+    where: { clinic_name: { contains: "رمد" } },
+  });
+  const dentalClinic = await prisma.clinics.findFirst({
+    where: { clinic_name: { contains: "أسنان" } },
+  });
+  const orthoClinic = await prisma.clinics.findFirst({
+    where: { clinic_name: { contains: "عظام" } },
+  });
+
+  const badrHsp = await prisma.external_hospitals.findFirst({
+    where: { hospital_name: { contains: "بدر" } },
+  });
+  const may15Hsp = await prisma.external_hospitals.findFirst({
+    where: { hospital_name: { contains: "15 مايو" } },
+  });
+
+  // 10. Seed Reservation Requests (Medical Examinations & Transfers)
+  const reservationsToSeed = [
+    // --- Abdelkhalek reservations ---
+    {
+      student_id: student1.id,
+      clinic_id: internalClinic ? internalClinic.id : 1,
+      exam_type: "NEW_EXAM",
+      status: "ACCEPTED",
+      date: new Date("2026-10-18T09:00:00.000Z"),
+    },
+    {
+      student_id: student1.id,
+      clinic_id: dentalClinic ? dentalClinic.id : 3,
+      exam_type: "NEW_EXAM",
+      status: "ACCEPTED",
+      date: new Date("2026-10-20T10:30:00.000Z"),
+      transfer: {
+        hospital_id: badrHsp ? badrHsp.id : 1,
+        transfer_reason: "إجراء أشعة بانوراما على الفك وعلاج عصب تخصصي",
+        notes: "يرجى التوجه لقسم جراحة الفم والأسنان مصطحباً الكارنيه الجامعي",
+        status: "accepted",
+      },
+    },
+    {
+      student_id: student1.id,
+      clinic_id: eyeClinic ? eyeClinic.id : 2,
+      exam_type: "FOLLOW_UP",
+      status: "PENDING",
+      date: new Date("2026-10-22T11:00:00.000Z"),
+    },
+    {
+      student_id: student1.id,
+      clinic_id: orthoClinic ? orthoClinic.id : 4,
+      exam_type: "EMERGENCY",
+      status: "ACCEPTED",
+      date: new Date("2026-10-25T12:00:00.000Z"),
+      transfer: {
+        hospital_id: may15Hsp ? may15Hsp.id : 2,
+        transfer_reason: "اشتباه كسر في مشط القدم وإجراء أشعة مقطعية",
+        notes: "حالة طارئة تتطلب كشف عاجل",
+        status: "pending",
+      },
+    },
+    {
+      student_id: student1.id,
+      clinic_id: internalClinic ? internalClinic.id : 1,
+      exam_type: "FOLLOW_UP",
+      status: "ACCEPTED",
+      date: new Date("2026-09-15T09:30:00.000Z"),
+    },
+    {
+      student_id: student1.id,
+      clinic_id: dentalClinic ? dentalClinic.id : 3,
+      exam_type: "FOLLOW_UP",
+      status: "ACCEPTED",
+      date: new Date("2026-09-28T11:15:00.000Z"),
+    },
+    {
+      student_id: student1.id,
+      clinic_id: orthoClinic ? orthoClinic.id : 4,
+      exam_type: "NEW_EXAM",
+      status: "PENDING",
+      date: new Date("2026-11-02T10:00:00.000Z"),
+    },
+    // --- Mariam reservations ---
+    {
+      student_id: student2.id,
+      clinic_id: eyeClinic ? eyeClinic.id : 2,
+      exam_type: "NEW_EXAM",
+      status: "PENDING",
+      date: new Date("2026-10-19T09:00:00.000Z"),
+    },
+    {
+      student_id: student2.id,
+      clinic_id: internalClinic ? internalClinic.id : 1,
+      exam_type: "NEW_EXAM",
+      status: "ACCEPTED",
+      date: new Date("2026-10-21T10:00:00.000Z"),
+    },
+    {
+      student_id: student2.id,
+      clinic_id: dentalClinic ? dentalClinic.id : 3,
+      exam_type: "EMERGENCY",
+      status: "PENDING",
+      date: new Date("2026-10-24T11:30:00.000Z"),
+    },
+    {
+      student_id: student2.id,
+      clinic_id: orthoClinic ? orthoClinic.id : 4,
+      exam_type: "FOLLOW_UP",
+      status: "ACCEPTED",
+      date: new Date("2026-10-27T12:00:00.000Z"),
+      transfer: {
+        hospital_id: badrHsp ? badrHsp.id : 1,
+        transfer_reason: "متابعة علاج طبيعي وإعادة تقييم المفصل",
+        notes: "مراجعة العيادة الخارجية",
+        status: "accepted",
+      },
+    },
+  ];
+
+  for (const { transfer, ...examData } of reservationsToSeed) {
+    let exam = await prisma.medical_examinations.findFirst({
+      where: {
+        student_id: examData.student_id,
+        clinic_id: examData.clinic_id,
+        date: examData.date,
+      },
+    });
+
+    if (!exam) {
+      exam = await prisma.medical_examinations.create({
+        data: examData,
+      });
+    }
+
+    if (transfer && exam) {
+      const existingTransfer = await prisma.transfers.findFirst({
+        where: {
+          medical_exam_id: exam.id,
+        },
+      });
+
+      if (!existingTransfer) {
+        await prisma.transfers.create({
+          data: {
+            medical_exam_id: exam.id,
+            hospital_id: transfer.hospital_id,
+            transfer_reason: transfer.transfer_reason,
+            notes: transfer.notes,
+            status: transfer.status,
+          },
+        });
+      }
+    }
+  }
+
   console.log("✅ Seeding completed successfully!");
 }
 
