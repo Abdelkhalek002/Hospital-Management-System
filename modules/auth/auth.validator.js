@@ -13,9 +13,9 @@ export const validateSignup = [
   body("email")
     .notEmpty()
     .withMessage("email required")
+    .bail()
     .isEmail()
-    .custom(customValidators.isAllowedEmail)
-    .withMessage("Email format is not allowed!"),
+    .withMessage("invalid email format"),
   body("password")
     .notEmpty()
     .withMessage("password required")
@@ -88,9 +88,7 @@ export const validateLogin = [
     .withMessage("email is required")
     .bail()
     .isEmail()
-    .withMessage("invalid email")
-    .custom(customValidators.isAllowedEmailForLogin)
-    .withMessage("Email format is not allowed!"),
+    .withMessage("invalid email"),
   body("password").notEmpty().withMessage("password is required").bail(),
   handleValidationErrors,
 ];

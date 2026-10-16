@@ -10,9 +10,7 @@ export const forgetPasswordValidator = [
     .withMessage("email is required")
     .bail()
     .isEmail()
-    .withMessage("invalid email")
-    .custom(customValidators.isAllowedEmail)
-    .withMessage("Email format is not allowed!"),
+    .withMessage("invalid email"),
   handleValidationErrors,
 ];
 // RESET PASSWORD VALIDATOR

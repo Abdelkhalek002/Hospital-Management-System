@@ -25,10 +25,8 @@ export const matchesDomain = (email, configuredDomain) => {
   return emailDomain === target || emailDomain.endsWith("." + target);
 };
 
-// To validate Helwan University account
-export const isAllowedEmail = (value) => {
-  return matchesDomain(value, process.env.USER_EMAIL_DOMAIN);
-};
+// Allow any valid email for regular user registration
+export const isAllowedEmail = () => true;
 
 export const isAdminAllowedEmail = (value) => {
   return (
@@ -37,13 +35,7 @@ export const isAdminAllowedEmail = (value) => {
   );
 };
 
-export const isAllowedEmailForLogin = (value) => {
-  return (
-    matchesDomain(value, process.env.SUPER_ADMIN_EMAIL_DOMAIN) ||
-    matchesDomain(value, process.env.ADMIN_EMAIL_DOMAIN) ||
-    matchesDomain(value, process.env.USER_EMAIL_DOMAIN)
-  );
-};
+export const isAllowedEmailForLogin = () => true;
 
 export const otpExist = (_, { req }) => {
   return req.body.OTP || req.body.otp;

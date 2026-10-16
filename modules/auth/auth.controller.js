@@ -88,11 +88,8 @@ export const login = asyncHandler(async (req, res) => {
     matchesDomain(email, process.env.ADMIN_EMAIL_DOMAIN)
   ) {
     loginFn = adminLogin;
-  } else if (matchesDomain(email, process.env.USER_EMAIL_DOMAIN)) {
-    loginFn = userLogin;
   } else {
-    // Default fallback to admin login if matching admin or student login
-    loginFn = adminLogin;
+    loginFn = userLogin;
   }
 
   const { token, user } = (await loginFn(email, password)) || {};
