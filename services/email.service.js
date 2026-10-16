@@ -22,16 +22,30 @@ const renderHTML = async (path, data) => {
   return content;
 };
 export class Email {
-  constructor(user, url, otp) {
+  constructor(user, url, otp, extraData = {}) {
     this.to = user.email;
     const fallbackName = (user.email || "user").split("@")[0];
     this.firstName = (user.username || fallbackName).split(" ")[0];
-    this.url = url;
+    this.url = url || process.env.CLIENT_URL || "http://localhost:3000";
     this.otp = otp;
+    this.reason = extraData.reason || "";
     this.from = `Helwan University Hospital <${process.env.EMAIL_FROM}>`;
   }
   newTransport() {
-    if (process.env.NODE_ENV === "production") {
+    if (
+      process.env.EMAIL_SERVICE === "gmail" ||
+      process.env.EMAIL_HOST?.includes("gmail")
+    ) {
+      return nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          user: process.env.EMAIL_USERNAME,
+          pass: process.env.EMAIL_PASSWORD,
+        },
+      });
+    }
+
+    if (process.env.NODE_ENV === "production" && process.env.SENDGRID_USERNAME) {
       // sendGrid
       return nodemailer.createTransport({
         host: "smtp.sendgrid.net",
@@ -46,6 +60,7 @@ export class Email {
     return nodemailer.createTransport({
       host: process.env.EMAIL_HOST,
       port: process.env.EMAIL_PORT,
+      secure: Number(process.env.EMAIL_PORT) === 465,
       auth: {
         user: process.env.EMAIL_USERNAME,
         pass: process.env.EMAIL_PASSWORD,
@@ -61,6 +76,7 @@ export class Email {
         firstName: this.firstName,
         url: this.url,
         otp: this.otp,
+        reason: this.reason,
         subject,
       },
     );
@@ -79,11 +95,20 @@ export class Email {
   async sendActivation() {
     await this.send("activate", "تفعيل حساب مستشفي جامعة حلوان");
   }
+  async sendActivationOtp() {
+    await this.send("activation-otp", "تفعيل الحساب - رمز التحقق لمستشفى جامعة حلوان");
+  }
   async sendConfirmation() {
     await this.send("confirm", "Email Confirmation");
   }
   async sendOtp() {
     await this.send("otp", "تغيير كلمة السر");
+  }
+  async sendDocumentApproved() {
+    await this.send("document-approved", "تمت مراجعة مستنداتك وتفعيل حسابك - مستشفى جامعة حلوان");
+  }
+  async sendDocumentRejected() {
+    await this.send("document-rejected", "تنبيه بخصوص مستندات حسابك - مستشفى جامعة حلوان");
   }
 }
 
@@ -138,3 +163,22 @@ export const sendOtpMail = async (user, otp) => {
   const url = `http://localhost:7000/api/v1/auth/resetPassword`;
   await new Email(user, url, otp).sendOtp();
 };
+
+// SEND ACTIVATION OTP TO USER
+export const sendActivationOtpMail = async (user, otp) => {
+  await new Email(user, null, otp).sendActivationOtp();
+};
+
+// SEND DOCUMENT APPROVAL MAIL
+export const sendDocumentApprovalMail = async (user) => {
+  const loginUrl = `${process.env.CLIENT_URL || "http://localhost:3000"}/login`;
+  await new Email(user, loginUrl).sendDocumentApproved();
+};
+
+// SEND DOCUMENT REJECTION MAIL
+export const sendDocumentRejectionMail = async (user, reason) => {
+  const profileUrl = `${process.env.CLIENT_URL || "http://localhost:3000"}/profile`;
+  await new Email(user, profileUrl, null, { reason }).sendDocumentRejected();
+};
+
+

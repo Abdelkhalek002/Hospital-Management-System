@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>تمت الموافقة على المستندات وتفعيل الحساب</title>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap");
+
+    body {
+      background-color: #f3f8ff;
+      font-family: "Tajawal", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 24px;
+      direction: rtl;
+      color: #333333;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #0c2d57;
+      border-radius: 20px;
+      padding: 36px 24px;
+      text-align: center;
+      box-shadow: 0 8px 30px rgba(12, 45, 87, 0.2);
+      color: #ffffff;
+    }
+
+    .icon-badge {
+      display: inline-block;
+      width: 70px;
+      height: 70px;
+      line-height: 70px;
+      border-radius: 50%;
+      background-color: rgba(21, 245, 186, 0.15);
+      border: 2px solid #15f5ba;
+      font-size: 36px;
+      margin-bottom: 16px;
+    }
+
+    .header h1 {
+      color: #ffffff;
+      font-size: 24px;
+      margin-top: 0;
+      margin-bottom: 8px;
+    }
+
+    .header h2 {
+      color: #15f5ba;
+      font-size: 18px;
+      font-weight: 500;
+      margin-top: 0;
+      margin-bottom: 24px;
+    }
+
+    .content p {
+      font-size: 16px;
+      line-height: 1.8;
+      color: #e0f7f4;
+      margin: 12px 0;
+    }
+
+    .success-box {
+      margin: 24px 0;
+      padding: 16px;
+      background: rgba(21, 245, 186, 0.1);
+      border-right: 4px solid #15f5ba;
+      border-radius: 8px;
+      text-align: right;
+    }
+
+    .success-box p {
+      color: #ffffff;
+      font-size: 15px;
+      margin: 6px 0;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 14px 32px;
+      background-color: #15f5ba;
+      color: #0c2d57;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 16px;
+      border-radius: 12px;
+      margin-top: 20px;
+    }
+
+    .footer {
+      margin-top: 32px;
+      border-top: 1px solid rgba(255, 255, 255, 0.15);
+      padding-top: 20px;
+    }
+
+    .footer p {
+      font-size: 14px;
+      color: #b0c9e8;
+      margin: 4px 0;
+    }
+
+    .footer .branding {
+      color: #15f5ba;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon-badge">✓</div>
+    <div class="header">
+      <h1>مستشفى جامعة حلوان</h1>
+      <h2>مرحباً {{firstName}} 🎉</h2>
+    </div>
+
+    <div class="content">
+      <p>
+        يسرنا إبلاغك بأنه تمت مراجعة مستنداتك (بطاقة الرقم القومي وإيصال الرسوم) بنجاح من قِبل إدارة المستشفى.
+      </p>
+
+      <div class="success-box">
+        <p>✓ تم التحقق من صحة المستندات المرفقة.</p>
+        <p>✓ تم تفعيل حسابك بالكامل بنجاح.</p>
+        <p>✓ يمكنك الآن حجز مواعيد الكشف الطبي ومتابعة الفحوصات.</p>
+      </div>
+
+      <a href="{{url}}" class="btn">تسجيل الدخول للنظام</a>
+    </div>
+
+    <div class="footer">
+      <p class="branding">صحتك وسلامتك تهمنا دائماً</p>
+      <p>© مستشفى جامعة حلوان - جميع الحقوق محفوظة</p>
+    </div>
+  </div>
+</body>
+</html>

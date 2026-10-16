@@ -56,12 +56,12 @@ export const signup = asyncHandler(async (req, res) => {
   const studentData = pick(req.body, allowedFields);
   const data = await authService.signup(studentData);
 
-  res.cookie("jwt", data.token, getCookieOptions(req));
   return res.status(StatusCode.CREATED).json({
     status: "success",
     message:
-      "تم عمل البريد الالكتروني بنجاح برجاء تفقد البريد الالكتروني للتفعيل",
-    token: data.token,
+      "تم إنشاء الحساب بنجاح. برجاء تفقد بريدك الإلكتروني لإدخال رمز التحقق لتفعيل الحساب",
+    email: data.email,
+    requiresVerification: true,
   });
 });
 

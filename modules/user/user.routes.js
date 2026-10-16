@@ -22,6 +22,15 @@ router
     controller.updateMe,
   );
 
+router.patch(
+  "/me/resubmit-documents",
+  restrictToUser,
+  fileUploader.uploadAdminStudentFiles,
+  fileUploader.resizeNationalIDFiles,
+  fileUploader.resizeFeesFile,
+  controller.resubmitDocuments,
+);
+
 // Users Management (Staff with USERS_READ permission)
 router.use(hasPermission(permissions.USERS_READ));
 
@@ -37,6 +46,18 @@ router
     fileUploader.resizeFeesFile,
     controller.update,
   );
+
+router.patch(
+  "/:id/approve",
+  hasPermission(permissions.USERS_WRITE),
+  controller.approveDocuments,
+);
+
+router.patch(
+  "/:id/reject",
+  hasPermission(permissions.USERS_WRITE),
+  controller.rejectDocuments,
+);
 
 export default router;
 

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>تنبيه بخصوص مستندات الحساب</title>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap");
+
+    body {
+      background-color: #f3f8ff;
+      font-family: "Tajawal", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 24px;
+      direction: rtl;
+      color: #333333;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #0c2d57;
+      border-radius: 20px;
+      padding: 36px 24px;
+      text-align: center;
+      box-shadow: 0 8px 30px rgba(12, 45, 87, 0.2);
+      color: #ffffff;
+    }
+
+    .icon-badge {
+      display: inline-block;
+      width: 70px;
+      height: 70px;
+      line-height: 70px;
+      border-radius: 50%;
+      background-color: rgba(255, 107, 107, 0.15);
+      border: 2px solid #ff6b6b;
+      font-size: 36px;
+      color: #ff6b6b;
+      margin-bottom: 16px;
+    }
+
+    .header h1 {
+      color: #ffffff;
+      font-size: 24px;
+      margin-top: 0;
+      margin-bottom: 8px;
+    }
+
+    .header h2 {
+      color: #ffd97d;
+      font-size: 18px;
+      font-weight: 500;
+      margin-top: 0;
+      margin-bottom: 24px;
+    }
+
+    .content p {
+      font-size: 16px;
+      line-height: 1.8;
+      color: #e0f7f4;
+      margin: 12px 0;
+    }
+
+    .reason-box {
+      margin: 24px 0;
+      padding: 18px;
+      background: rgba(255, 107, 107, 0.12);
+      border-right: 4px solid #ff6b6b;
+      border-radius: 8px;
+      text-align: right;
+    }
+
+    .reason-title {
+      color: #ff8e8e;
+      font-weight: 700;
+      font-size: 15px;
+      margin-bottom: 8px;
+    }
+
+    .reason-text {
+      color: #ffffff;
+      font-size: 16px;
+      font-weight: 500;
+      line-height: 1.6;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 14px 32px;
+      background-color: #15f5ba;
+      color: #0c2d57;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 16px;
+      border-radius: 12px;
+      margin-top: 20px;
+    }
+
+    .footer {
+      margin-top: 32px;
+      border-top: 1px solid rgba(255, 255, 255, 0.15);
+      padding-top: 20px;
+    }
+
+    .footer p {
+      font-size: 14px;
+      color: #b0c9e8;
+      margin: 4px 0;
+    }
+
+    .footer .branding {
+      color: #15f5ba;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon-badge">!</div>
+    <div class="header">
+      <h1>مستشفى جامعة حلوان</h1>
+      <h2>مرحباً {{firstName}}</h2>
+    </div>
+
+    <div class="content">
+      <p>
+        نود إعلامك بأنه بعد مراجعة المستندات المرفقة بحسابك من قِبل إدارة المستشفى، تعذر قبولها للسبب التالي:
+      </p>
+
+      <div class="reason-box">
+        <div class="reason-title">سبب الرفض:</div>
+        <div class="reason-text">{{reason}}</div>
+      </div>
+
+      <p>
+        يرجى تسجيل الدخول إلى حسابك وإعادة رفع المستندات المطلوبة بوضوح حتى نتمكن من تفعيل حسابك.
+      </p>
+
+      <a href="{{url}}" class="btn">تسجيل الدخول وإعادة الرفع</a>
+    </div>
+
+    <div class="footer">
+      <p class="branding">صحتك وسلامتك تهمنا دائماً</p>
+      <p>© مستشفى جامعة حلوان - جميع الحقوق محفوظة</p>
+    </div>
+  </div>
+</body>
+</html>

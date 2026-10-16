@@ -141,6 +141,17 @@ model password_reset_otps {
   updated_at     DateTime @default(now()) @db.DateTime(0)
 }
 
+model email_verification_otps {
+  email          String   @id @db.VarChar(255)
+  otp_hash       String   @db.VarChar(255)
+  expires_at     DateTime @db.DateTime(0)
+  attempts_count Int      @default(0)
+  used           Boolean  @default(false)
+  last_sent_at   DateTime @default(now()) @db.DateTime(0)
+  created_at     DateTime @default(now()) @db.DateTime(0)
+  updated_at     DateTime @default(now()) @db.DateTime(0)
+}
+
 model users {
   id                  Int                    @id @default(autoincrement())
   username            String                 @db.VarChar(255)
@@ -156,6 +167,10 @@ model users {
   phone_number        String                 @unique(map: "uq_users_phone") @db.VarChar(255)
   verified            Boolean                @default(false)
   is_active           Boolean                @default(false)
+  document_status     user_document_status   @default(pending)
+  rejection_reason    String?                @db.VarChar(500)
+  reviewed_by         Int?
+  reviewed_at         DateTime?              @db.DateTime(0)
   user_image_path     String                 @db.VarChar(255)
   national_id_path    String                 @db.VarChar(255)
   fees_path           String                 @db.VarChar(255)
@@ -246,3 +261,10 @@ enum users_gender {
   MALE   @map("ذكر")
   FEMALE @map("أنثي")
 }
+
+enum user_document_status {
+  pending
+  approved
+  rejected
+}
+

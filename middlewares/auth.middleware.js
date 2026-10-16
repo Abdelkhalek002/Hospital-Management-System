@@ -12,7 +12,10 @@ export const protect = asyncHandler(async (req, res, next) => {
     req.headers.authorization.startsWith("Bearer ")
   ) {
     token = req.headers.authorization.split(" ")[1];
+  } else if (req.cookies?.jwt) {
+    token = req.cookies.jwt;
   }
+
   if (!token) {
     return next(
       new ApiError(
@@ -24,10 +27,19 @@ export const protect = asyncHandler(async (req, res, next) => {
 
   const user = await authService.protect(token);
 
-  if (user.status === "inactive" || user.is_active === false) {
+  if (user.status === "inactive") {
     return next(
       new ApiError(
         "Your account is inactive or suspended. Please contact support.",
+        StatusCode.FORBIDDEN,
+      ),
+    );
+  }
+
+  if (user.verified === false || user.verified === 0) {
+    return next(
+      new ApiError(
+        "برجاء تأكيد بريدك الإلكتروني أولاً عن طريق رمز التحقق المرسل لك.",
         StatusCode.FORBIDDEN,
       ),
     );
@@ -125,4 +137,19 @@ export const restrictToUser = asyncHandler(async (req, res, next) => {
     );
   }
   next();
-});
+});
+
+export const requireApprovedUser = asyncHandler(async (req, res, next) => {
+  // Staff/admins pass through
+  if (req.user?.role) return next();
+
+  if (req.user?.document_status !== "approved" || !req.user?.is_active) {
+    const message =
+      req.user?.document_status === "rejected"
+        ? `تم رفض مستنداتك: ${req.user?.rejection_reason || "يرجى مراجعة إدارة المستشفى"}`
+        : "حسابك قيد مراجعة المستندات من قبل الإدارة، لا يمكنك إجراء حجوزات حالياً";
+    return next(new ApiError(message, StatusCode.FORBIDDEN));
+  }
+  next();
+});
+

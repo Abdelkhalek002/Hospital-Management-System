@@ -69,7 +69,7 @@ class UserRepository extends Base {
     }
 
     // Default to users table
-    const sql = `SELECT username, email, password, id, password_changed_at, verified, is_active FROM users WHERE email = ? LIMIT 1`;
+    const sql = `SELECT username, email, password, id, password_changed_at, verified, is_active, document_status, rejection_reason FROM users WHERE email = ? LIMIT 1`;
     const user = await queryOne(sql, [email]);
     if (user) return user;
 
@@ -135,6 +135,7 @@ class UserRepository extends Base {
                   u.fees_path AS fees_file,
                   u.phone_number, u.national_id, u.gender,
                   u.birth_date, u.is_active, u.verified,
+                  u.document_status, u.rejection_reason, u.reviewed_by, u.reviewed_at,
                   u.level_id, u.faculty_id, u.gov_id, u.nationality_id,
                   l.level_name AS level, l.level_name,
                   f.faculty_name AS faculty, f.faculty_name,
@@ -151,7 +152,7 @@ class UserRepository extends Base {
     return result;
   }
 
-  async getAll(searchKey, searchValue) {
+  async getAll(searchKey, searchValue, documentStatus = null) {
     let sql = `SELECT 
                   u.id, u.username, u.email,
                   u.user_image_path AS photo,
@@ -163,6 +164,7 @@ class UserRepository extends Base {
                   u.fees_path AS fees_file,
                   u.phone_number, u.national_id, u.gender,
                   u.birth_date, u.is_active, u.verified,
+                  u.document_status, u.rejection_reason, u.reviewed_by, u.reviewed_at,
                   u.level_id, u.faculty_id, u.gov_id, u.nationality_id,
                   l.level_name AS level, l.level_name,
                   f.faculty_name AS faculty, f.faculty_name,
@@ -175,12 +177,49 @@ class UserRepository extends Base {
                     LEFT JOIN nationality n    ON u.nationality_id = n.id
                     LEFT JOIN faculties f      ON u.faculty_id = f.id`;
     const params = [];
+    const whereClauses = [];
+
     if (searchKey && searchValue) {
-      sql += ` WHERE u.${searchKey} LIKE ?`;
+      whereClauses.push(`u.${searchKey} LIKE ?`);
       params.push(`%${searchValue}%`);
     }
+
+    if (documentStatus) {
+      whereClauses.push(`u.document_status = ?`);
+      params.push(documentStatus);
+    }
+
+    if (whereClauses.length > 0) {
+      sql += ` WHERE ${whereClauses.join(" AND ")}`;
+    }
+
     sql += ` ORDER BY u.id DESC;`;
     return await query(sql, params);
+  }
+
+  async updateDocumentStatus(id, { status, rejectionReason = null, reviewedBy = null }) {
+    let sql;
+    let params;
+
+    if (status === "approved") {
+      sql = `UPDATE users 
+             SET document_status = 'approved', is_active = 1, rejection_reason = NULL, reviewed_by = ?, reviewed_at = NOW() 
+             WHERE id = ?`;
+      params = [reviewedBy, id];
+    } else if (status === "rejected") {
+      sql = `UPDATE users 
+             SET document_status = 'rejected', is_active = 0, rejection_reason = ?, reviewed_by = ?, reviewed_at = NOW() 
+             WHERE id = ?`;
+      params = [rejectionReason, reviewedBy, id];
+    } else {
+      sql = `UPDATE users 
+             SET document_status = 'pending', is_active = 0, rejection_reason = NULL, reviewed_by = NULL, reviewed_at = NULL 
+             WHERE id = ?`;
+      params = [id];
+    }
+
+    const result = await query(sql, params);
+    return result;
   }
 
   async updateOne(id, data) {

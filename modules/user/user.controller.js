@@ -75,7 +75,8 @@ export const getAll = asyncHandler(async (req, res) => {
     }
   }
 
-  const rawUsers = await service.getAll(searchKey, searchValue);
+  const documentStatus = req.query.document_status || req.query.status || null;
+  const rawUsers = await service.getAll(searchKey, searchValue, documentStatus);
   const result = toAdminUsersListResource(rawUsers, req);
 
   res.status(StatusCode.OK).json({
@@ -123,3 +124,48 @@ export const update = asyncHandler(async (req, res) => {
     result,
   });
 });
+
+export const approveDocuments = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const adminId = req.user?.id;
+  const updated = await service.approveDocuments(id, adminId);
+  const result = toAdminUserResource(updated, req);
+
+  return res.status(StatusCode.OK).json({
+    status: "success",
+    message: "تمت مراجعة المستندات والموافقة عليها وتفعيل حساب المستخدم بنجاح",
+    result,
+  });
+});
+
+export const rejectDocuments = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const adminId = req.user?.id;
+  const { reason } = req.body;
+  const updated = await service.rejectDocuments(id, { reason, adminId });
+  const result = toAdminUserResource(updated, req);
+
+  return res.status(StatusCode.OK).json({
+    status: "success",
+    message: "تم رفض المستندات وإشعار المستخدم بالسبب بنجاح",
+    result,
+  });
+});
+
+export const resubmitDocuments = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+  const files = {
+    national_id_path: req.body.national_id_path || req.body.national_id_file,
+    fees_path: req.body.fees_path || req.body.fees_file,
+  };
+  const updated = await service.resubmitDocuments(userId, files);
+  const result = toUserProfileResource(updated, req);
+
+  return res.status(StatusCode.OK).json({
+    status: "success",
+    message:
+      "تم إعادة إرسال المستندات بنجاح، وهي قيد المراجعة حالياً من قبل الإدارة",
+    result,
+  });
+});
+

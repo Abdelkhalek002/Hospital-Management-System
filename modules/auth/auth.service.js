@@ -8,6 +8,7 @@ import User from "../user/user.repository.js";
 // IMPORT SERVICES
 import { signToken, verifyToken } from "./jwt.service.js";
 import * as emailService from "../../services/email.service.js";
+import * as emailVerificationService from "./email-verification/email-verification.service.js";
 
 // IMPORT UTILITIES
 import ApiError from "../../utils/api-error.js";
@@ -54,23 +55,17 @@ export const signup = async (studentData) => {
     fees_path: studentData.fees_path || studentData.fees_file,
   };
 
-  //4. create the user
+  //4. create the user (unverified by default)
   const newUser = await userRepo.create(finalStudentData);
 
-  //5. send activation email
-  await emailService.sendActivationMail(finalStudentData);
+  //5. send activation OTP via email
+  await emailVerificationService.sendVerificationOtp(finalStudentData.email);
 
-  //6. create a new token
-  const token = signToken(
-    { ...newUser, userType: UserType.USER },
-    process.env.JWT_EXPIRE_TIME,
-  );
-
-  // 7. Change status to online
-  await new User(UserType.USER).setOnline(newUser.id);
-  const result = { newUser, token };
-
-  return result;
+  return {
+    newUser,
+    email: finalStudentData.email,
+    requiresVerification: true,
+  };
 };
 
 export const login = async (userType, email, password) => {
@@ -88,11 +83,19 @@ export const login = async (userType, email, password) => {
   if (!matched)
     throw new ApiError("كلمة المرور غير صحيحة", StatusCode.UNAUTHORIZED);
 
-  // 4. Sign token
+  // 4. Verify email verification status for regular users
+  if (userType === UserType.USER && !user.verified) {
+    throw new ApiError(
+      "برجاء تفعيل حسابك أولاً باستخدام رمز التحقق المرسل إلى بريدك الإلكتروني",
+      StatusCode.FORBIDDEN,
+    );
+  }
+
+  // 5. Sign token
   const token = signToken({ ...user, userType }, process.env.JWT_EXPIRE_TIME);
   const result = { user, token };
 
-  // 5. Change status to online
+  // 6. Change status to online
   await new User(userType).setOnline(user.id);
 
   return result;

@@ -4,14 +4,13 @@ import bcrypt from "bcrypt";
 import db from "../../config/db.js";
 import Base from "../../repositories/base.repository.js";
 import Transfer from "./transfer.repository.js";
-import MedicalExamination from "../medical-examination/medical-examination.repository.js";
 import { StatusCode } from "../../utils/status-codes.js";
 import { roles } from "../../utils/roles.js";
 import ApiError from "../../utils/api-error.js";
 
 export const transfer = async (data) => {
   // 1. Check if the medical examination status is 'مقبول'
-  const medical_exam_accepted = await new MedicalExamination().isAccepted(
+  const medical_exam_accepted = await new Transfer().isExamAccepted(
     data.medical_exam_id,
   );
 
@@ -41,12 +40,13 @@ export const transfer = async (data) => {
 
 export const getTransferred = async ({ page, limit, searchKey }) => {
   try {
-    const result = await new MedicalExamination().index({
+    const result = await new Transfer().index({
       page,
       limit,
       searchKey,
     });
     return result;
+
   } catch (error) {
     console.error("Transfer service error:", error);
     throw new ApiError(

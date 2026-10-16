@@ -95,6 +95,8 @@ export const toUserProfileResource = (user, req = null) => {
     nationality_name: item.nationality_name || null,
     verified: Boolean(item.verified),
     is_active: Boolean(item.is_active),
+    document_status: item.document_status || "pending",
+    rejection_reason: item.rejection_reason || null,
   };
 };
 
@@ -140,6 +142,10 @@ export const toAdminUserResource = (user, req = null) => {
     birth_date: formatDate(item.birth_date),
     verified: Boolean(item.verified),
     is_active: Boolean(item.is_active),
+    document_status: item.document_status || "pending",
+    rejection_reason: item.rejection_reason || null,
+    reviewed_by: item.reviewed_by || null,
+    reviewed_at: item.reviewed_at || null,
 
     // Files & full URLs for admin review
     user_image_path: rawPhoto,
