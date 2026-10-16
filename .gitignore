@@ -6,3 +6,7 @@ roles.js
 .agents
 .claude
 .windsurf
+
+# Uploaded media files
+/uploads/*
+!/uploads/.gitkeep
