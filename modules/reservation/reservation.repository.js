@@ -60,16 +60,21 @@ class Reservation extends Base {
     return await query(sql, [date]);
   }
 
-  async countByStudentAndDate(studentId, date) {
-    const sql = `SELECT COUNT(*) AS count FROM medical_examinations WHERE student_id = ? AND date = ?`;
-    const result = await query(sql, [studentId, date]);
+  async countByUserAndDate(userId, date) {
+    const sql = `SELECT COUNT(*) AS count FROM medical_examinations WHERE user_id = ? AND date = ?`;
+    const result = await query(sql, [userId, date]);
     return result[0]?.count || 0;
   }
 
+  async countByStudentAndDate(studentId, date) {
+    return await this.countByUserAndDate(studentId, date);
+  }
+
   async create(data) {
-    const sql = `INSERT INTO medical_examinations (student_id, clinic_id, date, exam_type) VALUES (?, ?, ?, ?)`;
+    const userId = data.user_id ?? data.student_id;
+    const sql = `INSERT INTO medical_examinations (user_id, clinic_id, date, exam_type) VALUES (?, ?, ?, ?)`;
     const result = await query(sql, [
-      data.student_id,
+      userId,
       data.clinic_id,
       data.date,
       data.examType,
@@ -102,24 +107,29 @@ class Reservation extends Base {
     return await query(sql, [id]);
   }
 
-  async getStudentReservations({ student_id, page, limit }) {
-    const countSql = `SELECT COUNT(*) AS count FROM medical_examinations WHERE student_id = ?`;
+  async getUserReservations({ user_id, page, limit }) {
+    const countSql = `SELECT COUNT(*) AS count FROM medical_examinations WHERE user_id = ?`;
     const dataSql = `
       SELECT 
         medical_examinations.*,  
         clinics.clinic_name AS clinic_name, 
-        students.username AS student_name,
+        users.id AS user_id,
+        users.id AS student_id,
+        users.username AS user_name,
+        users.username AS student_name,
+        users.user_image_path,
+        users.user_image_path AS user_image_file,
         transfers.transfer_reason AS transferReason,
         transfers.notes,
         external_hospitals.hospital_name AS ex_hosp_name
       FROM 
         medical_examinations 
         LEFT JOIN clinics ON medical_examinations.clinic_id = clinics.id
-        LEFT JOIN students ON medical_examinations.student_id = students.id
+        LEFT JOIN users ON medical_examinations.user_id = users.id
         LEFT JOIN transfers ON medical_examinations.id = transfers.medical_exam_id
         LEFT JOIN external_hospitals ON transfers.hospital_id = external_hospitals.id
       WHERE 
-        medical_examinations.student_id = ?
+        medical_examinations.user_id = ?
       ORDER BY
         medical_examinations.id DESC
       LIMIT ? OFFSET ?
@@ -128,7 +138,15 @@ class Reservation extends Base {
     return await this.paginate({
       countSql,
       dataSql,
-      params: [student_id],
+      params: [user_id],
+      page,
+      limit,
+    });
+  }
+
+  async getStudentReservations({ student_id, user_id, page, limit }) {
+    return await this.getUserReservations({
+      user_id: user_id ?? student_id,
       page,
       limit,
     });
@@ -144,20 +162,20 @@ class Reservation extends Base {
     const countSql = `
       SELECT COUNT(*) AS count 
       FROM medical_examinations 
-      LEFT JOIN students ON medical_examinations.student_id = students.id 
+      LEFT JOIN users ON medical_examinations.user_id = users.id 
       LEFT JOIN clinics ON medical_examinations.clinic_id = clinics.id
-      LEFT JOIN levels ON students.level_id = levels.id
+      LEFT JOIN levels ON users.level_id = levels.id
       WHERE 
         medical_examinations.exam_type LIKE ? 
         OR medical_examinations.status LIKE ? 
-        OR students.username LIKE ? 
-        OR students.email LIKE ? 
-        OR students.national_id LIKE ? 
-        OR students.nationality_id LIKE ? 
-        OR students.level_id LIKE ? 
-        OR students.gov_id LIKE ? 
-        OR students.faculty_id LIKE ? 
-        OR students.phone_number LIKE ?
+        OR users.username LIKE ? 
+        OR users.email LIKE ? 
+        OR users.national_id LIKE ? 
+        OR users.nationality_id LIKE ? 
+        OR users.level_id LIKE ? 
+        OR users.gov_id LIKE ? 
+        OR users.faculty_id LIKE ? 
+        OR users.phone_number LIKE ?
         OR clinics.clinic_name LIKE ?
         OR levels.level_name LIKE ?
     `;
@@ -167,12 +185,19 @@ class Reservation extends Base {
         medical_examinations.*,  
         clinics.clinic_name AS clinic_name, 
         levels.level_name AS level_name,
-        students.username AS student_name,
-        students.user_image_file,
-        students.national_id_file AS national_id_img,
-        students.fees_file AS fees_file,
-        students.email AS student_email,
-        students.national_id AS national_id,
+        users.id AS user_id,
+        users.id AS student_id,
+        users.username AS user_name,
+        users.username AS student_name,
+        users.user_image_path,
+        users.user_image_path AS user_image_file,
+        users.national_id_path,
+        users.national_id_path AS national_id_img,
+        users.fees_path,
+        users.fees_path AS fees_file,
+        users.email AS user_email,
+        users.email AS student_email,
+        users.national_id AS national_id,
         transfers.id AS transfer_id,
         external_hospitals.hospital_name AS transfered_to,
         transfers.transfer_reason AS transferReason,
@@ -180,21 +205,21 @@ class Reservation extends Base {
       FROM 
         medical_examinations 
         LEFT JOIN clinics ON medical_examinations.clinic_id = clinics.id
-        LEFT JOIN students ON medical_examinations.student_id = students.id
-        LEFT JOIN levels ON students.level_id = levels.id
+        LEFT JOIN users ON medical_examinations.user_id = users.id
+        LEFT JOIN levels ON users.level_id = levels.id
         LEFT JOIN transfers ON medical_examinations.id = transfers.medical_exam_id
         LEFT JOIN external_hospitals ON transfers.hospital_id = external_hospitals.id
       WHERE 
         medical_examinations.exam_type LIKE ? 
         OR medical_examinations.status LIKE ? 
-        OR students.username LIKE ? 
-        OR students.email LIKE ? 
-        OR students.national_id LIKE ? 
-        OR students.nationality_id LIKE ? 
-        OR students.level_id LIKE ? 
-        OR students.gov_id LIKE ? 
-        OR students.faculty_id LIKE ? 
-        OR students.phone_number LIKE ?
+        OR users.username LIKE ? 
+        OR users.email LIKE ? 
+        OR users.national_id LIKE ? 
+        OR users.nationality_id LIKE ? 
+        OR users.level_id LIKE ? 
+        OR users.gov_id LIKE ? 
+        OR users.faculty_id LIKE ? 
+        OR users.phone_number LIKE ?
         OR clinics.clinic_name LIKE ?
         OR levels.level_name LIKE ?
       ORDER BY

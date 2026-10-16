@@ -14,77 +14,86 @@ import * as authMiddleware from "../../middlewares/auth.middleware.js";
 import * as fileUploader from "../../middlewares/file-upload.middleware.js";
 import limiter from "../../services/rate-limit.service.js";
 import { roles } from "../../utils/roles.js";
+import { permissions } from "../../utils/permissions.js";
 
 const router = express.Router();
 
-router.use(
-  authMiddleware.protect,
-  authMiddleware.allowedTo(roles.SUPER_ADMIN, roles.SECOND_MANAGER),
-);
+// Protect all admin endpoints (requires logged-in account)
+router.use(authMiddleware.protect);
 
 router
   .route("/")
   .post(
+    authMiddleware.hasPermission(permissions.ADMINS_CREATE),
     fileUploader.uploadAdminPhoto,
     fileUploader.processAdminPhoto,
     addNewAdminValidator,
     controller.createOne,
   )
-  .get(controller.getAll);
+  .get(
+    authMiddleware.hasPermission(permissions.ADMINS_READ),
+    controller.getAll,
+  );
 
 // Stats Route (specific endpoint before :id)
 router
   .route("/stats")
-  .get(
-    authMiddleware.allowedTo(roles.SUPER_ADMIN, roles.SECOND_MANAGER),
-    controller.getStats,
-  );
+  .get(authMiddleware.hasPermission(permissions.STATS_READ), controller.getStats);
 
 // Logs Routes (specific endpoints before :id)
-router.route("/logs").get(controller.getLogs).delete(controller.deleteLogs);
+router
+  .route("/logs")
+  .get(authMiddleware.hasPermission(permissions.LOGS_READ), controller.getLogs)
+  .delete(
+    authMiddleware.hasPermission(permissions.LOGS_DELETE),
+    controller.deleteLogs,
+  );
+
 router
   .route("/:admin_id/logs")
-  .get(controller.getLog)
-  .delete(controller.deleteLog);
+  .get(authMiddleware.hasPermission(permissions.LOGS_READ), controller.getLog)
+  .delete(
+    authMiddleware.hasPermission(permissions.LOGS_DELETE),
+    controller.deleteLog,
+  );
 
-// Parameterized :id routes
+// Parameterized :id routes (admins manage their own account, or Super Admin manages anyone)
 router
   .route("/:id")
-  .get(controller.getOne)
+  .get(authMiddleware.isOwnerOrAdmin("id"), controller.getOne)
   .put(
+    authMiddleware.isOwnerOrAdmin("id"),
     fileUploader.uploadAdminPhoto,
     fileUploader.processAdminPhoto,
     updateAdminValidator,
     controller.updateOne,
   )
+
   .patch(
+    authMiddleware.isOwnerOrAdmin("id"),
     fileUploader.uploadAdminPhoto,
     fileUploader.processAdminPhoto,
     updateAdminValidator,
     controller.updateOne,
   )
-  .delete(controller.deleteOne);
+  .delete(
+    authMiddleware.hasPermission(permissions.ADMINS_DELETE),
+    controller.deleteOne,
+  );
 
 // Transfer Route
 router.use(
   "/transfers",
-  authMiddleware.allowedTo(
-    roles.SECOND_MANAGER,
-    roles.TRANSFER_CLERK,
-    roles.COUNTER,
-  ),
+  authMiddleware.hasPermission(permissions.TRANSFERS_READ),
   transferRoute,
 );
 
 // Reservation Route
 router.use(
   "/reservations",
-  authMiddleware.allowedTo(
-    roles.SECOND_MANAGER,
-    roles.MEDICAL_CHECK_MANAGER,
-    roles.COUNTER,
-  ),
+  authMiddleware.hasPermission(permissions.RESERVATIONS_READ),
   reservationRoute,
 );
 
 export default router;
+

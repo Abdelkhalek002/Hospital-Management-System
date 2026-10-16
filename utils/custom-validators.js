@@ -1,5 +1,5 @@
 // Importing dependencies
-import Student from "../modules/students/student.repository.js";
+import UserRepository from "../modules/user/user.repository.js";
 
 // To check if the code is in Arabic or not
 export const isArabic = (value) => {
@@ -14,7 +14,7 @@ export const isValidDate = (value) => {
 
 // To check if the account is verified
 export const isVerified = async (email) => {
-  return await new Student().isVerfied(email);
+  return await new UserRepository().isVerified(email);
 };
 
 export const matchesDomain = (email, configuredDomain) => {

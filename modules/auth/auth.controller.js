@@ -10,6 +10,8 @@ import { pick } from "../../utils/pick-from-body-request.js";
 import ApiError from "../../utils/api-error.js";
 import { verifyToken } from "./jwt.service.js";
 import { matchesDomain } from "../../utils/custom-validators.js";
+import { rolePermissions } from "../../utils/permissions.js";
+
 
 dotenv.config();
 
@@ -43,8 +45,11 @@ const allowedFields = [
   "birth_date",
   "phone_number",
   "user_image_file",
+  "user_image_path",
   "national_id_file",
+  "national_id_path",
   "fees_file",
+  "fees_path",
 ];
 
 export const signup = asyncHandler(async (req, res) => {
@@ -65,14 +70,11 @@ export const login = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
   let loginFn;
 
-  const studentLogin = async (studentEmail, studentPassword) =>
-    await authService.login(UserType.STUDENT, studentEmail, studentPassword);
+  const userLogin = async (userEmail, userPassword) =>
+    await authService.login(UserType.USER, userEmail, userPassword);
 
   const adminLogin = async (adminEmail, adminPassword) =>
     await authService.login(UserType.ADMIN, adminEmail, adminPassword);
-
-  const superAdminLogin = async (superEmail, superPassword) =>
-    await authService.login(UserType.SUPER_ADMIN, superEmail, superPassword);
 
   if (!email || !password) {
     return res.status(StatusCode.BAD_REQUEST).json({
@@ -81,14 +83,16 @@ export const login = asyncHandler(async (req, res) => {
     });
   }
 
-  if (matchesDomain(email, process.env.SUPER_ADMIN_EMAIL_DOMAIN)) {
-    loginFn = superAdminLogin;
-  } else if (matchesDomain(email, process.env.ADMIN_EMAIL_DOMAIN)) {
+  if (
+    matchesDomain(email, process.env.SUPER_ADMIN_EMAIL_DOMAIN) ||
+    matchesDomain(email, process.env.ADMIN_EMAIL_DOMAIN)
+  ) {
     loginFn = adminLogin;
   } else if (matchesDomain(email, process.env.USER_EMAIL_DOMAIN)) {
-    loginFn = studentLogin;
+    loginFn = userLogin;
   } else {
-    throw new ApiError("Login failed", StatusCode.UNAUTHORIZED);
+    // Default fallback to admin login if matching admin or student login
+    loginFn = adminLogin;
   }
 
   const { token, user } = (await loginFn(email, password)) || {};
@@ -100,10 +104,12 @@ export const login = asyncHandler(async (req, res) => {
   return res.status(StatusCode.OK).json({
     success: true,
     token,
-    payLoad: {
-      userId: user?.id,
+    data: {
+      id: user?.id,
+      username: user?.username,
+      email: user?.email,
       role: user?.role,
-      type: user?.role ? "admin" : "user",
+      permissions: rolePermissions[user?.role] || [],
     },
   });
 });

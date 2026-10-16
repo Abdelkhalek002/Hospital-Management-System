@@ -1,12 +1,11 @@
 /**
- * DTO / Resource transformers for Student responses.
- * Dedicated resource transformers for student profile and admin endpoints.
+ * DTO / Resource transformers for User responses.
  */
 
 /**
  * Format any file/image path into a fully qualified URL.
  */
-export const formatStudentFileUrl = (filePath, username = null, req = null) => {
+export const formatUserFileUrl = (filePath, username = null, req = null) => {
   if (!filePath) return null;
   const str = String(filePath).trim();
   if (!str) return null;
@@ -23,7 +22,6 @@ export const formatStudentFileUrl = (filePath, username = null, req = null) => {
     cleanPath = cleanPath.replace(/^uploads\//, "");
   }
 
-  // If path is a bare filename (not inside students/), prefix with students/<username> if provided
   if (!cleanPath.startsWith("students/") && username) {
     cleanPath = `students/${username}/${cleanPath}`;
   }
@@ -48,6 +46,8 @@ export const formatStudentFileUrl = (filePath, username = null, req = null) => {
   return `${base}/api/v1/uploads/${encodedPath}`;
 };
 
+export const formatStudentFileUrl = formatUserFileUrl;
+
 const formatDate = (date) => {
   if (!date) return null;
   if (date instanceof Date) {
@@ -58,15 +58,15 @@ const formatDate = (date) => {
 };
 
 // ==========================================
-// 1. Student Self Profile Resource (GET /me, PUT /me)
+// 1. User Self Profile Resource (GET /me, PUT /me)
 // ==========================================
-export const toStudentProfileResource = (student, req = null) => {
-  if (!student) return null;
-  const item = Array.isArray(student) ? student[0] : student;
+export const toUserProfileResource = (user, req = null) => {
+  if (!user) return null;
+  const item = Array.isArray(user) ? user[0] : user;
   if (!item) return null;
 
-  const rawPhoto = item.user_image_file || item.photo || null;
-  const profilePhotoUrl = formatStudentFileUrl(
+  const rawPhoto = item.user_image_path || item.user_image_file || item.photo || null;
+  const profilePhotoUrl = formatUserFileUrl(
     rawPhoto,
     item.username,
     req,
@@ -74,12 +74,15 @@ export const toStudentProfileResource = (student, req = null) => {
 
   return {
     id: item.id,
+    user_id: item.id,
+    student_id: item.id,
     username: item.username,
     userName: item.username,
     email: item.email,
     phone_number: item.phone_number,
     phoneNumber: item.phone_number,
     profile_photo_url: profilePhotoUrl,
+    user_image_path: rawPhoto,
     user_image_file: profilePhotoUrl || rawPhoto,
     userImage_file: profilePhotoUrl || rawPhoto,
     photo: profilePhotoUrl || rawPhoto,
@@ -95,32 +98,39 @@ export const toStudentProfileResource = (student, req = null) => {
   };
 };
 
+export const toStudentProfileResource = toUserProfileResource;
+
 // ==========================================
-// 2. Admin Single Student Resource (GET /users/:id)
+// 2. Admin Single User Resource (GET /users/:id)
 // ==========================================
-export const toAdminStudentResource = (student, req = null) => {
-  if (!student) return null;
-  const item = Array.isArray(student) ? student[0] : student;
+export const toAdminUserResource = (user, req = null) => {
+  if (!user) return null;
+  const item = Array.isArray(user) ? user[0] : user;
   if (!item) return null;
 
-  const profilePhotoUrl = formatStudentFileUrl(
-    item.user_image_file || item.photo,
+  const rawPhoto = item.user_image_path || item.user_image_file || item.photo;
+  const rawNationalIdFile = item.national_id_path || item.national_id_file;
+  const rawFeesFile = item.fees_path || item.fees_file;
+
+  const profilePhotoUrl = formatUserFileUrl(
+    rawPhoto,
     item.username,
     req,
   );
-  const nationalIdFileUrl = formatStudentFileUrl(
-    item.national_id_file,
+  const nationalIdFileUrl = formatUserFileUrl(
+    rawNationalIdFile,
     item.username,
     req,
   );
-  const feesFileUrl = formatStudentFileUrl(
-    item.fees_file,
+  const feesFileUrl = formatUserFileUrl(
+    rawFeesFile,
     item.username,
     req,
   );
 
   return {
     id: item.id,
+    user_id: item.id,
     student_id: item.id,
     username: item.username,
     email: item.email,
@@ -132,6 +142,9 @@ export const toAdminStudentResource = (student, req = null) => {
     is_active: Boolean(item.is_active),
 
     // Files & full URLs for admin review
+    user_image_path: rawPhoto,
+    national_id_path: rawNationalIdFile,
+    fees_path: rawFeesFile,
     profile_photo_url: profilePhotoUrl,
     national_id_file_url: nationalIdFileUrl,
     fees_file_url: feesFileUrl,
@@ -140,10 +153,8 @@ export const toAdminStudentResource = (student, req = null) => {
     faculty_id: item.faculty_id,
     faculty_name: item.faculty_name || item.faculty || null,
 
-
     level_id: item.level_id,
     level_name: item.level_name || item.level || null,
-
 
     gov_id: item.gov_id,
     gov_name: item.gov_name || item.governorate || null,
@@ -156,10 +167,14 @@ export const toAdminStudentResource = (student, req = null) => {
   };
 };
 
+export const toAdminStudentResource = toAdminUserResource;
+
 // ==========================================
-// 3. Admin Students List Resource (GET /users)
+// 3. Admin Users List Resource (GET /users)
 // ==========================================
-export const toAdminStudentsListResource = (items = [], req = null) => {
+export const toAdminUsersListResource = (items = [], req = null) => {
   const list = Array.isArray(items) ? items : [items];
-  return list.map((student) => toAdminStudentResource(student, req));
+  return list.map((user) => toAdminUserResource(user, req));
 };
+
+export const toAdminStudentsListResource = toAdminUsersListResource;

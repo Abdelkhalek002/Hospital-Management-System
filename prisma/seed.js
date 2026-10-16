@@ -36,6 +36,7 @@ async function main() {
       create: level,
     });
   }
+
   // 3. Seed Nationalities
   const nationalities = [
     { nationality_name: "مصري" },
@@ -136,25 +137,61 @@ async function main() {
     });
   }
 
-  // 7. Seed Super Admin
-  const hashedPassword = await bcrypt.hash("Test1234$", 12);
-  await prisma.super_admins.upsert({
+  // 7. Seed Admins (Super Admin and Staff)
+  const defaultPassword = await bcrypt.hash("Test1234$", 12);
+
+  // Super Admin
+  await prisma.admins.upsert({
     where: { email: "superadmin@hsh.com" },
     update: {
-      password: hashedPassword,
+      password: defaultPassword,
       role: roles.SUPER_ADMIN,
+      status: "ACTIVE",
     },
     create: {
       username: "superadmin",
       email: "superadmin@hsh.com",
-      password: hashedPassword,
+      password: defaultPassword,
       role: roles.SUPER_ADMIN,
-      is_confirmed: true,
-      is_active: false,
+      status: "ACTIVE",
     },
   });
 
-  // 8. Seed Sample Students
+  // Second Manager
+  await prisma.admins.upsert({
+    where: { email: "manager@hsh.com" },
+    update: {
+      password: defaultPassword,
+      role: roles.SECOND_MANAGER,
+      status: "ACTIVE",
+    },
+    create: {
+      username: "manager",
+      email: "manager@hsh.com",
+      password: defaultPassword,
+      role: roles.SECOND_MANAGER,
+      status: "ACTIVE",
+    },
+  });
+
+  // Counter Staff
+  await prisma.admins.upsert({
+    where: { email: "counter@hsh.com" },
+    update: {
+      password: defaultPassword,
+      role: roles.COUNTER,
+      status: "ACTIVE",
+    },
+    create: {
+      username: "counter_staff",
+      email: "counter@hsh.com",
+      password: defaultPassword,
+      role: roles.COUNTER,
+      status: "ACTIVE",
+    },
+  });
+
+  // 8. Seed Sample Users (Students)
   const defaultLevel = (await prisma.levels.findFirst()) || { id: 1 };
   const defaultGov = (await prisma.governorates.findFirst()) || { id: 1 };
   const defaultFaculty = (await prisma.faculties.findFirst()) || { id: 1 };
@@ -162,17 +199,17 @@ async function main() {
 
   const studentPassword = await bcrypt.hash("Test1234$", 12);
 
-  let student1 = await prisma.students.findUnique({
+  let user1 = await prisma.users.findUnique({
     where: { email: "user@fci.helwan.edu.eg" },
   });
 
-  if (!student1) {
-    student1 = await prisma.students.create({
+  if (!user1) {
+    user1 = await prisma.users.create({
       data: {
         username: "abdelkhalek",
         email: "user@fci.helwan.edu.eg",
         password: studentPassword,
-        national_id: BigInt("12343678916932"),
+        national_id: "12343678916932",
         nationality_id: defaultNationality.id,
         level_id: defaultLevel.id,
         gov_id: defaultGov.id,
@@ -182,36 +219,36 @@ async function main() {
         phone_number: "01134327898",
         verified: true,
         is_active: true,
-        user_image_file: "uploads/default.png",
-        national_id_file: "uploads/default-id.png",
-        fees_file: "uploads/default-fees.png",
+        user_image_path: "uploads/default.png",
+        national_id_path: "uploads/default-id.png",
+        fees_path: "uploads/default-fees.png",
       },
     });
   }
 
-  let student2 = await prisma.students.findUnique({
+  let user2 = await prisma.users.findUnique({
     where: { email: "mariam@fci.helwan.edu.eg" },
   });
 
-  if (!student2) {
-    student2 = await prisma.students.create({
+  if (!user2) {
+    user2 = await prisma.users.create({
       data: {
-        username: "bedo",
-        email: "bedo@fci.helwan.edu.eg",
+        username: "mariam",
+        email: "mariam@fci.helwan.edu.eg",
         password: studentPassword,
-        national_id: BigInt("30209151234568"),
+        national_id: "30209151234568",
         nationality_id: defaultNationality.id,
         level_id: defaultLevel.id,
         gov_id: defaultGov.id,
         faculty_id: defaultFaculty.id,
-        gender: "MALE",
+        gender: "FEMALE",
         birth_date: new Date("2003-09-15"),
         phone_number: "01098765432",
         verified: true,
         is_active: true,
-        user_image_file: "uploads/default.png",
-        national_id_file: "uploads/default-id.png",
-        fees_file: "uploads/default-fees.png",
+        user_image_path: "uploads/default.png",
+        national_id_path: "uploads/default-id.png",
+        fees_path: "uploads/default-fees.png",
       },
     });
   }
@@ -241,14 +278,14 @@ async function main() {
   const reservationsToSeed = [
     // --- Abdelkhalek reservations ---
     {
-      student_id: student1.id,
+      user_id: user1.id,
       clinic_id: internalClinic ? internalClinic.id : 1,
       exam_type: "NEW_EXAM",
       status: "ACCEPTED",
       date: new Date("2026-10-18T09:00:00.000Z"),
     },
     {
-      student_id: student1.id,
+      user_id: user1.id,
       clinic_id: dentalClinic ? dentalClinic.id : 3,
       exam_type: "NEW_EXAM",
       status: "ACCEPTED",
@@ -261,14 +298,14 @@ async function main() {
       },
     },
     {
-      student_id: student1.id,
+      user_id: user1.id,
       clinic_id: eyeClinic ? eyeClinic.id : 2,
       exam_type: "FOLLOW_UP",
       status: "PENDING",
       date: new Date("2026-10-22T11:00:00.000Z"),
     },
     {
-      student_id: student1.id,
+      user_id: user1.id,
       clinic_id: orthoClinic ? orthoClinic.id : 4,
       exam_type: "EMERGENCY",
       status: "ACCEPTED",
@@ -281,67 +318,33 @@ async function main() {
       },
     },
     {
-      student_id: student1.id,
+      user_id: user1.id,
       clinic_id: internalClinic ? internalClinic.id : 1,
       exam_type: "FOLLOW_UP",
       status: "ACCEPTED",
       date: new Date("2026-09-15T09:30:00.000Z"),
     },
-    {
-      student_id: student1.id,
-      clinic_id: dentalClinic ? dentalClinic.id : 3,
-      exam_type: "FOLLOW_UP",
-      status: "ACCEPTED",
-      date: new Date("2026-09-28T11:15:00.000Z"),
-    },
-    {
-      student_id: student1.id,
-      clinic_id: orthoClinic ? orthoClinic.id : 4,
-      exam_type: "NEW_EXAM",
-      status: "PENDING",
-      date: new Date("2026-11-02T10:00:00.000Z"),
-    },
     // --- Mariam reservations ---
     {
-      student_id: student2.id,
+      user_id: user2.id,
       clinic_id: eyeClinic ? eyeClinic.id : 2,
       exam_type: "NEW_EXAM",
       status: "PENDING",
       date: new Date("2026-10-19T09:00:00.000Z"),
     },
     {
-      student_id: student2.id,
-      clinic_id: internalClinic ? internalClinic.id : 1,
-      exam_type: "NEW_EXAM",
-      status: "ACCEPTED",
-      date: new Date("2026-10-21T10:00:00.000Z"),
-    },
-    {
-      student_id: student2.id,
+      user_id: user2.id,
       clinic_id: dentalClinic ? dentalClinic.id : 3,
       exam_type: "EMERGENCY",
       status: "PENDING",
       date: new Date("2026-10-24T11:30:00.000Z"),
-    },
-    {
-      student_id: student2.id,
-      clinic_id: orthoClinic ? orthoClinic.id : 4,
-      exam_type: "FOLLOW_UP",
-      status: "ACCEPTED",
-      date: new Date("2026-10-27T12:00:00.000Z"),
-      transfer: {
-        hospital_id: badrHsp ? badrHsp.id : 1,
-        transfer_reason: "متابعة علاج طبيعي وإعادة تقييم المفصل",
-        notes: "مراجعة العيادة الخارجية",
-        status: "accepted",
-      },
     },
   ];
 
   for (const { transfer, ...examData } of reservationsToSeed) {
     let exam = await prisma.medical_examinations.findFirst({
       where: {
-        student_id: examData.student_id,
+        user_id: examData.user_id,
         clinic_id: examData.clinic_id,
         date: examData.date,
       },

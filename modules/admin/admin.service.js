@@ -24,23 +24,6 @@ export const createOne = async (data) => {
     throw new ApiError("البريد الإلكتروني مستخدم بالفعل", StatusCode.BAD_REQUEST);
   }
 
-  // Also check super_admins to prevent duplicate identities
-  const superAdminUsernameExists = await new Base("super_admins").existsByField(
-    "username",
-    data.username,
-  );
-  if (superAdminUsernameExists) {
-    throw new ApiError("اسم المستخدم مستخدم بالفعل", StatusCode.BAD_REQUEST);
-  }
-
-  const superAdminEmailExists = await new Base("super_admins").existsByField(
-    "email",
-    data.email,
-  );
-  if (superAdminEmailExists) {
-    throw new ApiError("البريد الإلكتروني مستخدم بالفعل", StatusCode.BAD_REQUEST);
-  }
-
   // 2. hash password
   const hashedPassword = await bcrypt.hash(data.password, 12);
 
@@ -48,7 +31,9 @@ export const createOne = async (data) => {
   const finalData = {
     ...data,
     password: hashedPassword,
+    profile_photo_path: data.profile_photo_path || data.profile_photo || null,
   };
+  delete finalData.profile_photo;
 
   // 4. create admin
   const newAdmin = await adminRepo.create(finalData);
@@ -93,18 +78,23 @@ export const updateOne = async (id, data) => {
     updatePayload.password = await bcrypt.hash(updatePayload.password, 12);
   }
 
+  const newPhoto = updatePayload.profile_photo_path ?? updatePayload.profile_photo;
+  const oldPhoto = existing.profile_photo_path || existing.profile_photo;
+
   // 5. Clean up old photo file if photo is updated or removed
-  if (
-    updatePayload.profile_photo !== undefined &&
-    existing.profile_photo &&
-    existing.profile_photo !== updatePayload.profile_photo
-  ) {
-    const oldFilePath = path.join("uploads", "admins", existing.profile_photo);
+  if (newPhoto !== undefined && oldPhoto && oldPhoto !== newPhoto) {
+    const oldFilePath = path.join("uploads", "admins", oldPhoto);
     fs.unlink(oldFilePath).catch(() => {});
   }
 
+  if (newPhoto !== undefined) {
+    updatePayload.profile_photo_path = newPhoto;
+  }
+  delete updatePayload.profile_photo;
+
   // 6. Update admin details
   await adminRepo.updateOne(id, updatePayload);
+
 
   return await adminRepo.getOne(id);
 };
@@ -131,8 +121,9 @@ export const deleteOne = async (id) => {
     throw new ApiError("Admin does not exist", StatusCode.NOT_FOUND);
   }
 
-  if (existing.profile_photo) {
-    const oldFilePath = path.join("uploads", "admins", existing.profile_photo);
+  const photo = existing.profile_photo_path || existing.profile_photo;
+  if (photo) {
+    const oldFilePath = path.join("uploads", "admins", photo);
     fs.unlink(oldFilePath).catch(() => {});
   }
 
@@ -145,6 +136,7 @@ export const deleteOne = async (id) => {
     role: existing.role,
   };
 };
+
 export const getLogs = async ({ page = 1, limit = 10 } = {}) => {
   const safePage = Math.max(parseInt(page, 10) || 1, 1);
   const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 10, 1), 100);
@@ -204,4 +196,3 @@ export const deleteLog = async (adminId) => {
   ]);
   return true;
 };
-

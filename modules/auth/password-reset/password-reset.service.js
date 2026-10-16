@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 
-import User from "../../../repositories/user.repository.js";
+import User from "../../user/user.repository.js";
 import PasswordResetRepo from "./password-reset.repository.js";
 import * as emailService from "../../../services/email.service.js";
 
@@ -32,8 +32,8 @@ export const sendPasswordResetOtp = async (email) => {
   await passwordResetRepo.cleanupConsumedAndExpiredOtps();
 
   // 2. check if email exist
-  const student = await new User(UserType.STUDENT).findByEmail(email);
-  if (!student) {
+  const user = await new User(UserType.USER).findByEmail(email);
+  if (!user) {
     throw new ApiError("المستخدم غير موجود", StatusCode.NOT_FOUND);
   }
   // 3. check if otp exist
@@ -64,7 +64,7 @@ export const sendPasswordResetOtp = async (email) => {
 
   // 7. send otp via email
   try {
-    await emailService.sendOtpMail(student, otp);
+    await emailService.sendOtpMail(user, otp);
   } catch (error) {
     await passwordResetRepo.invalidateOtp(email);
     throw new ApiError(
@@ -83,8 +83,8 @@ export const resetPasswordWithOtp = async ({ email, otp, newPassword }) => {
   otp = String(otp);
 
   // 1. check if email exist
-  const student = await new User(UserType.STUDENT).findByEmail(email);
-  if (!student) {
+  const user = await new User(UserType.USER).findByEmail(email);
+  if (!user) {
     throw new ApiError("User not found", StatusCode.NOT_FOUND);
   }
 
@@ -138,14 +138,14 @@ export const resetPasswordWithOtp = async ({ email, otp, newPassword }) => {
   }
 
   // 5. handle entering same password
-  if (typeof student.password !== "string" || !student.password) {
+  if (typeof user.password !== "string" || !user.password) {
     throw new ApiError(
       "Password reset is unavailable for this account.",
       StatusCode.BAD_REQUEST,
     );
   }
 
-  const isSamePassword = await bcrypt.compare(newPassword, student.password);
+  const isSamePassword = await bcrypt.compare(newPassword, user.password);
   if (isSamePassword) {
     throw new ApiError(
       "New password must be different from current password.",

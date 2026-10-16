@@ -1,54 +1,56 @@
 import asyncHandler from "express-async-handler";
-import * as service from "./student.service.js";
+import * as service from "./user.service.js";
 import { StatusCode } from "../../utils/status-codes.js";
 import { pick } from "../../utils/pick-from-body-request.js";
 import ApiError from "../../utils/api-error.js";
 import {
-  toStudentProfileResource,
-  toAdminStudentResource,
-  toAdminStudentsListResource,
-  formatStudentFileUrl,
-} from "./student.resource.js";
+  toUserProfileResource,
+  toAdminUserResource,
+  toAdminUsersListResource,
+  formatUserFileUrl,
+} from "./user.resource.js";
 
 // Re-export helpers for backward compatibility
-export const getStudentPhotoUrl = (req, photo, username) =>
-  formatStudentFileUrl(photo, username, req);
+export const getUserPhotoUrl = (req, photo, username) =>
+  formatUserFileUrl(photo, username, req);
+export const getStudentPhotoUrl = getUserPhotoUrl;
 
-export const formatStudentResponse = (req, student) =>
-  toStudentProfileResource(student, req);
+export const formatUserResponse = (req, user) =>
+  toUserProfileResource(user, req);
+export const formatStudentResponse = formatUserResponse;
 
 // ==========================================
-// Student Self Profile Routes (/users/me)
+// User Self Profile Routes (/users/me)
 // ==========================================
 
 export const getMe = asyncHandler(async (req, res) => {
   const id = req.user.id;
-  const rawStudent = await service.get(id);
-  if (!rawStudent) {
-    throw new ApiError("Student does not exist", StatusCode.NOT_FOUND);
+  const rawUser = await service.get(id);
+  if (!rawUser) {
+    throw new ApiError("User does not exist", StatusCode.NOT_FOUND);
   }
-  const result = toStudentProfileResource(rawStudent, req);
+  const result = toUserProfileResource(rawUser, req);
   res.status(StatusCode.OK).json({ status: "success", result });
 });
 
 export const updateMe = asyncHandler(async (req, res) => {
-  // 1. pick allowed fields
   const user = req.user;
-  if (!req.body.user_image_file && req.body.photo) {
-    req.body.user_image_file = req.body.photo;
+  const imageVal =
+    req.body.user_image_path ||
+    req.body.user_image_file ||
+    req.body.photo ||
+    req.body.userImage_file;
+  if (imageVal) {
+    req.body.user_image_path = imageVal;
+    req.body.user_image_file = imageVal;
   }
-  if (!req.body.user_image_file && req.body.userImage_file) {
-    req.body.user_image_file = req.body.userImage_file;
-  }
-  const allowedFields = ["username", "user_image_file"];
+  const allowedFields = ["username", "user_image_path", "user_image_file"];
   const data = pick(req.body, allowedFields);
 
-  // 2. call service
-  const updatedStudent = await service.updateMe(user.id, data);
-  const result = toStudentProfileResource(updatedStudent, req);
+  const updatedUser = await service.updateMe(user.id, data);
+  const result = toUserProfileResource(updatedUser, req);
   const profilePhotoUrl = result?.profile_photo_url || null;
 
-  // 3. send response
   res.status(StatusCode.OK).json({
     status: "success",
     msg: "Data updated successfully",
@@ -58,7 +60,7 @@ export const updateMe = asyncHandler(async (req, res) => {
 });
 
 // ==========================================
-// Admin Student Management Routes (/users)
+// Admin User Management Routes (/users)
 // ==========================================
 
 export const getAll = asyncHandler(async (req, res) => {
@@ -73,8 +75,8 @@ export const getAll = asyncHandler(async (req, res) => {
     }
   }
 
-  const rawStudents = await service.getAll(searchKey, searchValue);
-  const result = toAdminStudentsListResource(rawStudents, req);
+  const rawUsers = await service.getAll(searchKey, searchValue);
+  const result = toAdminUsersListResource(rawUsers, req);
 
   res.status(StatusCode.OK).json({
     status: "success",
@@ -85,17 +87,16 @@ export const getAll = asyncHandler(async (req, res) => {
 
 export const get = asyncHandler(async (req, res) => {
   const id = req.params.id;
-  const rawStudent = await service.get(id);
-  if (!rawStudent) {
-    throw new ApiError("Student does not exist", StatusCode.NOT_FOUND);
+  const rawUser = await service.get(id);
+  if (!rawUser) {
+    throw new ApiError("User does not exist", StatusCode.NOT_FOUND);
   }
 
-  const result = toAdminStudentResource(rawStudent, req);
+  const result = toAdminUserResource(rawUser, req);
   res.status(StatusCode.OK).json({ status: "success", result });
 });
 
 export const update = asyncHandler(async (req, res) => {
-  // 1. pick allowed fields from req
   const { id } = req.params;
   const allowedFields = [
     "national_id",
@@ -103,17 +104,19 @@ export const update = asyncHandler(async (req, res) => {
     "faculty_id",
     "level_id",
     "nationality_id",
+    "national_id_path",
     "national_id_file",
+    "fees_path",
     "fees_file",
+    "user_image_path",
+    "user_image_file",
   ];
   const data = pick(req.body, allowedFields);
 
-  // 2. call service
   await service.update(id, data);
-  const updatedStudent = await service.get(id);
-  const result = toAdminStudentResource(updatedStudent, req);
+  const updatedUser = await service.get(id);
+  const result = toAdminUserResource(updatedUser, req);
 
-  // 3. send response
   return res.status(StatusCode.OK).json({
     status: "success",
     message: "تم تعديل بيانات المستخدم بنجاح",

@@ -13,8 +13,7 @@ import userReservationRoute from "./modules/reservation/reservation-user.routes.
 import adminReservationRoute from "./modules/reservation/reservation-admin.routes.js";
 import authRoute from "./modules/auth/auth.routes.js";
 import adminRoute from "./modules/admin/admin.routes.js";
-import superAdminRoute from "./modules/super-admin/super-admin.routes.js";
-import studentRoute from "./modules/students/student.routes.js";
+import userRoute from "./modules/user/user.routes.js";
 import systemDataRoutes from "./modules/system-data/system-data.routes.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -67,11 +66,10 @@ if (process.env.NODE_ENV === "development") {
 }
 
 // MOUNT ROUTES
-app.use("/api/v1/auth/", authRoute); // DONE
-app.use("/api/v1/super-admins/", superAdminRoute); // DONE
+app.use("/api/v1/auth/", authRoute);
 app.use("/api/v1/admins/", adminRoute);
 app.use("/api/v1/reservations/", adminReservationRoute);
-app.use("/api/v1/users/", studentRoute);
+app.use("/api/v1/users/", userRoute);
 app.use("/api/v1/Myreservations/", userReservationRoute);
 app.use("/api/v1/sysdata/", systemDataRoutes);
 

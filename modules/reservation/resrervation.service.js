@@ -29,7 +29,7 @@ export const getReservationsPerMonth = async () => {
 };
 
 export const createReservation = async (
-  student_id,
+  userId,
   { clinic_id, date, examType },
 ) => {
   // 1- check if reservation limit reached
@@ -39,8 +39,8 @@ export const createReservation = async (
   }
 
   // check if user exceeded limit of 1 reservation per day
-  const dailyCount = await new Reservation().countByStudentAndDate(
-    student_id,
+  const dailyCount = await new Reservation().countByUserAndDate(
+    userId,
     date,
   );
   if (dailyCount >= 1) {
@@ -51,17 +51,18 @@ export const createReservation = async (
   }
 
   // 2- check if user exists
-  const student = await new Base("students").findById(student_id);
-  if (!student) {
+  const user = await new Base("users").findById(userId);
+  if (!user) {
     throw new ApiError(
-      `المستخدم ${student_id} غير موجود`,
+      `المستخدم ${userId} غير موجود`,
       StatusCode.BAD_REQUEST,
     );
   }
 
   // 3- insert reservation
   return await new Reservation().create({
-    student_id,
+    user_id: userId,
+    student_id: userId,
     clinic_id,
     date,
     examType,
@@ -95,9 +96,10 @@ export const getReservationById = async (medicEx_id) => {
   return results;
 };
 
-export const getMyReservations = async ({ student_id, page, limit }) => {
-  const result = await new Reservation().getStudentReservations({
-    student_id,
+export const getMyReservations = async ({ user_id, student_id, page, limit }) => {
+  const targetId = user_id ?? student_id;
+  const result = await new Reservation().getUserReservations({
+    user_id: targetId,
     page,
     limit,
   });

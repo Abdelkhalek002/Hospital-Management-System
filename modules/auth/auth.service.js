@@ -3,8 +3,7 @@ import jwt from "jsonwebtoken";
 
 // IMPORT REPOSITORIES
 import Base from "../../repositories/base.repository.js";
-import Student from "../students/student.repository.js";
-import User from "../../repositories/user.repository.js";
+import User from "../user/user.repository.js";
 
 // IMPORT SERVICES
 import { signToken, verifyToken } from "./jwt.service.js";
@@ -20,20 +19,22 @@ const checkPassword = async function (candidatePassword, userPassword) {
 };
 
 export const signup = async (studentData) => {
-  //1. check if (email, national_id, phone_number) existes
-  const emailExists = await new Student().existsByField(
+  const userRepo = new User();
+
+  //1. check if (email, national_id, phone_number) exist
+  const emailExists = await userRepo.existsByField(
     "email",
     studentData.email,
   );
   if (emailExists) throw new ApiError("Email already exists");
 
-  const nationalIdExists = await new Student().existsByField(
+  const nationalIdExists = await userRepo.existsByField(
     "national_id",
-    studentData.national_id,
+    String(studentData.national_id),
   );
   if (nationalIdExists) throw new ApiError("National ID already exists");
 
-  const phoneNumberExists = await new Student().existsByField(
+  const phoneNumberExists = await userRepo.existsByField(
     "phone_number",
     String(studentData.phone_number),
   );
@@ -47,22 +48,26 @@ export const signup = async (studentData) => {
   const finalStudentData = {
     ...studentData,
     password: hashedPassword,
+    national_id: String(studentData.national_id),
+    user_image_path: studentData.user_image_path || studentData.user_image_file,
+    national_id_path: studentData.national_id_path || studentData.national_id_file,
+    fees_path: studentData.fees_path || studentData.fees_file,
   };
 
-  //4. create the student
-  const newUser = await new Student().create(finalStudentData);
+  //4. create the user
+  const newUser = await userRepo.create(finalStudentData);
 
   //5. send activation email
   await emailService.sendActivationMail(finalStudentData);
 
   //6. create a new token
   const token = signToken(
-    { ...newUser, userType: UserType.STUDENT },
+    { ...newUser, userType: UserType.USER },
     process.env.JWT_EXPIRE_TIME,
   );
 
   // 7. Change status to online
-  await new User(UserType.STUDENT).setOnline(newUser.id);
+  await new User(UserType.USER).setOnline(newUser.id);
   const result = { newUser, token };
 
   return result;
@@ -105,7 +110,7 @@ export const protect = async (token) => {
   const decoded = await verifyToken(token, process.env.JWT_SECRET);
 
   // 2. find user by email
-  const currentUser = await new User(decoded.type).findByEmail(decoded.email);
+  const currentUser = await new User(decoded.type || decoded.userType).findByEmail(decoded.email);
   if (!currentUser || currentUser.length === 0) {
     throw new ApiError(
       "The user that belongs to this token no longer exists",

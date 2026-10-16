@@ -9,6 +9,7 @@ const validAdminRoles = [
   roles.OBSERVER,
   roles.MEDICAL_CHECK_MANAGER,
   roles.COUNTER,
+  roles.TRANSFER_CLERK,
 ];
 
 const roleMap = {
@@ -17,12 +18,14 @@ const roleMap = {
   [roles.OBSERVER]: roles.OBSERVER,
   [roles.MEDICAL_CHECK_MANAGER]: roles.MEDICAL_CHECK_MANAGER,
   [roles.COUNTER]: roles.COUNTER,
+  [roles.TRANSFER_CLERK]: roles.TRANSFER_CLERK,
   super_admin: roles.SUPER_ADMIN,
   second_manager: roles.SECOND_MANAGER,
   observer: roles.OBSERVER,
   viewer: roles.OBSERVER,
   medical_check_manager: roles.MEDICAL_CHECK_MANAGER,
   counter: roles.COUNTER,
+  transfer_clerk: roles.TRANSFER_CLERK,
 };
 
 export const addNewAdminValidator = [
@@ -40,20 +43,32 @@ export const addNewAdminValidator = [
   body("password")
     .notEmpty()
     .withMessage("password is required")
-    .isLength({ min: 6 })
-    .withMessage("password must be at least 6 characters long"),
+    .isLength({ min: 8 })
+    .withMessage("password must be at least 8 characters long")
+    .matches(/[A-Z]/)
+    .withMessage("password must contain at least one uppercase letter")
+    .matches(/[a-z]/)
+    .withMessage("password must contain at least one lowercase letter")
+    .matches(/[\W_]/)
+    .withMessage("password must contain at least one symbol/special character"),
   body("role")
     .notEmpty()
     .withMessage("role is required")
     .customSanitizer((val) => {
       if (typeof val === "string") {
         const key = val.trim().toLowerCase();
-        return roleMap[val] || roleMap[key] || val;
+        const upperKey = val.trim().toUpperCase();
+        return roleMap[upperKey] || roleMap[key] || roleMap[val] || val;
       }
       return val;
     })
     .isIn(validAdminRoles)
     .withMessage("Invalid admin role"),
+  body("status")
+    .optional()
+    .customSanitizer((val) => (typeof val === "string" ? val.toLowerCase() : val))
+    .isIn(["active", "inactive"])
+    .withMessage("Invalid status value (active, inactive)"),
   body("profile_photo").optional(),
   handleValidationErrors,
 ];
@@ -74,8 +89,14 @@ export const updateAdminValidator = [
     .withMessage("email is not valid"),
   body("password")
     .optional()
-    .isLength({ min: 6 })
-    .withMessage("password must be at least 6 characters long"),
+    .isLength({ min: 8 })
+    .withMessage("password must be at least 8 characters long")
+    .matches(/[A-Z]/)
+    .withMessage("password must contain at least one uppercase letter")
+    .matches(/[a-z]/)
+    .withMessage("password must contain at least one lowercase letter")
+    .matches(/[\W_]/)
+    .withMessage("password must contain at least one symbol/special character"),
   body("role")
     .optional()
     .notEmpty()
@@ -83,12 +104,19 @@ export const updateAdminValidator = [
     .customSanitizer((val) => {
       if (typeof val === "string") {
         const key = val.trim().toLowerCase();
-        return roleMap[val] || roleMap[key] || val;
+        const upperKey = val.trim().toUpperCase();
+        return roleMap[upperKey] || roleMap[key] || roleMap[val] || val;
       }
       return val;
     })
     .isIn(validAdminRoles)
     .withMessage("Invalid admin role"),
+  body("status")
+    .optional()
+    .customSanitizer((val) => (typeof val === "string" ? val.toLowerCase() : val))
+    .isIn(["active", "inactive"])
+    .withMessage("Invalid status value (active, inactive)"),
   body("profile_photo").optional(),
   handleValidationErrors,
 ];
+

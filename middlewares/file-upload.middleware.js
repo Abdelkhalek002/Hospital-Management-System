@@ -54,37 +54,34 @@ const upload = multer({
 // Upload files
 export const uploadRegistrationFiles = upload.fields([
   { name: "user_image_file", maxCount: 1 },
+  { name: "user_image_path", maxCount: 1 },
   { name: "national_id_file", maxCount: 1 },
+  { name: "national_id_path", maxCount: 1 },
   { name: "fees_file", maxCount: 1 },
+  { name: "fees_path", maxCount: 1 },
 ]);
 export const uploadAdminStudentFiles = upload.fields([
   { name: "national_id_file", maxCount: 1 },
+  { name: "national_id_path", maxCount: 1 },
   { name: "fees_file", maxCount: 1 },
+  { name: "fees_path", maxCount: 1 },
 ]);
 
 export const uploadProfilePhoto = upload.fields([
   { name: "user_image_file", maxCount: 1 },
+  { name: "user_image_path", maxCount: 1 },
   { name: "userImage_file", maxCount: 1 },
   { name: "photo", maxCount: 1 },
   { name: "profile_photo", maxCount: 1 },
+  { name: "profile_photo_path", maxCount: 1 },
 ]);
 export const uploadNationalIDFiles = upload.single("national_id_file");
 export const uploadFeesFile = upload.single("fees_file");
 
-export const uploadAdminPhoto = upload.fields([
-  { name: "profile_photo", maxCount: 1 },
-  { name: "photo", maxCount: 1 },
-  { name: "avatar", maxCount: 1 },
-  { name: "user_image_file", maxCount: 1 },
-]);
+export const uploadAdminPhoto = upload.fields([{ name: "profile_photo", maxCount: 1 }]);
 
 export const processAdminPhoto = asyncHandler(async (req, _res, next) => {
-  const file =
-    req.files?.profile_photo?.[0] ||
-    req.files?.photo?.[0] ||
-    req.files?.avatar?.[0] ||
-    req.files?.user_image_file?.[0] ||
-    req.file;
+  const file = req.files?.profile_photo?.[0] || req.file;
 
   if (file) {
     const adminId = String(req.params?.id || req.user?.id || "admin");
@@ -199,7 +196,7 @@ const resolveTargetStudentForAdminUpload = async (req) => {
     throw new ApiError("Student ID is required", StatusCode.BAD_REQUEST);
   }
 
-  const student = await new Base("students").findById(studentId);
+  const student = await new Base("users").findById(studentId);
   if (!student) {
     throw new ApiError("Student does not exist", StatusCode.NOT_FOUND);
   }
@@ -269,7 +266,13 @@ export const resizeFiles = asyncHandler(async (req, _res, next) => {
       fileBuffer: file.buffer,
     });
 
-    req.body[fieldName] = path.posix.join("students", username, fileName);
+    const storedPath = path.posix.join("students", username, fileName);
+    req.body[fieldName] = storedPath;
+
+    // Support both new _path and old _file fields
+    if (fieldName === "user_image_file") req.body.user_image_path = storedPath;
+    if (fieldName === "national_id_file") req.body.national_id_path = storedPath;
+    if (fieldName === "fees_file") req.body.fees_path = storedPath;
   }
   next();
 });
@@ -298,9 +301,11 @@ export const resizeUserPhoto = asyncHandler(async (req, _res, next) => {
     studentKey,
     fileBuffer: file.buffer,
   });
-  req.body[fieldName] = path.posix.join("students", username, fileName);
-  req.body.photo = req.body[fieldName];
-  req.body.userImage_file = req.body[fieldName];
+  const storedPath = path.posix.join("students", username, fileName);
+  req.body[fieldName] = storedPath;
+  req.body.user_image_path = storedPath;
+  req.body.photo = storedPath;
+  req.body.userImage_file = storedPath;
   next();
 });
 
@@ -332,12 +337,15 @@ const persistAdminPatchedStudentFile = async (req, fieldName) => {
   });
 
   req.body.student_upload_key = studentKey;
-  req.body[fieldName] = path.posix.join(
+  const storedPath = path.posix.join(
     "students",
     username,
     uploadDirectoryName,
     fileName,
   );
+  req.body[fieldName] = storedPath;
+  if (fieldName === "national_id_file") req.body.national_id_path = storedPath;
+  if (fieldName === "fees_file") req.body.fees_path = storedPath;
 };
 
 export const resizeNationalIDFiles = asyncHandler(async (req, _res, next) => {

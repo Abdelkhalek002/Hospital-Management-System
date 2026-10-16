@@ -118,17 +118,17 @@ export const adminDeleteRequest = asyncHandler(async (req, res) => {
 });
 
 // ==========================================
-// Student Medical Examination Endpoints
+// Student / User Medical Examination Endpoints
 // ==========================================
 
 //@desc     submit medical examination request
 //@route    POST /api/v1/myreservations
 //@access   public
 export const createRequest = asyncHandler(async (req, res) => {
-  const student_id = req.user.id;
+  const userId = req.user.id;
   const { clinic_id, date, examType } = req.body;
 
-  await service.createReservation(student_id, { clinic_id, date, examType });
+  await service.createReservation(userId, { clinic_id, date, examType });
   return res.status(StatusCode.CREATED).json({ message: "تم حجز الكشف بنجاح" });
 });
 
@@ -156,16 +156,22 @@ export const viewRequest = asyncHandler(async (req, res) => {
     .json(resource.toSingleReservationResource(results, req));
 });
 
-//@desc     view all my medical examinations (student list)
+//@desc     view all my medical examinations (user list)
 //@route    GET /api/v1/myreservations
 //@access   public
 export const getMyReservations = asyncHandler(async (req, res) => {
-  const student_id = req.query?.student_id || req.params?.student_id || req.user?.id;
+  const userId =
+    req.query?.user_id ||
+    req.query?.student_id ||
+    req.params?.user_id ||
+    req.params?.student_id ||
+    req.user?.id;
   const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
   const limit = Math.min(parseInt(req.query.limit, 10) || 10, 100);
 
   const responseData = await service.getMyReservations({
-    student_id,
+    user_id: userId,
+    student_id: userId,
     page,
     limit,
   });

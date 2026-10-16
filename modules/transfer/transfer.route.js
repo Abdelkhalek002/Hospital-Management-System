@@ -1,11 +1,18 @@
 import express from "express";
 const router = express.Router();
 
-import { roles } from "../../utils/roles.js";
 import * as controller from "../transfer/transfer.controller.js";
-import * as authMiddleware from "../../middlewares/auth.middleware.js";
+import { hasPermission } from "../../middlewares/auth.middleware.js";
+import { permissions } from "../../utils/permissions.js";
 
-router.route("/").post(controller.transfer).get(controller.getTransferred);
+router
+  .route("/")
+  .post(hasPermission(permissions.TRANSFERS_WRITE), controller.transfer)
+  .get(hasPermission(permissions.TRANSFERS_READ), controller.getTransferred);
 
-router.route("/:id").patch(controller.updateTransfer);
+router
+  .route("/:id")
+  .patch(hasPermission(permissions.TRANSFERS_WRITE), controller.updateTransfer);
+
 export default router;
+

@@ -54,10 +54,16 @@ class PasswordResetRepo {
 
   async updatePasswordAndConsumeOtp(email, hashedPassword) {
     await transaction(async (connection) => {
-      await connection.execute(
-        "UPDATE students SET password = ?, password_changed_at = NOW() WHERE email = ?",
+      const [userResult] = await connection.execute(
+        "UPDATE users SET password = ?, password_changed_at = NOW() WHERE email = ?",
         [hashedPassword, email],
       );
+      if (userResult.affectedRows === 0) {
+        await connection.execute(
+          "UPDATE admins SET password = ?, password_changed_at = NOW() WHERE email = ?",
+          [hashedPassword, email],
+        );
+      }
       await connection.execute(
         `UPDATE password_reset_otps SET used = 1, updated_at = NOW() WHERE email = ?`,
         [email],

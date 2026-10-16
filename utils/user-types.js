@@ -1,5 +1,6 @@
 export const UserType = {
-  STUDENT: "students",
+  USER: "users",
+  STUDENT: "users",
   ADMIN: "admins",
-  SUPER_ADMIN: "super_admins",
+  SUPER_ADMIN: "admins",
 };

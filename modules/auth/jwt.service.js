@@ -9,19 +9,17 @@ export const signToken = (user, expiresIn = process.env.JWT_EXPIRE_TIME || "90d"
   }
 
   const { id, email, role } = user;
-  const type = user.userType;
-  if (type === "super_admins" || type === "admins") {
-    const token = jwt.sign({ id, email, type, role }, process.env.JWT_SECRET, {
+  const type = user.userType || (role ? "admins" : "users");
+  if (type === "super_admins" || type === "admins" || role) {
+    const token = jwt.sign({ id, email, type: "admins", role }, process.env.JWT_SECRET, {
       expiresIn,
     });
     return token;
   }
-  if (type === "students") {
-    const token = jwt.sign({ id, email, type }, process.env.JWT_SECRET, {
-      expiresIn,
-    });
-    return token;
-  }
+  const token = jwt.sign({ id, email, type: "users" }, process.env.JWT_SECRET, {
+    expiresIn,
+  });
+  return token;
 };
 
 export const verifyToken = async (token, secret) => {

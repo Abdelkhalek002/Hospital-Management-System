@@ -61,6 +61,7 @@ class Base {
       params: columns.map(() => like),
     };
   }
+
   async getStats() {
     const labels = {
       usersCount: "Total users",
@@ -81,17 +82,17 @@ class Base {
 
       const sql = `
         SELECT
-          (SELECT COUNT(*) FROM students) AS usersCount,
+          (SELECT COUNT(*) FROM users) AS usersCount,
           (SELECT COUNT(*) FROM medical_examinations) AS reservationsCount,
           (SELECT COUNT(*) FROM clinics) AS clinicsCount,
-          (SELECT COUNT(*) FROM admins) AS adminsCount,
-          (SELECT COUNT(*) FROM super_admins) AS superAdminsCount,
+          (SELECT COUNT(*) FROM admins WHERE role != 'SUPER_ADMIN') AS adminsCount,
+          (SELECT COUNT(*) FROM admins WHERE role = 'SUPER_ADMIN') AS superAdminsCount,
           (
             SELECT AVG(reservationsCount)
             FROM (
               SELECT COUNT(*) AS reservationsCount
               FROM medical_examinations
-              GROUP BY student_id
+              GROUP BY user_id
             ) AS reservationsPerUser
           ) AS avgReservationsPerUser,
           (
@@ -141,6 +142,7 @@ class Base {
       },
     ];
   }
+
   async index({
     page,
     limit,
@@ -153,33 +155,32 @@ class Base {
   }) {
     const search = this.buildSearch(searchableColumns, searchKey);
 
-    const whereClause = `
-    ${baseWhere}
-    AND ${search.clause}
-  `;
-
-    const params = [...search.params];
+    const whereConditions = [baseWhere];
+    if (search.clause !== "1=1") {
+      whereConditions.push(search.clause);
+    }
+    const whereClause = whereConditions.join(" AND ");
 
     const countSql = `
-    SELECT COUNT(*) AS count
-    FROM ${this.table}
-    ${joins}
-    WHERE ${whereClause}
-  `;
+      SELECT COUNT(DISTINCT ${this.table}.id) AS count
+      FROM ${this.table}
+      ${joins}
+      WHERE ${whereClause}
+    `;
 
     const dataSql = `
-    SELECT ${select}
-    FROM ${this.table}
-    ${joins}
-    WHERE ${whereClause}
-    ORDER BY ${orderBy}
-    LIMIT ? OFFSET ?
-  `;
+      SELECT ${select}
+      FROM ${this.table}
+      ${joins}
+      WHERE ${whereClause}
+      ORDER BY ${orderBy}
+      LIMIT ? OFFSET ?
+    `;
 
-    return this.paginate({
+    return await this.paginate({
       countSql,
       dataSql,
-      params,
+      params: search.params,
       page,
       limit,
     });

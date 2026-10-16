@@ -12,6 +12,7 @@ import { roles } from "../../utils/roles.js";
 export const transfer = asyncHandler(async (req, res) => {
   // 1. pick valid data only from req.body
   const allowedFields = [
+    "user_id",
     "student_id",
     "medical_exam_id",
     "hospital_id",

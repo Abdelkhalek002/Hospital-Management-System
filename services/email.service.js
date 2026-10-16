@@ -10,7 +10,7 @@ import { signToken, verifyToken } from "../modules/auth/jwt.service.js";
 import dotenv from "dotenv";
 import { UserType } from "../utils/user-types.js";
 import { StatusCode } from "../utils/status-codes.js";
-import User from "../repositories/user.repository.js";
+import User from "../modules/user/user.repository.js";
 dotenv.config();
 
 const renderHTML = async (path, data) => {
@@ -102,7 +102,7 @@ export const activateEmail = asyncHandler(async (req, res) => {
   // 1. verify token
   const decoded = await verifyToken(token, process.env.JWT_SECRET);
   // 2. activate email and save data into the database
-  const user = await new User(UserType.STUDENT);
+  const user = await new User(UserType.USER);
   user.activateEmail(decoded.email);
   // 3. send response
   return res.status(StatusCode.OK).send(html);

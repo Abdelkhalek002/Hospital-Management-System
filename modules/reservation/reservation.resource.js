@@ -62,18 +62,17 @@ export const toSingleReservationResource = (reservation, req = null) => {
     updatedAt: item.updated_at,
   };
 
-  if (item.user_image_file || item.userImage) {
-    result.userImage = formatImageUrl(
-      item.user_image_file ?? item.userImage,
-      req,
-    );
+  const imagePath =
+    item.user_image_path || item.user_image_file || item.userImage;
+  if (imagePath) {
+    result.userImage = formatImageUrl(imagePath, req);
   }
 
   return result;
 };
 
 // ==========================================
-// 2. Student Reservations List (getMyReservations)
+// 2. Student / User Reservations List (getMyReservations)
 // ==========================================
 export const toMyReservationsListResource = (items = [], req = null) => {
   return items.map((item) => {
@@ -94,11 +93,10 @@ export const toMyReservationsListResource = (items = [], req = null) => {
           : null,
     };
 
-    if (item.user_image_file || item.userImage) {
-      res.userImage = formatImageUrl(
-        item.user_image_file ?? item.userImage,
-        req,
-      );
+    const imagePath =
+      item.user_image_path || item.user_image_file || item.userImage;
+    if (imagePath) {
+      res.userImage = formatImageUrl(imagePath, req);
     }
 
     return res;
@@ -109,23 +107,33 @@ export const toMyReservationsListResource = (items = [], req = null) => {
 // 3. Admin All Reservations List (adminGetAllReservations)
 // ==========================================
 export const toAdminReservationsListResource = (items = [], req = null) => {
-  return items.map((item) => ({
-    id: item.id,
-    examType: item.exam_type ?? item.examType,
-    status: item.status,
-    date: item.date,
-    clinic: {
-      id: item.clinic_id,
-      name: item.clinic_name,
-    },
-    level: item.level_name,
-    student: {
-      id: item.student_id,
-      name: item.student_name,
-      nationalId: item.national_id,
-      userImage: formatImageUrl(item.user_image_file ?? item.userImage, req),
-    },
-  }));
+  return items.map((item) => {
+    const userId = item.user_id ?? item.student_id;
+    const userName = item.user_name ?? item.student_name;
+    const rawImage = item.user_image_path || item.user_image_file || item.userImage;
+    const userImgUrl = formatImageUrl(rawImage, req);
+
+    const userObj = {
+      id: userId,
+      name: userName,
+      nationalId: item.national_id != null ? String(item.national_id) : null,
+      userImage: userImgUrl,
+    };
+
+    return {
+      id: item.id,
+      examType: item.exam_type ?? item.examType,
+      status: item.status,
+      date: item.date,
+      clinic: {
+        id: item.clinic_id,
+        name: item.clinic_name,
+      },
+      level: item.level_name,
+      student: userObj,
+      user: userObj,
+    };
+  });
 };
 
 // ==========================================
@@ -139,7 +147,7 @@ export const toSingleEmergencyReservationResource = (item, _req = null) => {
   return {
     id: row.emergencyUser_id,
     name: row.Name,
-    nationalId: row.national_id,
+    nationalId: row.national_id != null ? String(row.national_id) : null,
     clinicId: row.clinic_id,
     levelId: row.level_id,
     facultyId: row.faculty_id,
@@ -159,7 +167,7 @@ export const toEmergencyReservationsListResource = (
   return items.map((item) => ({
     id: item.emergencyUser_id,
     name: item.Name,
-    nationalId: item.national_id,
+    nationalId: item.national_id != null ? String(item.national_id) : null,
     time: item.time,
     clinicName: item.clinic_name,
     levelName: item.level_name,

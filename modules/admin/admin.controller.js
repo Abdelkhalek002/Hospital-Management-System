@@ -4,26 +4,28 @@ import Base from "../../repositories/base.repository.js";
 import * as service from "./admin.service.js";
 import { auditLog } from "../../utils/audit-log.js";
 import { pick } from "../../utils/pick-from-body-request.js";
+import {
+  formatAdminPhotoUrl,
+  toAdminResource,
+  toAdminListResource,
+  toAdminLogListResource,
+} from "./admin.resource.js";
 
-const getAdminPhotoUrl = (req, photo) => {
-  if (!photo) return null;
-  if (photo.startsWith("http://") || photo.startsWith("https://")) {
-    return photo;
-  }
-  return `${req.protocol}://${req.get("host")}/api/v1/uploads/admins/${photo}`;
-};
+// Re-export helper for backward compatibility
+export const getAdminPhotoUrl = (req, photo) => formatAdminPhotoUrl(photo, req);
 
 export const createOne = asyncHandler(async (req, res) => {
   // 1. pick valid data from req.body (handling username / userName / name)
   const username = req.body.username || req.body.userName || req.body.name;
-  const { email, password, role, profile_photo } = req.body;
+  const { email, password, role, profile_photo, status } = req.body;
 
   const data = {
     username,
     email,
     password,
     role,
-    profile_photo,
+    status: status || "active",
+    profile_photo_path: profile_photo || null,
   };
 
   // 2. create admin
@@ -37,17 +39,13 @@ export const createOne = asyncHandler(async (req, res) => {
   };
   await auditLog(auditData);
 
-  const formattedAdmin = {
-    ...result,
-    profile_photo_url: getAdminPhotoUrl(req, result.profile_photo),
-  };
+  const formattedAdmin = toAdminResource(result, req);
 
   // 4. send response
   return res.status(StatusCode.CREATED).json({
     status: "success",
     message: `تم إضافة أدمن جديد`,
     data: formattedAdmin,
-    admin: formattedAdmin,
   });
 });
 
@@ -57,12 +55,15 @@ export const updateOne = asyncHandler(async (req, res) => {
   const allowedFields = [
     "email",
     "role",
-    "is_active",
+    "status",
     "password",
-    "profile_photo",
   ];
   const data = pick(req.body, allowedFields);
   if (username) data.username = username;
+  if (req.body.profile_photo !== undefined) {
+    data.profile_photo_path = req.body.profile_photo;
+  }
+
 
   // 2. update admin
   const result = await service.updateOne(id, data);
@@ -75,10 +76,7 @@ export const updateOne = asyncHandler(async (req, res) => {
   };
   await auditLog(auditData);
 
-  const formattedAdmin = {
-    ...result,
-    profile_photo_url: getAdminPhotoUrl(req, result.profile_photo),
-  };
+  const formattedAdmin = toAdminResource(result, req);
 
   // 4. send response
   return res.status(StatusCode.OK).json({
@@ -92,10 +90,7 @@ export const getOne = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const result = await service.getOne(id);
 
-  const formattedAdmin = {
-    ...result,
-    profile_photo_url: getAdminPhotoUrl(req, result.profile_photo),
-  };
+  const formattedAdmin = toAdminResource(result, req);
 
   return res.status(StatusCode.OK).json({
     status: "success",
@@ -105,11 +100,7 @@ export const getOne = asyncHandler(async (req, res) => {
 
 export const getAll = asyncHandler(async (req, res) => {
   const result = await service.getAll();
-
-  const formattedAdmins = result.map((admin) => ({
-    ...admin,
-    profile_photo_url: getAdminPhotoUrl(req, admin.profile_photo),
-  }));
+  const formattedAdmins = toAdminListResource(result, req);
 
   return res.status(StatusCode.OK).json({
     status: "success",
@@ -131,7 +122,6 @@ export const deleteOne = asyncHandler(async (req, res) => {
   return res.status(StatusCode.OK).json({
     status: "success",
     message: "تم حذف الادمن بنجاح",
-    data: deletedAdmin,
   });
 });
 
@@ -142,13 +132,17 @@ export const getLogs = asyncHandler(async (req, res) => {
 
   const result = await service.getLogs({ page, limit });
 
-  return res.status(StatusCode.OK).json(result);
+  return res.status(StatusCode.OK).json({
+    totalPages: result.totalPages,
+    currentPage: result.currentPage,
+    adminLogs: toAdminLogListResource(result.adminLogs),
+  });
 });
 
 export const getLog = asyncHandler(async (req, res) => {
   const adminId = req.params.admin_id || req.params.id;
   const result = await service.getLog(adminId);
-  return res.status(StatusCode.OK).json(result);
+  return res.status(StatusCode.OK).json(toAdminLogListResource(result));
 });
 
 export const deleteLogs = asyncHandler(async (req, res) => {

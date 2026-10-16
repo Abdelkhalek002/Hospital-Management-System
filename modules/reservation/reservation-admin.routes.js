@@ -2,47 +2,54 @@ import express from "express";
 const router = express.Router();
 
 import * as reservationController from "./reservation.controller.js";
-import * as authMiddleware from "../../middlewares/auth.middleware.js";
+import { protect, hasPermission } from "../../middlewares/auth.middleware.js";
+import { permissions } from "../../utils/permissions.js";
 
-import { protect, allowedTo } from "../../middlewares/auth.middleware.js";
-import { roles } from "../../utils/roles.js";
+router.use(protect);
 
-router.use(authMiddleware.protect);
-
-router.get("/byMonth", reservationController.getReservationsPerMonth);
+router.get(
+  "/byMonth",
+  hasPermission(permissions.RESERVATIONS_READ),
+  reservationController.getReservationsPerMonth,
+);
 
 router.route("/:id").put(
-  //authMiddleware.allowedTo(roles.SUPER_ADMIN, roles.COUNTER),
+  hasPermission(permissions.RESERVATIONS_APPROVE),
   reservationController.isAccepted,
 );
 
 router
   .route("/")
   .post(
-    allowedTo(roles.SUPER_ADMIN, roles.COUNTER),
+    hasPermission(permissions.RESERVATIONS_WRITE),
     reservationController.adminCreateRequest,
   )
   .get(
-    allowedTo(roles.SUPER_ADMIN, roles.COUNTER, roles.OBSERVER),
+    hasPermission(permissions.RESERVATIONS_READ),
     reservationController.adminGetAllReservations,
   );
 
 router
   .route("/emergency")
   .get(
-    allowedTo(roles.SUPER_ADMIN, roles.COUNTER),
+    hasPermission(permissions.RESERVATIONS_READ),
     reservationController.adminGetAllEmergencyReservations,
   );
+
 router
   .route("/:emergencyUser_id")
   .put(
-    allowedTo(roles.SUPER_ADMIN, roles.COUNTER),
+    hasPermission(permissions.RESERVATIONS_WRITE),
     reservationController.adminUpdateRequest,
   )
-  .get(reservationController.adminViewRequest)
+  .get(
+    hasPermission(permissions.RESERVATIONS_READ),
+    reservationController.adminViewRequest,
+  )
   .delete(
-    allowedTo(roles.SUPER_ADMIN, roles.COUNTER),
+    hasPermission(permissions.RESERVATIONS_WRITE),
     reservationController.adminDeleteRequest,
   );
 
 export default router;
+
