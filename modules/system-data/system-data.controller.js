@@ -10,16 +10,10 @@ const extractName = (req, resourceKey) => {
     req.body[config.alias] ??
     req.body.name ??
     req.body.hospital_name ??
-    req.body.hospName ??
     req.body.clinic_name ??
-    req.body.clinicName ??
     req.body.faculty_name ??
-    req.body.facultyName ??
     req.body.gov_name ??
-    req.body.govName ??
-    req.body.level_name ??
-    req.body.levelName
-  );
+    req.body.level_name);
 };
 
 const extractId = (req, resourceKey) => {

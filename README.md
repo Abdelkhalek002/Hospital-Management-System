@@ -166,7 +166,7 @@ Implemented under `modules/admin/` and `modules/transfer/`.
 - `GET /api/v1/admins/stats` - dashboard summary metrics and reservation statistics
 - transfer endpoints under `/api/v1/admins/transfers`
 
-Role validation supports both internal hash codes and friendly names (`counter`, `second_manager`, `viewer`, `observer`, `medical_check_manager`, `super_admin`).
+Role validation supports both internal hash codes and friendly names (`counter`, `medical_tests_manager`, `viewer`, `observer`, `medical_check_manager`, `super_admin`).
 
 ### System Data
 

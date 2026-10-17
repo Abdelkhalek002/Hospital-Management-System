@@ -5,7 +5,7 @@ import { roles } from "../../utils/roles.js";
 
 const validAdminRoles = [
   roles.SUPER_ADMIN,
-  roles.SECOND_MANAGER,
+  roles.MEDICAL_TESTS_MANAGER,
   roles.OBSERVER,
   roles.MEDICAL_CHECK_MANAGER,
   roles.COUNTER,
@@ -14,13 +14,13 @@ const validAdminRoles = [
 
 const roleMap = {
   [roles.SUPER_ADMIN]: roles.SUPER_ADMIN,
-  [roles.SECOND_MANAGER]: roles.SECOND_MANAGER,
+  [roles.MEDICAL_TESTS_MANAGER]: roles.MEDICAL_TESTS_MANAGER,
   [roles.OBSERVER]: roles.OBSERVER,
   [roles.MEDICAL_CHECK_MANAGER]: roles.MEDICAL_CHECK_MANAGER,
   [roles.COUNTER]: roles.COUNTER,
   [roles.TRANSFER_CLERK]: roles.TRANSFER_CLERK,
   super_admin: roles.SUPER_ADMIN,
-  second_manager: roles.SECOND_MANAGER,
+  medical_tests_manager: roles.MEDICAL_TESTS_MANAGER,
   observer: roles.OBSERVER,
   viewer: roles.OBSERVER,
   medical_check_manager: roles.MEDICAL_CHECK_MANAGER,

@@ -157,19 +157,19 @@ async function main() {
     },
   });
 
-  // Second Manager
+  // Medical Tests Manager
   await prisma.admins.upsert({
-    where: { email: "manager@hsh.com" },
+    where: { email: "tests_manager@hsh.com" },
     update: {
       password: defaultPassword,
-      role: roles.SECOND_MANAGER,
+      role: roles.MEDICAL_TESTS_MANAGER,
       status: "ACTIVE",
     },
     create: {
-      username: "manager",
-      email: "manager@hsh.com",
+      username: "tests_manager",
+      email: "tests_manager@hsh.com",
       password: defaultPassword,
-      role: roles.SECOND_MANAGER,
+      role: roles.MEDICAL_TESTS_MANAGER,
       status: "ACTIVE",
     },
   });

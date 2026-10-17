@@ -28,7 +28,7 @@ export const permissions = Object.freeze({
 export const rolePermissions = Object.freeze({
   [roles.SUPER_ADMIN]: ["*"],
 
-  [roles.SECOND_MANAGER]: [
+  [roles.MEDICAL_TESTS_MANAGER]: [
     // permissions.ADMINS_READ,
     // permissions.STATS_READ,
     // permissions.LOGS_READ,
@@ -50,7 +50,7 @@ export const rolePermissions = Object.freeze({
   ],
 
   [roles.COUNTER]: [
-    // permissions.USERS_READ,
+    permissions.USERS_READ,
     // permissions.RESERVATIONS_READ,
     // permissions.RESERVATIONS_WRITE,
     // permissions.TRANSFERS_READ,

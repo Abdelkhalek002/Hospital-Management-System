@@ -71,7 +71,7 @@ app.use("/api/v1/admins/", adminRoute);
 app.use("/api/v1/reservations/", adminReservationRoute);
 app.use("/api/v1/users/", userRoute);
 app.use("/api/v1/Myreservations/", userReservationRoute);
-app.use("/api/v1/sysdata/", systemDataRoutes);
+app.use("/api/v1/", systemDataRoutes);
 
 app.use((req, res, next) => {
   next(new ApiError(`Can't find this route: ${req.originalUrl}`, 400));
