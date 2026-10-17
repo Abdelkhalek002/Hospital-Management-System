@@ -227,6 +227,10 @@ class UserRepository extends Base {
     const values = [];
 
     const cleanData = { ...data };
+    if ("user_profile_photo" in cleanData && !("user_image_path" in cleanData)) {
+      cleanData.user_image_path = cleanData.user_profile_photo;
+      delete cleanData.user_profile_photo;
+    }
     if ("user_image_file" in cleanData && !("user_image_path" in cleanData)) {
       cleanData.user_image_path = cleanData.user_image_file;
       delete cleanData.user_image_file;

@@ -35,16 +35,7 @@ export const getMe = asyncHandler(async (req, res) => {
 
 export const updateMe = asyncHandler(async (req, res) => {
   const user = req.user;
-  const imageVal =
-    req.body.user_image_path ||
-    req.body.user_image_file ||
-    req.body.photo ||
-    req.body.userImage_file;
-  if (imageVal) {
-    req.body.user_image_path = imageVal;
-    req.body.user_image_file = imageVal;
-  }
-  const allowedFields = ["username", "user_image_path", "user_image_file"];
+  const allowedFields = ["username", "user_profile_photo"];
   const data = pick(req.body, allowedFields);
 
   const updatedUser = await service.updateMe(user.id, data);
@@ -109,8 +100,7 @@ export const update = asyncHandler(async (req, res) => {
     "national_id_file",
     "fees_path",
     "fees_file",
-    "user_image_path",
-    "user_image_file",
+    "user_profile_photo",
   ];
   const data = pick(req.body, allowedFields);
 

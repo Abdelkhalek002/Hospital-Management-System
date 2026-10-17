@@ -50,9 +50,9 @@ export const signup = async (studentData) => {
     ...studentData,
     password: hashedPassword,
     national_id: String(studentData.national_id),
-    user_image_path: studentData.user_image_path || studentData.user_image_file,
-    national_id_path: studentData.national_id_path || studentData.national_id_file,
-    fees_path: studentData.fees_path || studentData.fees_file,
+    user_image_path: studentData.user_profile_photo,
+    national_id_path: studentData.national_id_file,
+    fees_path: studentData.fees_file,
   };
 
   //4. create the user (unverified by default)

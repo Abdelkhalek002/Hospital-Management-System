@@ -54,9 +54,9 @@ export const validateSignup = [
     .notEmpty()
     .withMessage("phone number required")
     .isMobilePhone("ar-EG"),
-  check("user_image_file").custom((_, { req }) => {
+  check("user_profile_photo").custom((_, { req }) => {
     const hasFile =
-      req.files?.user_image_file?.[0] || req.body?.user_image_file;
+      req.files?.user_profile_photo?.[0] || req.body?.user_profile_photo;
     if (!hasFile) {
       throw new Error("user profile photo is required");
     }
@@ -64,14 +64,21 @@ export const validateSignup = [
   }),
   check("national_id_file").custom((_, { req }) => {
     const hasFile =
-      req.files?.national_id_file?.[0] || req.body?.national_id_file;
+      req.files?.national_id_file?.[0] ||
+      req.files?.national_id_path?.[0] ||
+      req.body?.national_id_file ||
+      req.body?.national_id_path;
     if (!hasFile) {
       throw new Error("national id file is required");
     }
     return true;
   }),
   check("fees_file").custom((_, { req }) => {
-    const hasFile = req.files?.fees_file?.[0] || req.body?.fees_file;
+    const hasFile =
+      req.files?.fees_file?.[0] ||
+      req.files?.fees_path?.[0] ||
+      req.body?.fees_file ||
+      req.body?.fees_path;
     if (!hasFile) {
       throw new Error("fees file is required");
     }

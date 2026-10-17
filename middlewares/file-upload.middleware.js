@@ -19,6 +19,7 @@ const registrationUploadFieldNames = [
 ];
 const fileFieldAliases = {
   user_image_file: "profile",
+  user_profile_photo: "profile",
   national_id_file: "national-id",
   fees_file: "fees",
 };
@@ -55,6 +56,8 @@ const upload = multer({
 export const uploadRegistrationFiles = upload.fields([
   { name: "user_image_file", maxCount: 1 },
   { name: "user_image_path", maxCount: 1 },
+  { name: "user_profile_photo", maxCount: 1 },
+  { name: "user_profile_photo_path", maxCount: 1 },
   { name: "national_id_file", maxCount: 1 },
   { name: "national_id_path", maxCount: 1 },
   { name: "fees_file", maxCount: 1 },
@@ -68,12 +71,7 @@ export const uploadAdminStudentFiles = upload.fields([
 ]);
 
 export const uploadProfilePhoto = upload.fields([
-  { name: "user_image_file", maxCount: 1 },
-  { name: "user_image_path", maxCount: 1 },
-  { name: "userImage_file", maxCount: 1 },
-  { name: "photo", maxCount: 1 },
-  { name: "profile_photo", maxCount: 1 },
-  { name: "profile_photo_path", maxCount: 1 },
+  { name: "user_profile_photo", maxCount: 1 },
 ]);
 export const uploadNationalIDFiles = upload.single("national_id_file");
 export const uploadFeesFile = upload.single("fees_file");
@@ -163,12 +161,13 @@ const createImmutableUserPhotoKey = ({ user, username }) => {
 const formatTimestampForFileName = () =>
   new Date().toISOString().replace(/[-:.TZ]/g, "");
 
-const buildAuditFriendlyFileName = (fieldName, studentKey) => {
+const buildAuditFriendlyFileName = (fieldName, studentKey, mimeType) => {
   const alias = fileFieldAliases[fieldName] || "document";
   const timestamp = formatTimestampForFileName();
   const randomSuffix = randomBytes(4).toString("hex");
+  const ext = mimeType === "application/pdf" ? "pdf" : "jpeg";
 
-  return `${alias}-${studentKey}-${timestamp}-${randomSuffix}.jpeg`;
+  return `${alias}-${studentKey}-${timestamp}-${randomSuffix}.${ext}`;
 };
 
 const getSafeChildPath = (parentDirectory, ...pathSegments) => {
@@ -214,6 +213,7 @@ const writeStudentFileCollisionSafe = async ({
   fieldName,
   studentKey,
   fileBuffer,
+  mimeType,
   outputDirectory = studentDirectory,
 }) => {
   const safeOutputDirectory = getSafeChildPath(
@@ -224,7 +224,7 @@ const writeStudentFileCollisionSafe = async ({
   await ensureDirectory(safeOutputDirectory);
 
   for (let attempt = 0; attempt < FILE_NAME_MAX_ATTEMPTS; attempt += 1) {
-    const fileName = buildAuditFriendlyFileName(fieldName, studentKey);
+    const fileName = buildAuditFriendlyFileName(fieldName, studentKey, mimeType);
     const outputPath = getSafeChildPath(safeOutputDirectory, fileName);
 
     try {
@@ -249,8 +249,41 @@ export const resizeFiles = asyncHandler(async (req, _res, next) => {
   const studentDirectory = getStudentDirectory(username);
   let studentKey = null;
   await ensureDirectory(studentDirectory);
-  for (const fieldName of registrationUploadFieldNames) {
-    const file = getUploadedFile(req, fieldName);
+
+  const fileGroups = [
+    {
+      aliases: [
+        "user_profile_photo",
+        "user_image_file",
+        "user_image_path",
+        "user_profile_photo_path",
+      ],
+      auditField: "user_image_file",
+      destKeys: [
+        "user_profile_photo",
+        "user_image_file",
+        "user_image_path",
+      ],
+    },
+    {
+      aliases: ["national_id_file", "national_id_path"],
+      auditField: "national_id_file",
+      destKeys: ["national_id_file", "national_id_path"],
+    },
+    {
+      aliases: ["fees_file", "fees_path"],
+      auditField: "fees_file",
+      destKeys: ["fees_file", "fees_path"],
+    },
+  ];
+
+  for (const group of fileGroups) {
+    let file = null;
+    for (const fieldName of group.aliases) {
+      file = getUploadedFile(req, fieldName);
+      if (file) break;
+    }
+
     if (!file) {
       continue;
     }
@@ -259,36 +292,35 @@ export const resizeFiles = asyncHandler(async (req, _res, next) => {
       studentKey = createImmutableStudentKey(req.body);
       req.body.student_upload_key = studentKey;
     }
+
     const fileName = await writeStudentFileCollisionSafe({
       studentDirectory,
-      fieldName,
+      fieldName: group.auditField,
       studentKey,
       fileBuffer: file.buffer,
+      mimeType: file.mimetype,
     });
 
     const storedPath = path.posix.join("students", username, fileName);
-    req.body[fieldName] = storedPath;
-
-    // Support both new _path and old _file fields
-    if (fieldName === "user_image_file") req.body.user_image_path = storedPath;
-    if (fieldName === "national_id_file") req.body.national_id_path = storedPath;
-    if (fieldName === "fees_file") req.body.fees_path = storedPath;
+    for (const key of group.destKeys) {
+      req.body[key] = storedPath;
+    }
   }
+
   next();
 });
 
 export const resizeUserPhoto = asyncHandler(async (req, _res, next) => {
   const username = req.user.username;
   const studentDirectory = getStudentDirectory(username);
-  const fieldName = "user_image_file";
+  const file = getUploadedFile(req, "user_profile_photo");
 
-  await ensureDirectory(studentDirectory);
-  const file = getUploadedFile(req, fieldName);
   if (!file) {
     next();
     return;
   }
 
+  await ensureDirectory(studentDirectory);
   const studentKey = createImmutableUserPhotoKey({
     user: req.user,
     username,
@@ -297,15 +329,13 @@ export const resizeUserPhoto = asyncHandler(async (req, _res, next) => {
 
   const fileName = await writeStudentFileCollisionSafe({
     studentDirectory,
-    fieldName,
+    fieldName: "user_profile_photo",
     studentKey,
     fileBuffer: file.buffer,
+    mimeType: file.mimetype,
   });
   const storedPath = path.posix.join("students", username, fileName);
-  req.body[fieldName] = storedPath;
-  req.body.user_image_path = storedPath;
-  req.body.photo = storedPath;
-  req.body.userImage_file = storedPath;
+  req.body.user_profile_photo = storedPath;
   next();
 });
 

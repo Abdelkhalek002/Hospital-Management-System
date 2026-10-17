@@ -33,6 +33,16 @@ export class Email {
   }
   newTransport() {
     if (
+      process.env.NODE_ENV === "testing" ||
+      process.env.DISABLE_EMAIL === "true" ||
+      process.env.EMAIL_SERVICE === "mock"
+    ) {
+      return nodemailer.createTransport({
+        jsonTransport: true,
+      });
+    }
+
+    if (
       process.env.EMAIL_SERVICE === "gmail" ||
       process.env.EMAIL_HOST?.includes("gmail")
     ) {

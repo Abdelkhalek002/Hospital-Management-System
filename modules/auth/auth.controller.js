@@ -44,12 +44,9 @@ const allowedFields = [
   "gender",
   "birth_date",
   "phone_number",
-  "user_image_file",
-  "user_image_path",
+  "user_profile_photo",
   "national_id_file",
-  "national_id_path",
   "fees_file",
-  "fees_path",
 ];
 
 export const signup = asyncHandler(async (req, res) => {

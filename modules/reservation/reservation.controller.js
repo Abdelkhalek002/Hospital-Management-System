@@ -169,6 +169,18 @@ export const getMyReservations = asyncHandler(async (req, res) => {
   const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
   const limit = Math.min(parseInt(req.query.limit, 10) || 10, 100);
 
+  const isApproved =
+    Boolean(req.user?.role) ||
+    (Boolean(req.user?.is_active) && req.user?.document_status === "approved");
+
+  if (!isApproved) {
+    return res.status(StatusCode.OK).json({
+      totalPages: 0,
+      currentPage: page,
+      results: [],
+    });
+  }
+
   const responseData = await service.getMyReservations({
     user_id: userId,
     student_id: userId,

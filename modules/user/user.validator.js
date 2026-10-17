@@ -21,8 +21,7 @@ export const updateValidator = [
     .isIn(["ذكر", "أنثي"])
     .withMessage("Invalid gender data"),
 
-  body("user_image_path").optional(),
-  body("user_image_file").optional(),
+  body("user_profile_photo").optional(),
 
   body("national_id")
     .optional()

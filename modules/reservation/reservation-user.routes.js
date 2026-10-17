@@ -1,8 +1,5 @@
 import express from "express";
 import * as reservationController from "./reservation.controller.js";
-
-// IMPORT VALIDATORS
-
 import {
   protect,
   restrictToUser,
@@ -12,11 +9,12 @@ import { createRequestValidator } from "./reservation.validator.js";
 
 const router = express.Router();
 
-router.use(protect, restrictToUser, requireApprovedUser);
+router.use(protect, restrictToUser);
 
 router
   .route("/")
   .post(
+    requireApprovedUser,
     createRequestValidator,
     reservationController.createRequest,
   )
@@ -24,8 +22,8 @@ router
 
 router
   .route("/:student_id/:medicEx_id")
-  .put(reservationController.updateRequest)
-  .get(reservationController.viewRequest)
-  .delete(reservationController.cancelRequest);
+  .put(requireApprovedUser, reservationController.updateRequest)
+  .get(requireApprovedUser, reservationController.viewRequest)
+  .delete(requireApprovedUser, reservationController.cancelRequest);
 
 export default router;
