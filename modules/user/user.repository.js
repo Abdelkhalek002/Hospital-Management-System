@@ -152,7 +152,7 @@ class UserRepository extends Base {
     return result;
   }
 
-  async getAll(searchKey, searchValue, documentStatus = null) {
+  async getAll(searchKey, searchValue, documentStatus = null, filters = {}) {
     let sql = `SELECT 
                   u.id, u.username, u.email,
                   u.user_image_path AS photo,
@@ -187,6 +187,31 @@ class UserRepository extends Base {
     if (documentStatus) {
       whereClauses.push(`u.document_status = ?`);
       params.push(documentStatus);
+    }
+
+    if (filters?.faculty_id) {
+      whereClauses.push(`u.faculty_id = ?`);
+      params.push(filters.faculty_id);
+    }
+
+    if (filters?.level_id) {
+      whereClauses.push(`u.level_id = ?`);
+      params.push(filters.level_id);
+    }
+
+    if (filters?.gender) {
+      whereClauses.push(`u.gender = ?`);
+      params.push(filters.gender);
+    }
+
+    if (filters?.nationality_id) {
+      whereClauses.push(`u.nationality_id = ?`);
+      params.push(filters.nationality_id);
+    }
+
+    if (filters?.date) {
+      whereClauses.push(`DATE(u.created_at) = ?`);
+      params.push(filters.date);
     }
 
     if (whereClauses.length > 0) {

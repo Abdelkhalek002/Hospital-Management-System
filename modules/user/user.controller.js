@@ -73,7 +73,14 @@ export const getAll = asyncHandler(async (req, res) => {
       searchValue = generalSearch;
     }
     const documentStatus = req.query.document_status || req.query.status || null;
-  const rawUsers = await service.getAll(searchKey, searchValue, documentStatus);
+  const filters = {
+    faculty_id: req.query.faculty_id || null,
+    level_id: req.query.level_id || null,
+    gender: req.query.gender || null,
+    nationality_id: req.query.nationality_id || null,
+    date: req.query.date || null,
+  };
+  const rawUsers = await service.getAll(searchKey, searchValue, documentStatus, filters);
   const result = toAdminUsersListResource(rawUsers, req);
 
   res.status(StatusCode.OK).json({

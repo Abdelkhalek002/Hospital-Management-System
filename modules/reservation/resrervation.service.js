@@ -147,6 +147,11 @@ export const getAllAdminReservations = async ({
   year = null,
   clinicId = null,
   status = null,
+  date = null,
+  facultyId = null,
+  levelId = null,
+  gender = null,
+  nationalityId = null,
 }) => {
   const result = await new Reservation().getAllAdminReservations({
     page,
@@ -157,6 +162,11 @@ export const getAllAdminReservations = async ({
     year,
     clinicId,
     status,
+    date,
+    facultyId,
+    levelId,
+    gender,
+    nationalityId,
   });
 
   (result.data || []).forEach((row) => {

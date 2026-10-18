@@ -221,6 +221,10 @@ export const toAdminUserListItemResource = (
     level_id: item.level_id || null,
     level_name: item.level_name || item.level || null,
 
+    gender: item.gender || null,
+    nationality_id: item.nationality_id || null,
+    nationality_name: item.nationality_name || item.nationality || null,
+
     is_active: Boolean(item.is_active),
     document_status: item.document_status,
 

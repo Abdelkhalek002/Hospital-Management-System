@@ -97,6 +97,11 @@ export const adminGetAllReservations = asyncHandler(async (req, res) => {
   const year = req.query.year ? parseInt(req.query.year, 10) : null;
   const clinicId = req.query.clinic_id || req.query.clinicId || null;
   const status = req.query.status || null;
+  const date = req.query.date || null;
+  const facultyId = req.query.faculty_id || req.query.facultyId || null;
+  const levelId = req.query.level_id || req.query.levelId || null;
+  const gender = req.query.gender || null;
+  const nationalityId = req.query.nationality_id || req.query.nationalityId || null;
 
   const responseData = await service.getAllAdminReservations({
     page,
@@ -107,6 +112,11 @@ export const adminGetAllReservations = asyncHandler(async (req, res) => {
     year,
     clinicId,
     status,
+    date,
+    facultyId,
+    levelId,
+    gender,
+    nationalityId,
   });
 
   return res.status(StatusCode.OK).json({

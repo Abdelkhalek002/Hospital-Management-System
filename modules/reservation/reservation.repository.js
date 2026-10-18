@@ -189,6 +189,11 @@ class Reservation extends Base {
     year = null,
     clinicId = null,
     status = null,
+    date = null,
+    facultyId = null,
+    levelId = null,
+    gender = null,
+    nationalityId = null,
   }) {
     const searchParam = `%${searchKey}%`;
     const whereClauses = [];
@@ -238,10 +243,46 @@ class Reservation extends Base {
       params.push(Number(clinicId));
     }
 
+    // Exact Date filter (YYYY-MM-DD)
+    if (date) {
+      whereClauses.push(`DATE(reservations.date) = ?`);
+      params.push(date);
+    }
+
+    // Faculty filter
+    if (facultyId) {
+      whereClauses.push(`users.faculty_id = ?`);
+      params.push(Number(facultyId));
+    }
+
+    // Level filter
+    if (levelId) {
+      whereClauses.push(`users.level_id = ?`);
+      params.push(Number(levelId));
+    }
+
+    // Gender filter
+    if (gender) {
+      whereClauses.push(`users.gender = ?`);
+      params.push(gender);
+    }
+
+    // Nationality filter
+    if (nationalityId) {
+      whereClauses.push(`users.nationality_id = ?`);
+      params.push(Number(nationalityId));
+    }
+
     // Status filter
     if (status) {
-      whereClauses.push(`reservations.status = ?`);
-      params.push(status);
+      if (status === "finished" || status === "مكتمل" || status === "منتهي") {
+        whereClauses.push(`reservations.status IN ('مقبول', 'مرفوض')`);
+      } else if (status === "pending" || status === "معلق" || status === "تحت الانتظار") {
+        whereClauses.push(`reservations.status = 'تحت الانتظار'`);
+      } else {
+        whereClauses.push(`reservations.status = ?`);
+        params.push(status);
+      }
     }
 
     const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";

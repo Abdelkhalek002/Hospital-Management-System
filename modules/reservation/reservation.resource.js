@@ -127,7 +127,7 @@ export const toAdminReservationsListResource = (items = [], req = null) => {
 
     return {
       id: item.id,
-      examType: item.examType,
+      examType: item.exam_type,
       status: item.status,
       date: item.date,
       clinic: item.clinic_name,

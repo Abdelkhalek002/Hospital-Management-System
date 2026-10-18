@@ -28,8 +28,8 @@ export const updateMe = async (id, data) => {
   return await userRepo.getOne(id);
 };
 
-export const getAll = async (searchKey, searchValue, documentStatus = null) => {
-  return new UserRepository().getAll(searchKey, searchValue, documentStatus);
+export const getAll = async (searchKey, searchValue, documentStatus = null, filters = {}) => {
+  return new UserRepository().getAll(searchKey, searchValue, documentStatus, filters);
 };
 
 export const update = async (id, data) => {
