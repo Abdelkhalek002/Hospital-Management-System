@@ -14,6 +14,7 @@ export const transfer = asyncHandler(async (req, res) => {
   const allowedFields = [
     "user_id",
     "student_id",
+    "reservation_id",
     "medical_exam_id",
     "hospital_id",
     "transfer_reason",

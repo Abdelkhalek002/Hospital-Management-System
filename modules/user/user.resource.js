@@ -66,8 +66,21 @@ export const toUserProfileResource = (user, req = null) => {
   if (!item) return null;
 
   const rawPhoto = item.user_image_path || item.user_image_file || item.photo || null;
+  const rawNationalIdFile = item.national_id_path || item.national_id_file;
+  const rawFeesFile = item.fees_path || item.fees_file;
   const profilePhotoUrl = formatUserFileUrl(
     rawPhoto,
+    item.username,
+    req,
+  );
+
+  const nationalIdFileUrl = formatUserFileUrl(
+    rawNationalIdFile,
+    item.username,
+    req,
+  );
+  const feesFileUrl = formatUserFileUrl(
+    rawFeesFile,
     item.username,
     req,
   );
@@ -80,7 +93,8 @@ export const toUserProfileResource = (user, req = null) => {
     email: item.email,
     phone_number: item.phone_number,
     profile_photo_url: profilePhotoUrl,
-    user_image_file: profilePhotoUrl || rawPhoto,
+    national_id_file_url: nationalIdFileUrl,
+    fees_file_url: feesFileUrl,
     national_id: item.national_id != null ? String(item.national_id) : null,
     gender: item.gender,
     birth_date: formatDate(item.birth_date),
@@ -151,6 +165,12 @@ export const toAdminUserResource = (user, req = null) => {
     faculty_id: item.faculty_id,
     faculty_name: item.faculty_name || item.faculty || null,
 
+    level_id: item.level_id || null,
+    level_name: item.level_name || item.level || null,
+
+    level_id: item.level_id || null,
+    level_name: item.level_name || item.level || null,
+
     level_id: item.level_id,
     level_name: item.level_name || item.level || null,
 
@@ -168,11 +188,80 @@ export const toAdminUserResource = (user, req = null) => {
 export const toAdminStudentResource = toAdminUserResource;
 
 // ==========================================
-// 3. Admin Users List Resource (GET /users)
+// 3. Admin User List Item Resource (GET /users)
 // ==========================================
-export const toAdminUsersListResource = (items = [], req = null) => {
+export const toAdminUserListItemResource = (
+  user,
+  req = null,
+  fields = null,
+) => {
+  if (!user) return null;
+  const item = Array.isArray(user) ? user[0] : user;
+  if (!item) return null;
+
+  const rawPhoto = item.user_image_path || item.user_image_file || item.photo;
+  const profilePhotoUrl = formatUserFileUrl(
+    rawPhoto,
+    item.username,
+    req,
+  );
+
+  const data = {
+    id: item.id,
+    user_id: item.id,
+    student_id: item.id,
+    username: item.username,
+    email: item.email,
+    profile_photo_url: profilePhotoUrl,
+
+    // Relational display names & IDs
+    faculty_id: item.faculty_id,
+    faculty_name: item.faculty_name || item.faculty || null,
+
+    level_id: item.level_id || null,
+    level_name: item.level_name || item.level || null,
+
+    is_active: Boolean(item.is_active),
+    document_status: item.document_status,
+
+    created_at: item.created_at,
+  };
+
+  const selectedFields =
+    Array.isArray(fields) && fields.length > 0
+      ? fields
+      : typeof fields === "string" && fields.trim()
+        ? fields.split(",").map((f) => f.trim()).filter(Boolean)
+        : typeof req?.query?.fields === "string" && req.query.fields.trim()
+          ? req.query.fields.split(",").map((f) => f.trim()).filter(Boolean)
+          : null;
+
+  if (selectedFields && selectedFields.length > 0) {
+    const filtered = {};
+    for (const field of selectedFields) {
+      if (field in data) {
+        filtered[field] = data[field];
+      }
+    }
+    return filtered;
+  }
+
+  return data;
+};
+
+export const toAdminStudentListItemResource = toAdminUserListItemResource;
+
+// ==========================================
+// 4. Admin Users List Resource (GET /users)
+// ==========================================
+export const toAdminUsersListResource = (
+  items = [],
+  req = null,
+  fields = null,
+) => {
   const list = Array.isArray(items) ? items : [items];
-  return list.map((user) => toAdminUserResource(user, req));
+  return list.map((user) => toAdminUserListItemResource(user, req, fields));
 };
 
 export const toAdminStudentsListResource = toAdminUsersListResource;
+

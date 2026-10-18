@@ -125,7 +125,10 @@ Implemented under `modules/students/`.
 - `PUT /api/v1/users/me`
 - `GET /api/v1/users`
 - `GET /api/v1/users/:id`
-- `PATCH /api/v1/users/:id`
+- `PATCH /api/v1/users/:id` (update `is_active`)
+- `PATCH /api/v1/users/:id/approve`
+- `PATCH /api/v1/users/:id/reject`
+- `PATCH /api/v1/users/me/resubmit-documents`
 
 Student self-service routes require a valid JWT and a student email domain.
 
@@ -143,14 +146,12 @@ Student side:
 
 Admin side:
 
-- `GET /api/v1/reservations/byMonth`
-- `PATCH /api/v1/reservations/accept/:id`
 - `POST /api/v1/reservations`
-- `GET /api/v1/reservations`
+- `GET /api/v1/reservations` (supports query filters: `?month=`, `?year=`, `?examType=`, `?clinic_id=`, `?status=`, `?searchKey=`, `?page=`, `?limit=`)
 - `GET /api/v1/reservations/emergency`
-- `PUT /api/v1/reservations/:emergencyUser_id`
-- `GET /api/v1/reservations/:emergencyUser_id`
-- `DELETE /api/v1/reservations/:emergencyUser_id`
+- `PUT /api/v1/reservations/:id`
+- `GET /api/v1/reservations/:id`
+- `DELETE /api/v1/reservations/:id`
 
 ### Admins and Transfers
 

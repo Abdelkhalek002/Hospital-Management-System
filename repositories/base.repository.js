@@ -83,7 +83,7 @@ class Base {
       const sql = `
         SELECT
           (SELECT COUNT(*) FROM users) AS usersCount,
-          (SELECT COUNT(*) FROM medical_examinations) AS reservationsCount,
+          (SELECT COUNT(*) FROM reservations) AS reservationsCount,
           (SELECT COUNT(*) FROM clinics) AS clinicsCount,
           (SELECT COUNT(*) FROM admins WHERE role != 'SUPER_ADMIN') AS adminsCount,
           (SELECT COUNT(*) FROM admins WHERE role = 'SUPER_ADMIN') AS superAdminsCount,
@@ -91,7 +91,7 @@ class Base {
             SELECT AVG(reservationsCount)
             FROM (
               SELECT COUNT(*) AS reservationsCount
-              FROM medical_examinations
+              FROM reservations
               GROUP BY user_id
             ) AS reservationsPerUser
           ) AS avgReservationsPerUser,
@@ -99,7 +99,7 @@ class Base {
             SELECT AVG(reservationsCount)
             FROM (
               SELECT COUNT(*) AS reservationsCount
-              FROM medical_examinations
+              FROM reservations
               GROUP BY clinic_id
             ) AS reservationsPerClinic
           ) AS avgReservationsPerClinic,
@@ -108,9 +108,9 @@ class Base {
         FROM (SELECT 1) AS dummy
         LEFT JOIN (
           SELECT clinics.clinic_name, COUNT(*) AS value
-          FROM medical_examinations
-          JOIN clinics ON medical_examinations.clinic_id = clinics.id
-          GROUP BY medical_examinations.clinic_id
+          FROM reservations
+          JOIN clinics ON reservations.clinic_id = clinics.id
+          GROUP BY reservations.clinic_id
           ORDER BY value DESC
           LIMIT 1
         ) AS mostReserved ON 1=1

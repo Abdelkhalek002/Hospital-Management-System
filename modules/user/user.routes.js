@@ -38,14 +38,7 @@ router.route("/").get(controller.getAll);
 router
   .route("/:id")
   .get(controller.get)
-  .patch(
-    hasPermission(permissions.USERS_WRITE),
-    updateValidator,
-    fileUploader.uploadAdminStudentFiles,
-    fileUploader.resizeNationalIDFiles,
-    fileUploader.resizeFeesFile,
-    controller.update,
-  );
+  .patch(hasPermission(permissions.USERS_WRITE), controller.update);
 
 router.patch(
   "/:id/approve",

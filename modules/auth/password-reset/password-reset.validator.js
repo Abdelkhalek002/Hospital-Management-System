@@ -27,13 +27,30 @@ export const resetPasswordValidator = [
     .bail()
     .isLength({ min: 6, max: 6 })
     .withMessage("OTP should be 6 digits"),
-  body("newPassword")
-    .notEmpty()
-    .withMessage("new password is required")
-    .bail()
-    .matches(/^[A-Z][a-z0-9#@]{7,39}$/)
-    .withMessage(
-      "Password should start with an uppercase letter and contain 8 to 40 characters with lowercase letters, numbers, or symbols #, @.",
-    ),
+  body("password")
+    .custom((val, { req }) => {
+      const targetPass = val !== undefined ? val : req.body?.newPassword;
+      if (!targetPass) {
+        throw new Error("password is required");
+      }
+      if (!/^[A-Z][a-z0-9#@$]{7,39}$/.test(targetPass)) {
+        throw new Error(
+          "Password should start with an uppercase letter and contain 8 to 40 characters with lowercase letters, numbers, or symbols #, @, $.",
+        );
+      }
+      return true;
+    }),
+  body("password_confirm")
+    .custom((val, { req }) => {
+      const confirmVal = val !== undefined ? val : req.body?.passwordConfirm;
+      if (!confirmVal || !String(confirmVal).trim()) {
+        throw new Error("password_confirm is required");
+      }
+      const targetPassword = req.body?.password ?? req.body?.newPassword;
+      if (confirmVal !== targetPassword) {
+        throw new Error("password_confirm does not match password");
+      }
+      return true;
+    }),
   handleValidationErrors,
 ];

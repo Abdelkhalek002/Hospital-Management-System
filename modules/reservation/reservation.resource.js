@@ -60,6 +60,9 @@ export const toSingleReservationResource = (reservation, req = null) => {
     date: item.date,
     createdAt: item.created_at,
     updatedAt: item.updated_at,
+    patientName: item.patient_name || item.user_name || null,
+    nationalId: item.national_id != null ? String(item.national_id) : null,
+    phoneNumber: item.phone_number || null,
   };
 
   const imagePath =
@@ -86,10 +89,10 @@ export const toMyReservationsListResource = (items = [], req = null) => {
       transfer:
         item.transferReason || item.ex_hosp_name
           ? {
-              transferReason: item.transferReason,
-              notes: item.notes,
-              externalHospital: item.ex_hosp_name,
-            }
+            transferReason: item.transferReason,
+            notes: item.notes,
+            externalHospital: item.ex_hosp_name,
+          }
           : null,
     };
 
@@ -108,29 +111,27 @@ export const toMyReservationsListResource = (items = [], req = null) => {
 // ==========================================
 export const toAdminReservationsListResource = (items = [], req = null) => {
   return items.map((item) => {
-    const userId = item.user_id ?? item.student_id;
-    const userName = item.user_name ?? item.student_name;
+    const userId = item.user_id ?? item.student_id ?? null;
+    const userName = item.user_name ?? item.student_name ?? item.patient_name ?? item.Name;
     const rawImage = item.user_image_path || item.user_image_file || item.userImage;
     const userImgUrl = formatImageUrl(rawImage, req);
 
     const userObj = {
       id: userId,
       name: userName,
-      nationalId: item.national_id != null ? String(item.national_id) : null,
-      userImage: userImgUrl,
+      national_id: item.national_id != null ? String(item.national_id) : null,
+      phone_number: item.phone_number || null,
+      profile_photo_url: userImgUrl,
+      is_walk_in: !userId,
     };
 
     return {
       id: item.id,
-      examType: item.exam_type ?? item.examType,
+      examType: item.examType,
       status: item.status,
       date: item.date,
-      clinic: {
-        id: item.clinic_id,
-        name: item.clinic_name,
-      },
+      clinic: item.clinic_name,
       level: item.level_name,
-      student: userObj,
       user: userObj,
     };
   });
@@ -139,21 +140,31 @@ export const toAdminReservationsListResource = (items = [], req = null) => {
 // ==========================================
 // 4. Single Emergency Reservation by ID (adminViewRequest)
 // ==========================================
-export const toSingleEmergencyReservationResource = (item, _req = null) => {
+export const toSingleEmergencyReservationResource = (item, req = null) => {
   if (!item) return null;
   const row = Array.isArray(item) ? item[0] : item;
   if (!row) return null;
 
+  const rawImage = row.user_image_path || row.user_image_file || row.userImage;
+  const userImgUrl = formatImageUrl(rawImage, req);
+
   return {
-    id: row.emergencyUser_id,
-    name: row.Name,
+    id: row.id,
+    emergencyUser_id: row.id,
+    name: row.patient_name || row.Name || row.user_name || row.username,
     nationalId: row.national_id != null ? String(row.national_id) : null,
+    phoneNumber: row.phone_number || null,
     clinicId: row.clinic_id,
+    clinicName: row.clinic_name,
     levelId: row.level_id,
     facultyId: row.faculty_id,
     govId: row.gov_id,
     nationalityId: row.nationality_id,
-    time: row.time,
+    time: row.date,
+    date: row.date,
+    examType: row.exam_type,
+    status: row.status,
+    userImage: userImgUrl,
   };
 };
 
@@ -162,19 +173,30 @@ export const toSingleEmergencyReservationResource = (item, _req = null) => {
 // ==========================================
 export const toEmergencyReservationsListResource = (
   items = [],
-  _req = null,
+  req = null,
 ) => {
-  return items.map((item) => ({
-    id: item.emergencyUser_id,
-    name: item.Name,
-    nationalId: item.national_id != null ? String(item.national_id) : null,
-    time: item.time,
-    clinicName: item.clinic_name,
-    levelName: item.level_name,
-    facultyName: item.faculty_name,
-    govName: item.gov_name,
-    nationality: item.Nationlaity,
-  }));
+  return items.map((item) => {
+    const rawImage = item.user_image_path || item.user_image_file || item.userImage;
+    const userImgUrl = formatImageUrl(rawImage, req);
+    const displayName = item.patient_name || item.Name || item.user_name || item.student_name;
+    const nationalId = item.national_id != null ? String(item.national_id) : null;
+
+    return {
+      id: item.id,
+      emergencyUser_id: item.id,
+      name: displayName,
+      nationalId,
+      phoneNumber: item.phone_number,
+      time: item.date,
+      date: item.date,
+      clinicName: item.clinic_name,
+      levelName: item.level_name,
+      facultyName: item.faculty_name,
+      govName: item.gov_name,
+      nationality: item.Nationlaity || item.nationality_name,
+      userImage: userImgUrl,
+    };
+  });
 };
 
 // ==========================================

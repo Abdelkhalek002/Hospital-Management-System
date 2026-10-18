@@ -6,6 +6,7 @@ import ApiError from "../../utils/api-error.js";
 import {
   toUserProfileResource,
   toAdminUserResource,
+  toAdminUserListItemResource,
   toAdminUsersListResource,
   formatUserFileUrl,
 } from "./user.resource.js";
@@ -66,7 +67,12 @@ export const getAll = asyncHandler(async (req, res) => {
     }
   }
 
-  const documentStatus = req.query.document_status || req.query.status || null;
+  const generalSearch = req.query.search || req.query.searchKey || req.query.q;
+    if (!searchValue && generalSearch) {
+      searchKey = 'username';
+      searchValue = generalSearch;
+    }
+    const documentStatus = req.query.document_status || req.query.status || null;
   const rawUsers = await service.getAll(searchKey, searchValue, documentStatus);
   const result = toAdminUsersListResource(rawUsers, req);
 
@@ -90,27 +96,35 @@ export const get = asyncHandler(async (req, res) => {
 
 export const update = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const allowedFields = [
-    "national_id",
-    "phone_number",
-    "faculty_id",
-    "level_id",
-    "nationality_id",
-    "national_id_path",
-    "national_id_file",
-    "fees_path",
-    "fees_file",
-    "user_profile_photo",
-  ];
-  const data = pick(req.body, allowedFields);
+  const rawValue =
+    req.body.is_active !== undefined
+      ? req.body.is_active
+      : req.body.status !== undefined
+        ? req.body.status
+        : req.body.isActive;
 
-  await service.update(id, data);
-  const updatedUser = await service.get(id);
+  if (rawValue === undefined) {
+    throw new ApiError(
+      "حالة الحساب (is_active) مطلوبة",
+      StatusCode.BAD_REQUEST,
+    );
+  }
+
+  const isActive =
+    rawValue === true ||
+    rawValue === 1 ||
+    rawValue === "1" ||
+    rawValue === "true" ||
+    rawValue === "active";
+
+  const updatedUser = await service.setUserActiveStatus(id, isActive);
   const result = toAdminUserResource(updatedUser, req);
 
   return res.status(StatusCode.OK).json({
     status: "success",
-    message: "تم تعديل بيانات المستخدم بنجاح",
+    message: isActive ? "تم تفعيل حساب المستخدم بنجاح" : "تم تعطيل حساب المستخدم بنجاح",
+    id: result.id,
+    student_id: result.id,
     result,
   });
 });

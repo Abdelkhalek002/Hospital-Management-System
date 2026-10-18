@@ -48,7 +48,7 @@ export const sendPasswordResetOtp = async (email) => {
     const remaining = getRemainingCooldownSeconds(existingOtp.last_sent_at);
     if (remaining > 0) {
       throw new ApiError(
-        `Please wait ${remaining} seconds before requesting another OTP`,
+        `يرجى الانتظار ${remaining} ثانية قبل طلب رمز تحقق جديد`,
         StatusCode.TOO_MANY_REQUESTS,
       );
     }
@@ -68,37 +68,51 @@ export const sendPasswordResetOtp = async (email) => {
   } catch (error) {
     await passwordResetRepo.invalidateOtp(email);
     throw new ApiError(
-      "Failed to send OTP email. Please try again.",
+      "فشل إرسال رمز التحقق إلى البريد الإلكتروني. يرجى المحاولة مرة أخرى.",
       StatusCode.INTERNAL_SERVER_ERROR,
     );
   }
 
   return {
-    message: `OTP sent successfully. It expires in ${OTP_EXPIRY_MINUTES} minutes.`,
+    message: `تم إرسال رمز التحقق بنجاح، وهو صالح لمدة ${OTP_EXPIRY_MINUTES} دقائق.`,
   };
 };
 
-export const resetPasswordWithOtp = async ({ email, otp, newPassword }) => {
+export const resetPasswordWithOtp = async ({
+  email,
+  otp,
+  password,
+  newPassword,
+  password_confirm,
+}) => {
   const passwordResetRepo = new PasswordResetRepo();
   otp = String(otp);
+  const targetPassword = password ?? newPassword;
+
+  if (password_confirm !== undefined && password_confirm !== targetPassword) {
+    throw new ApiError(
+      "تأكيد كلمة المرور غير متطابق مع كلمة المرور",
+      StatusCode.BAD_REQUEST,
+    );
+  }
 
   // 1. check if email exist
   const user = await new User(UserType.USER).findByEmail(email);
   if (!user) {
-    throw new ApiError("User not found", StatusCode.NOT_FOUND);
+    throw new ApiError("المستخدم غير موجود", StatusCode.NOT_FOUND);
   }
 
   // 2. check if otp exist
   const otpRecord = await passwordResetRepo.findOtpByEmail(email);
   if (!otpRecord || otpRecord.used) {
-    throw new ApiError("Invalid OTP", StatusCode.BAD_REQUEST);
+    throw new ApiError("رمز التحقق غير صحيح", StatusCode.BAD_REQUEST);
   }
 
   // 3. handling otp expiration
   if (isOtpExpired(otpRecord.expires_at)) {
     await passwordResetRepo.invalidateOtp(email);
     throw new ApiError(
-      "OTP has expired. Please request a new OTP.",
+      "انتهت صلاحية رمز التحقق. يرجى طلب رمز جديد.",
       StatusCode.BAD_REQUEST,
     );
   }
@@ -107,13 +121,13 @@ export const resetPasswordWithOtp = async ({ email, otp, newPassword }) => {
   if (otpRecord.attempts_count >= OTP_MAX_ATTEMPTS) {
     await passwordResetRepo.invalidateOtp(email);
     throw new ApiError(
-      "Too many invalid OTP attempts. Please request a new OTP.",
+      "تم تجاوز الحد الأقصى للمحاولات الخاطئة. يرجى طلب رمز جديد.",
       StatusCode.TOO_MANY_REQUESTS,
     );
   }
 
   if (typeof otpRecord.otp_hash !== "string" || !otpRecord.otp_hash) {
-    throw new ApiError("Invalid OTP", StatusCode.BAD_REQUEST);
+    throw new ApiError("رمز التحقق غير صحيح", StatusCode.BAD_REQUEST);
   }
 
   const otpMatched = await bcrypt.compare(otp, otpRecord.otp_hash);
@@ -126,13 +140,13 @@ export const resetPasswordWithOtp = async ({ email, otp, newPassword }) => {
     if (remainingAttempts <= 0) {
       await passwordResetRepo.invalidateOtp(email);
       throw new ApiError(
-        "Too many invalid OTP attempts. Please request a new OTP.",
+        "تم تجاوز الحد الأقصى للمحاولات الخاطئة. يرجى طلب رمز جديد.",
         StatusCode.TOO_MANY_REQUESTS,
       );
     }
 
     throw new ApiError(
-      `Invalid OTP. ${remainingAttempts} attempt(s) left.`,
+      `رمز التحقق غير صحيح. متبقي ${remainingAttempts} محاولة.`,
       StatusCode.BAD_REQUEST,
     );
   }
@@ -140,20 +154,20 @@ export const resetPasswordWithOtp = async ({ email, otp, newPassword }) => {
   // 5. handle entering same password
   if (typeof user.password !== "string" || !user.password) {
     throw new ApiError(
-      "Password reset is unavailable for this account.",
+      "إعادة تعيين كلمة المرور غير متاحة لهذا الحساب.",
       StatusCode.BAD_REQUEST,
     );
   }
 
-  const isSamePassword = await bcrypt.compare(newPassword, user.password);
+  const isSamePassword = await bcrypt.compare(targetPassword, user.password);
   if (isSamePassword) {
     throw new ApiError(
-      "New password must be different from current password.",
+      "كلمة المرور الجديدة يجب أن تكون مختلفة عن كلمة المرور الحالية.",
       StatusCode.BAD_REQUEST,
     );
   }
 
-  const hashedPassword = await bcrypt.hash(newPassword, 12);
+  const hashedPassword = await bcrypt.hash(targetPassword, 12);
   await passwordResetRepo.updatePasswordAndConsumeOtp(email, hashedPassword);
-  return { message: "Password changed successfully" };
+  return { message: "تم تغيير كلمة المرور بنجاح" };
 };

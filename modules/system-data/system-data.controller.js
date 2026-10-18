@@ -29,10 +29,21 @@ const extractId = (req, resourceKey) => {
   );
 };
 
+const extractIsActive = (req) => {
+  if (req.body.is_active !== undefined) {
+    return req.body.is_active === true || req.body.is_active === "true" || req.body.is_active === 1 || req.body.is_active === "1";
+  }
+  if (req.body.isActive !== undefined) {
+    return req.body.isActive === true || req.body.isActive === "true" || req.body.isActive === 1 || req.body.isActive === "1";
+  }
+  return undefined;
+};
+
 export const createItem = (resourceKey) =>
   asyncHandler(async (req, res) => {
     const name = extractName(req, resourceKey);
-    const data = await systemDataService.createOne(resourceKey, name);
+    const isActive = extractIsActive(req) ?? true;
+    const data = await systemDataService.createOne(resourceKey, name, isActive);
 
     return res.status(StatusCode.CREATED).json({
       status: "success",
@@ -43,7 +54,15 @@ export const createItem = (resourceKey) =>
 
 export const getItems = (resourceKey) =>
   asyncHandler(async (req, res) => {
-    const results = await systemDataService.getAll(resourceKey);
+    const { active, is_active, status } = req.query;
+    let isActiveFilter;
+    if (active === "true" || is_active === "true" || status === "active") {
+      isActiveFilter = true;
+    } else if (active === "false" || is_active === "false" || status === "inactive") {
+      isActiveFilter = false;
+    }
+
+    const results = await systemDataService.getAll(resourceKey, { isActive: isActiveFilter });
     return res.status(StatusCode.OK).json(results);
   });
 
@@ -62,7 +81,8 @@ export const updateItem = (resourceKey) =>
   asyncHandler(async (req, res) => {
     const id = extractId(req, resourceKey);
     const name = extractName(req, resourceKey);
-    const data = await systemDataService.updateOne(resourceKey, id, name);
+    const isActive = extractIsActive(req);
+    const data = await systemDataService.updateOne(resourceKey, id, { name, isActive });
 
     return res.status(StatusCode.OK).json({
       status: "success",

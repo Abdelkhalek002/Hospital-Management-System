@@ -17,12 +17,13 @@ export const sendPasswordResetOtp = asyncHandler(async (req, res) => {
 
 //--------------------------------------FORGET PASSWORD--------------------------
 export const resetPassword = asyncHandler(async (req, res) => {
-  const { email, OTP, newPassword } = req.body;
+  const { email, OTP, password, newPassword, password_confirm, passwordConfirm } = req.body;
 
   const data = await passwordResetService.resetPasswordWithOtp({
     email,
     otp: OTP,
-    newPassword,
+    password: password ?? newPassword,
+    password_confirm: password_confirm ?? passwordConfirm,
   });
 
   return res.status(StatusCode.OK).json({

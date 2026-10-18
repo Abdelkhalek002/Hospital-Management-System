@@ -63,6 +63,19 @@ export const update = async (id, data) => {
   return done;
 };
 
+export const setUserActiveStatus = async (userId, isActive) => {
+  const userRepo = new UserRepository();
+  const user = await userRepo.findById(userId);
+  if (!user) {
+    throw new ApiError("المستخدم غير موجود", StatusCode.NOT_FOUND);
+  }
+
+  const activeValue = isActive ? 1 : 0;
+  await userRepo.updateOne(userId, { is_active: activeValue });
+
+  return await userRepo.getOne(userId);
+};
+
 export const approveDocuments = async (userId, adminId) => {
   const userRepo = new UserRepository();
   const user = await userRepo.getOne(userId);

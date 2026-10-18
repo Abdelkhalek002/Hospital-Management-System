@@ -32,24 +32,18 @@ model admins {
 }
 
 model clinics {
-  id                   Int                    @id @default(autoincrement())
-  clinic_name          String                 @unique(map: "uq_clinics_name") @db.VarChar(255)
-  created_at           DateTime               @default(now()) @db.Timestamp(0)
-  updated_at           DateTime               @default(now()) @db.Timestamp(0)
-  medical_examinations medical_examinations[]
-}
-
-model emergency_bookings {
-  id          Int      @id @default(autoincrement())
-  user_name   String   @db.VarChar(255)
-  national_id String   @db.VarChar(14)
-  type        String   @default("طوارئ") @db.VarChar(50)
-  created_at  DateTime @default(now()) @db.Timestamp(0)
+  id           Int            @id @default(autoincrement())
+  clinic_name  String         @unique(map: "uq_clinics_name") @db.VarChar(255)
+  is_active    Boolean        @default(true)
+  created_at   DateTime       @default(now()) @db.Timestamp(0)
+  updated_at   DateTime       @default(now()) @db.Timestamp(0)
+  reservations reservations[]
 }
 
 model external_hospitals {
   id            Int         @id @default(autoincrement())
   hospital_name String      @unique(map: "uq_hospitals_name") @db.VarChar(255)
+  is_active     Boolean     @default(true)
   created_at    DateTime    @default(now()) @db.Timestamp(0)
   updated_at    DateTime    @default(now()) @db.Timestamp(0)
   transfers     transfers[]
@@ -58,6 +52,7 @@ model external_hospitals {
 model faculties {
   id           Int      @id @default(autoincrement())
   faculty_name String   @unique(map: "uq_faculties_name") @db.VarChar(255)
+  is_active    Boolean  @default(true)
   created_at   DateTime @default(now()) @db.Timestamp(0)
   updated_at   DateTime @default(now()) @db.Timestamp(0)
   users        users[]
@@ -66,22 +61,23 @@ model faculties {
 model governorates {
   id         Int      @id @default(autoincrement())
   gov_name   String   @unique(map: "uq_governorates_name") @db.VarChar(255)
+  is_active  Boolean  @default(true)
   created_at DateTime @default(now()) @db.Timestamp(0)
   updated_at DateTime @default(now()) @db.Timestamp(0)
   users      users[]
 }
 
 model laboratory {
-  id                   Int                    @id @default(autoincrement())
-  user_id              Int
-  medical_exam_id      Int
-  medical_test_id      Int
-  test_result          laboratory_test_result
-  users                users                  @relation(fields: [user_id], references: [id], onDelete: NoAction, map: "laboratory_ibfk_1")
-  medical_examinations medical_examinations   @relation(fields: [medical_exam_id], references: [id], onDelete: NoAction, map: "laboratory_ibfk_2")
-  medical_tests        medical_tests          @relation(fields: [medical_test_id], references: [id], onDelete: NoAction, map: "laboratory_ibfk_3")
+  id              Int                    @id @default(autoincrement())
+  user_id         Int?
+  reservation_id  Int
+  medical_test_id Int
+  test_result     laboratory_test_result
+  users           users?                 @relation(fields: [user_id], references: [id], onDelete: NoAction, map: "laboratory_ibfk_1")
+  reservations    reservations           @relation(fields: [reservation_id], references: [id], onDelete: NoAction, map: "laboratory_ibfk_2")
+  medical_tests   medical_tests          @relation(fields: [medical_test_id], references: [id], onDelete: NoAction, map: "laboratory_ibfk_3")
 
-  @@index([medical_exam_id], map: "medical_exam_id")
+  @@index([reservation_id], map: "reservation_id")
   @@index([medical_test_id], map: "medical_test_id")
   @@index([user_id], map: "user_id")
 }
@@ -89,27 +85,10 @@ model laboratory {
 model levels {
   id         Int      @id @default(autoincrement())
   level_name String   @unique(map: "uq_levels_name") @db.VarChar(255)
+  is_active  Boolean  @default(true)
   created_at DateTime @default(now()) @db.Timestamp(0)
   updated_at DateTime @default(now()) @db.Timestamp(0)
   users      users[]
-}
-
-model medical_examinations {
-  id         Int                            @id @default(autoincrement())
-  user_id    Int
-  clinic_id  Int
-  exam_type  medical_examinations_exam_type @default(EMERGENCY)
-  status     medical_examinations_status    @default(PENDING)
-  date       DateTime                       @db.DateTime(0)
-  created_at DateTime                       @default(now()) @db.Timestamp(0)
-  updated_at DateTime                       @default(now()) @db.Timestamp(0)
-  laboratory laboratory[]
-  users      users                          @relation(fields: [user_id], references: [id], onDelete: NoAction, map: "medical_examinations_ibfk_1")
-  clinics    clinics                        @relation(fields: [clinic_id], references: [id], onDelete: NoAction, map: "medical_examinations_ibfk_2")
-  transfers  transfers[]
-
-  @@index([clinic_id], map: "clinic_id")
-  @@index([user_id], map: "user_id")
 }
 
 model medical_tests {
@@ -125,6 +104,7 @@ model medical_tests {
 model nationality {
   id               Int      @id @default(autoincrement())
   nationality_name String   @unique(map: "uq_nationality_name") @db.VarChar(255)
+  is_active        Boolean  @default(true)
   created_at       DateTime @default(now()) @db.Timestamp(0)
   updated_at       DateTime @default(now()) @db.Timestamp(0)
   users            users[]
@@ -150,6 +130,27 @@ model email_verification_otps {
   last_sent_at   DateTime @default(now()) @db.DateTime(0)
   created_at     DateTime @default(now()) @db.DateTime(0)
   updated_at     DateTime @default(now()) @db.DateTime(0)
+}
+
+model reservations {
+  id           Int                    @id @default(autoincrement())
+  user_id      Int?
+  patient_name String?                @db.VarChar(255)
+  national_id  String?                @db.VarChar(14)
+  phone_number String?                @db.VarChar(255)
+  clinic_id    Int?
+  exam_type    reservations_exam_type @default(EMERGENCY)
+  status       reservations_status    @default(PENDING)
+  date         DateTime               @default(now()) @db.DateTime(0)
+  created_at   DateTime               @default(now()) @db.Timestamp(0)
+  updated_at   DateTime               @default(now()) @db.Timestamp(0)
+  laboratory   laboratory[]
+  users        users?                 @relation(fields: [user_id], references: [id], onDelete: NoAction, map: "reservations_ibfk_1")
+  clinics      clinics?               @relation(fields: [clinic_id], references: [id], onDelete: NoAction, map: "reservations_ibfk_2")
+  transfers    transfers[]
+
+  @@index([clinic_id], map: "clinic_id")
+  @@index([user_id], map: "user_id")
 }
 
 model users {
@@ -178,7 +179,7 @@ model users {
   created_at          DateTime               @default(now()) @db.Timestamp(0)
   updated_at          DateTime               @default(now()) @db.Timestamp(0)
   laboratory          laboratory[]
-  medical_examinations medical_examinations[]
+  reservations        reservations[]
   nationality         nationality            @relation(fields: [nationality_id], references: [id], onDelete: NoAction, map: "users_ibfk_1")
   levels              levels                 @relation(fields: [level_id], references: [id], onDelete: NoAction, map: "users_ibfk_2")
   governorates        governorates           @relation(fields: [gov_id], references: [id], onDelete: NoAction, map: "users_ibfk_3")
@@ -191,20 +192,20 @@ model users {
 }
 
 model transfers {
-  id                   Int                  @id @default(autoincrement())
-  medical_exam_id      Int
-  hospital_id          Int
-  transfer_reason      String               @db.VarChar(500)
-  notes                String?              @db.VarChar(500)
-  status               transfers_status     @default(pending)
-  created_at           DateTime             @default(now()) @db.Timestamp(0)
-  updated_at           DateTime             @default(now()) @db.Timestamp(0)
-  medical_examinations medical_examinations @relation(fields: [medical_exam_id], references: [id], onDelete: NoAction, map: "transfers_ibfk_1")
-  external_hospitals   external_hospitals   @relation(fields: [hospital_id], references: [id], onDelete: NoAction, map: "transfers_ibfk_2")
+  id                 Int                @id @default(autoincrement())
+  reservation_id     Int
+  hospital_id        Int
+  transfer_reason    String             @db.VarChar(500)
+  notes              String?            @db.VarChar(500)
+  status             transfers_status   @default(pending)
+  created_at         DateTime           @default(now()) @db.Timestamp(0)
+  updated_at         DateTime           @default(now()) @db.Timestamp(0)
+  reservations       reservations       @relation(fields: [reservation_id], references: [id], onDelete: NoAction, map: "transfers_ibfk_1")
+  external_hospitals external_hospitals @relation(fields: [hospital_id], references: [id], onDelete: NoAction, map: "transfers_ibfk_2")
 
   @@index([hospital_id], map: "hospital_id")
-  @@index([medical_exam_id], map: "medicExam_id")
-  @@index([medical_exam_id, hospital_id], map: "transfer_medic_hospital_idx")
+  @@index([reservation_id], map: "reservation_id")
+  @@index([reservation_id, hospital_id], map: "transfer_res_hospital_idx")
 }
 
 enum admin_status {
@@ -228,7 +229,7 @@ enum medical_tests_test_type {
   URINE   @map("بول")
 }
 
-enum medical_examinations_exam_type {
+enum reservations_exam_type {
   EMERGENCY @map("طواريْ")
   FOLLOW_UP @map("متابعة")
   NEW_EXAM  @map("كشف جديد")
@@ -244,7 +245,7 @@ enum laboratory_test_result {
   NEGATIVE @map("سلبي")
 }
 
-enum medical_examinations_status {
+enum reservations_status {
   ACCEPTED @map("مقبول")
   PENDING  @map("تحت الانتظار")
   REJECTED @map("مرفوض")
@@ -267,4 +268,3 @@ enum user_document_status {
   approved
   rejected
 }
-

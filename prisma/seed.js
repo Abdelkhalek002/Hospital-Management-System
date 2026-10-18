@@ -342,7 +342,7 @@ async function main() {
   ];
 
   for (const { transfer, ...examData } of reservationsToSeed) {
-    let exam = await prisma.medical_examinations.findFirst({
+    let exam = await prisma.reservations.findFirst({
       where: {
         user_id: examData.user_id,
         clinic_id: examData.clinic_id,
@@ -351,7 +351,7 @@ async function main() {
     });
 
     if (!exam) {
-      exam = await prisma.medical_examinations.create({
+      exam = await prisma.reservations.create({
         data: examData,
       });
     }
@@ -359,14 +359,14 @@ async function main() {
     if (transfer && exam) {
       const existingTransfer = await prisma.transfers.findFirst({
         where: {
-          medical_exam_id: exam.id,
+          reservation_id: exam.id,
         },
       });
 
       if (!existingTransfer) {
         await prisma.transfers.create({
           data: {
-            medical_exam_id: exam.id,
+            reservation_id: exam.id,
             hospital_id: transfer.hospital_id,
             transfer_reason: transfer.transfer_reason,
             notes: transfer.notes,

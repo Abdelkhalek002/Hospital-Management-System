@@ -9,28 +9,28 @@ import { roles } from "../../utils/roles.js";
 import ApiError from "../../utils/api-error.js";
 
 export const transfer = async (data) => {
-  // 1. Check if the medical examination status is 'مقبول'
-  const medical_exam_accepted = await new Transfer().isExamAccepted(
-    data.medical_exam_id,
-  );
+  const reservationId = data.reservation_id ?? data.medical_exam_id;
 
-  if (!medical_exam_accepted) {
+  // 1. Check if the reservation status is 'مقبول'
+  const isAccepted = await new Transfer().isExamAccepted(reservationId);
+
+  if (!isAccepted) {
     throw new ApiError(
-      "Medical examination not accepted!",
+      "Reservation not accepted or not found!",
       StatusCode.CONFLICT,
     );
   }
 
-  //2. check if hospital id exists
+  // 2. check if hospital id exists
   const hospitalResult = await new Base("external_hospitals").findById(
     data.hospital_id,
   );
   if (!hospitalResult)
     throw new ApiError("Invalid hospital data", StatusCode.NOT_FOUND);
 
-  // 4. Insert transfer record
+  // 3. Insert transfer record
   const result = await new Transfer(
-    data.medical_exam_id,
+    reservationId,
     data.hospital_id,
     data.transfer_reason,
     data.notes,
@@ -46,7 +46,6 @@ export const getTransferred = async ({ page, limit, searchKey }) => {
       searchKey,
     });
     return result;
-
   } catch (error) {
     console.error("Transfer service error:", error);
     throw new ApiError(

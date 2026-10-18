@@ -18,7 +18,8 @@ router.route("/clinics").get(controller.getAllClinics).post(
 );
 
 router
-  .route("/clinics/:id").get(controller.getOneClinic)
+  .route("/clinics/:id")
+  .get(controller.getOneClinic)
   .put(
     protect,
     allowedTo(...adminRoles),
@@ -27,8 +28,6 @@ router
     controller.updateClinic,
   )
   .delete(protect, allowedTo(...adminRoles), limiter, controller.deleteClinic);
-
-
 
 // Faculties
 router.route("/faculties").get(controller.getAllFaculties).post(
@@ -39,16 +38,17 @@ router.route("/faculties").get(controller.getAllFaculties).post(
   controller.createFaculty,
 );
 
-router.route("/faculties/:id").get(controller.getOneFaculty).put(
-  protect,
-  allowedTo(...adminRoles),
-  limiter,
-  validator.facultyValidator,
-  controller.updateFaculty,
-)
+router
+  .route("/faculties/:id")
+  .get(controller.getOneFaculty)
+  .put(
+    protect,
+    allowedTo(...adminRoles),
+    limiter,
+    validator.facultyValidator,
+    controller.updateFaculty,
+  )
   .delete(protect, allowedTo(...adminRoles), limiter, controller.deleteFaculty);
-
-
 
 // Governorates
 router.route("/governorates").get(controller.GetAllGovernorates).post(
@@ -59,16 +59,17 @@ router.route("/governorates").get(controller.GetAllGovernorates).post(
   controller.createGovernorate,
 );
 
-router.route("/governorates/:id").get(controller.getOneGovernorate).put(
-  protect,
-  allowedTo(...adminRoles),
-  limiter,
-  validator.governorateValidator,
-  controller.updateGovernorate,
-)
+router
+  .route("/governorates/:id")
+  .get(controller.getOneGovernorate)
+  .put(
+    protect,
+    allowedTo(...adminRoles),
+    limiter,
+    validator.governorateValidator,
+    controller.updateGovernorate,
+  )
   .delete(protect, allowedTo(...adminRoles), limiter, controller.deleteGovernorate);
-
-
 
 // Hospitals
 router.route("/hospitals").get(controller.getAllhospitals).post(
@@ -79,16 +80,17 @@ router.route("/hospitals").get(controller.getAllhospitals).post(
   controller.createHospital,
 );
 
-router.route("/hospitals/:id").get(controller.getOneHospital).put(
-  protect,
-  allowedTo(...adminRoles),
-  limiter,
-  validator.hospitalValidator,
-  controller.updateHospital,
-)
+router
+  .route("/hospitals/:id")
+  .get(controller.getOneHospital)
+  .put(
+    protect,
+    allowedTo(...adminRoles),
+    limiter,
+    validator.hospitalValidator,
+    controller.updateHospital,
+  )
   .delete(protect, allowedTo(...adminRoles), limiter, controller.deleteHospital);
-
-
 
 // Levels
 router.route("/levels").get(controller.GetAllLevels).post(
@@ -99,13 +101,16 @@ router.route("/levels").get(controller.GetAllLevels).post(
   controller.createLevel,
 );
 
-router.route("/levels/:id").get(controller.getOneLevel).put(
-  protect,
-  allowedTo(...adminRoles),
-  limiter,
-  validator.levelsValidator,
-  controller.updateLevel,
-)
+router
+  .route("/levels/:id")
+  .get(controller.getOneLevel)
+  .put(
+    protect,
+    allowedTo(...adminRoles),
+    limiter,
+    validator.levelsValidator,
+    controller.updateLevel,
+  )
   .delete(protect, allowedTo(...adminRoles), limiter, controller.DeleteLevel);
 
 export default router;

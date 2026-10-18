@@ -7,17 +7,15 @@ import { permissions } from "../../utils/permissions.js";
 
 router.use(protect);
 
-router.get(
-  "/byMonth",
-  hasPermission(permissions.RESERVATIONS_READ),
-  reservationController.getReservationsPerMonth,
-);
+// Backward-compatible emergency listing
+router
+  .route("/emergency")
+  .get(
+    hasPermission(permissions.RESERVATIONS_READ),
+    reservationController.adminGetAllEmergencyReservations,
+  );
 
-router.route("/:id").put(
-  hasPermission(permissions.RESERVATIONS_APPROVE),
-  reservationController.isAccepted,
-);
-
+// Main reservations listing (supports ?page=&limit=&searchKey=&month=&year=&examType=&clinic_id=&status=) and creation
 router
   .route("/")
   .post(
@@ -29,18 +27,24 @@ router
     reservationController.adminGetAllReservations,
   );
 
-router
-  .route("/emergency")
-  .get(
-    hasPermission(permissions.RESERVATIONS_READ),
-    reservationController.adminGetAllEmergencyReservations,
-  );
+// Dedicated status route
+router.route("/:id/status").put(
+  hasPermission(permissions.RESERVATIONS_APPROVE),
+  reservationController.isAccepted,
+);
 
+// Unified parameter route
 router
-  .route("/:emergencyUser_id")
+  .route("/:id")
   .put(
     hasPermission(permissions.RESERVATIONS_WRITE),
-    reservationController.adminUpdateRequest,
+    (req, res, next) => {
+      // If only status is passed in body, route to isAccepted
+      if (req.body.status !== undefined && Object.keys(req.body).length === 1) {
+        return reservationController.isAccepted(req, res, next);
+      }
+      return reservationController.adminUpdateRequest(req, res, next);
+    },
   )
   .get(
     hasPermission(permissions.RESERVATIONS_READ),
@@ -52,4 +56,3 @@ router
   );
 
 export default router;
-

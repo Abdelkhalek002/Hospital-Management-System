@@ -112,7 +112,7 @@ export class Email {
     await this.send("confirm", "Email Confirmation");
   }
   async sendOtp() {
-    await this.send("otp", "تغيير كلمة السر");
+    await this.send("otp", "إعادة تعيين كلمة المرور - مستشفى جامعة حلوان");
   }
   async sendDocumentApproved() {
     await this.send("document-approved", "تمت مراجعة مستنداتك وتفعيل حسابك - مستشفى جامعة حلوان");

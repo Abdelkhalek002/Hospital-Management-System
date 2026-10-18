@@ -1,10 +1,10 @@
 import ApiError from "../../utils/api-error.js";
 import { StatusCode } from "../../utils/status-codes.js";
 import Reservation from "./reservation.repository.js";
-import EmergencyReservation from "./emergency-reservation.repository.js";
 import Base from "../../repositories/base.repository.js";
 import { isLimitReached } from "./reservation.validator.js";
 import { auditLog } from "../../utils/audit-log.js";
+import { queryOne } from "../../config/db-helpers.js";
 
 export const formatCairoTime = (date) => {
   if (!date) return date;
@@ -22,10 +22,6 @@ export const isAccepted = async (id, status) => {
     "error receiving operation data (only true or false)",
     StatusCode.BAD_REQUEST,
   );
-};
-
-export const getReservationsPerMonth = async () => {
-  return await new Reservation().getPerMonth();
 };
 
 export const createReservation = async (
@@ -65,31 +61,40 @@ export const createReservation = async (
     student_id: userId,
     clinic_id,
     date,
-    examType,
+    examType: examType || "كشف جديد",
+    status: "تحت الانتظار",
   });
 };
 
 export const updateReservation = async (
-  medicEx_id,
-  { clinic_id, date, examType },
+  reservationId,
+  { clinic_id, date, examType, status, patient_name, national_id, phone_number },
 ) => {
-  const reservation = await new Reservation().findById(medicEx_id);
+  const reservation = await new Reservation().findById(reservationId);
   if (!reservation) {
     throw new ApiError(
-      `الكشف رقم ${medicEx_id} غير موجود`,
+      `الكشف رقم ${reservationId} غير موجود`,
       StatusCode.NOT_FOUND,
     );
   }
 
-  await new Reservation().update(medicEx_id, { clinic_id, date, examType });
-  return medicEx_id;
+  await new Reservation().update(reservationId, {
+    clinic_id,
+    date,
+    examType,
+    status,
+    patient_name,
+    national_id,
+    phone_number,
+  });
+  return reservationId;
 };
 
-export const getReservationById = async (medicEx_id) => {
-  const results = await new Reservation().findByIdWithClinic(medicEx_id);
+export const getReservationById = async (reservationId) => {
+  const results = await new Reservation().findByIdWithClinic(reservationId);
   if (!results || results.length === 0) {
     throw new ApiError(
-      `الكشف رقم ${medicEx_id} غير موجود`,
+      `الكشف رقم ${reservationId} غير موجود`,
       StatusCode.NOT_FOUND,
     );
   }
@@ -117,8 +122,8 @@ export const getMyReservations = async ({ user_id, student_id, page, limit }) =>
   };
 };
 
-export const cancelReservation = async (medicEx_id) => {
-  const reservation = await new Reservation().findById(medicEx_id);
+export const cancelReservation = async (reservationId) => {
+  const reservation = await new Reservation().findById(reservationId);
   if (!reservation) {
     throw new ApiError("الكشف غير موجود", StatusCode.NOT_FOUND);
   }
@@ -130,18 +135,28 @@ export const cancelReservation = async (medicEx_id) => {
     );
   }
 
-  return await new Reservation().delete(medicEx_id);
+  return await new Reservation().delete(reservationId);
 };
 
 export const getAllAdminReservations = async ({
   page,
   limit,
   searchKey = "",
+  examType = null,
+  month = null,
+  year = null,
+  clinicId = null,
+  status = null,
 }) => {
   const result = await new Reservation().getAllAdminReservations({
     page,
     limit,
     searchKey,
+    examType,
+    month,
+    year,
+    clinicId,
+    status,
   });
 
   (result.data || []).forEach((row) => {
@@ -157,9 +172,33 @@ export const getAllAdminReservations = async ({
   };
 };
 
-// Emergency Reservations
+// Emergency Reservations (counter admin flow)
 export const createEmergencyReservation = async (data, user) => {
-  const id = await new EmergencyReservation().create(data);
+  let linkedUserId = data.user_id || null;
+
+  // Auto-link: If national_id matches an existing registered user, link user_id
+  if (!linkedUserId && data.national_id) {
+    const existingUser = await queryOne(
+      `SELECT id, username, phone_number FROM users WHERE national_id = ? LIMIT 1`,
+      [String(data.national_id)],
+    );
+    if (existingUser) {
+      linkedUserId = existingUser.id;
+    }
+  }
+
+  const reservationData = {
+    user_id: linkedUserId,
+    patient_name: data.Name || data.patient_name || data.patientName || null,
+    national_id: data.national_id != null ? String(data.national_id) : null,
+    phone_number: data.phone_number || null,
+    clinic_id: data.clinic_id || null,
+    date: data.date || new Date(),
+    examType: "طواريْ",
+    status: "مقبول",
+  };
+
+  const id = await new Reservation().create(reservationData);
   const adminId = user?.id || user?.user_id || user?.[0]?.superAdmin_id;
   if (adminId) {
     await auditLog({
@@ -172,11 +211,11 @@ export const createEmergencyReservation = async (data, user) => {
 };
 
 export const updateEmergencyReservation = async (
-  emergencyUser_id,
+  reservationId,
   data,
   user,
 ) => {
-  const item = await new EmergencyReservation().findById(emergencyUser_id);
+  const item = await new Reservation().findById(reservationId);
   if (!item) {
     throw new ApiError(
       "Emergency Reservation ID not found",
@@ -184,7 +223,13 @@ export const updateEmergencyReservation = async (
     );
   }
 
-  await new EmergencyReservation().update(emergencyUser_id, data);
+  await new Reservation().update(reservationId, {
+    patient_name: data.Name || data.patient_name || data.patientName,
+    national_id: data.national_id,
+    clinic_id: data.clinic_id,
+    phone_number: data.phone_number,
+  });
+
   const adminId = user?.id || user?.user_id || user?.[0]?.superAdmin_id;
   if (adminId) {
     await auditLog({
@@ -195,23 +240,30 @@ export const updateEmergencyReservation = async (
   }
 };
 
-export const getEmergencyReservationById = async (emergencyUser_id) => {
-  const item = await new EmergencyReservation().findById(emergencyUser_id);
-  if (!item) {
+export const getEmergencyReservationById = async (reservationId) => {
+  const results = await new Reservation().findByIdWithClinic(reservationId);
+  if (!results || results.length === 0) {
     throw new ApiError(
       "Emergency Reservation ID not found",
       StatusCode.NOT_FOUND,
     );
   }
-  return [item];
+  return results;
 };
 
-export const getAllEmergencyReservations = async ({ page, limit }) => {
-  const result = await new EmergencyReservation().getAll({ page, limit });
+export const getAllEmergencyReservations = async ({ page, limit, searchKey = "", month = null, year = null }) => {
+  const result = await new Reservation().getAllAdminReservations({
+    page,
+    limit,
+    searchKey,
+    examType: "طواريْ",
+    month,
+    year,
+  });
 
   (result.data || []).forEach((row) => {
-    if (row.time) {
-      row.time = formatCairoTime(row.time);
+    if (row.date) {
+      row.date = formatCairoTime(row.date);
     }
   });
 
@@ -222,13 +274,13 @@ export const getAllEmergencyReservations = async ({ page, limit }) => {
   };
 };
 
-export const deleteEmergencyReservation = async (emergencyUser_id, user) => {
-  const item = await new EmergencyReservation().findById(emergencyUser_id);
+export const deleteEmergencyReservation = async (reservationId, user) => {
+  const item = await new Reservation().findById(reservationId);
   if (!item) {
     throw new ApiError("الكشف غير موجود ", StatusCode.NOT_FOUND);
   }
 
-  await new EmergencyReservation().delete(emergencyUser_id);
+  await new Reservation().delete(reservationId);
   const adminId = user?.id || user?.user_id || user?.[0]?.superAdmin_id;
   if (adminId) {
     await auditLog({
