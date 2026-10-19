@@ -47,18 +47,9 @@ export const toTransferResource = (transfer, req = null) => {
   const item = Array.isArray(transfer) ? transfer[0] : transfer;
   if (!item) return null;
 
-  const rawImage = item.user_image_path || item.user_image_file || item.userImage;
-  const userImgUrl = formatImageUrl(rawImage, req);
-
   const userId = item.user_id ?? item.student_id ?? null;
   const patientName =
     item.user_name ?? item.student_name ?? item.patient_name ?? item.username ?? null;
-  const nationalId =
-    item.patient_national_id != null
-      ? String(item.patient_national_id)
-      : item.national_id != null
-        ? String(item.national_id)
-        : null;
   const phoneNumber =
     item.patient_phone_number || item.user_phone || item.phone_number || null;
   const email = item.user_email ?? item.student_email ?? item.email ?? null;
@@ -67,9 +58,11 @@ export const toTransferResource = (transfer, req = null) => {
   const hospitalName = item.hospital_name || item.transfered_to || null;
 
   return {
-    id: item.id,
+    id: item.id ?? item.transfer_id,
     transferId: item.transfer_id ?? item.id,
     status: item.transfer_status ?? item.status,
+    transferReason: item.transfer_reason ?? item.transferReason ?? null,
+    notes: item.notes ?? null,
     createdAt: item.transfer_created_at ?? item.created_at,
     externalHospital:
       hospitalId
@@ -91,6 +84,9 @@ export const toTransferResource = (transfer, req = null) => {
       email,
       phoneNumber,
     },
+    email,
+    phoneNumber,
+    phone_number: phoneNumber,
   };
 };
 
@@ -102,7 +98,11 @@ export const toTransfersListResource = (transfers = [], req = null) => {
   return transfers.map((item) => toTransferResource(item, req));
 };
 
+export const toTransferListItemResource = toTransferResource;
+
 export default {
   toTransferResource,
   toTransfersListResource,
+  toTransferListItemResource,
 };
+

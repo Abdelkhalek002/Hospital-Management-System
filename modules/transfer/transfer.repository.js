@@ -171,6 +171,8 @@ class Transfer extends Base {
         reservations.patient_name,
         reservations.national_id AS patient_national_id,
         reservations.phone_number AS patient_phone_number,
+        users.phone_number AS user_phone,
+        COALESCE(reservations.phone_number, users.phone_number) AS phone_number,
         clinics.clinic_name,
         levels.level_name,
         users.id AS user_id,
