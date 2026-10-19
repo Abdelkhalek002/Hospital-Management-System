@@ -51,16 +51,15 @@ export const rolePermissions = Object.freeze({
 
   [roles.COUNTER]: [
     permissions.USERS_READ,
-    // permissions.RESERVATIONS_READ,
-    // permissions.RESERVATIONS_WRITE,
-    // permissions.TRANSFERS_READ,
-    // permissions.TRANSFERS_WRITE,
+    permissions.RESERVATIONS_READ,
+    permissions.RESERVATIONS_WRITE,
+    permissions.TRANSFERS_WRITE,
   ],
 
   [roles.TRANSFER_CLERK]: [
-    // permissions.USERS_READ,
-    // permissions.TRANSFERS_READ,
-    // permissions.TRANSFERS_WRITE,
+    permissions.USERS_READ,
+    permissions.TRANSFERS_READ,
+    permissions.TRANSFERS_WRITE,
   ],
 
   [roles.OBSERVER]: [

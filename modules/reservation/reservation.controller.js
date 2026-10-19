@@ -3,8 +3,9 @@ import asyncHandler from "express-async-handler";
 import { StatusCode } from "../../utils/status-codes.js";
 import { auditLog } from "../../utils/audit-log.js";
 import { pick } from "../../utils/pick-from-body-request.js";
-import * as service from "./resrervation.service.js";
+import * as service from "./reservation.service.js";
 import * as resource from "./reservation.resource.js";
+import * as transferService from "../transfer/transfer.service.js";
 
 const parseMonth = (val) => {
   if (!val) return null;
@@ -179,8 +180,13 @@ export const createRequest = asyncHandler(async (req, res) => {
   const userId = req.user.id;
   const { clinic_id, date, examType } = req.body;
 
-  await service.createReservation(userId, { clinic_id, date, examType });
-  return res.status(StatusCode.CREATED).json({ message: "تم حجز الكشف بنجاح" });
+  const newId = await service.createReservation(userId, { clinic_id, date, examType });
+  const reservation = await service.getReservationById(newId);
+
+  return res.status(StatusCode.CREATED).json({
+    message: "تم حجز الكشف بنجاح",
+    data: resource.toSingleReservationResource(reservation, req),
+  });
 });
 
 //@desc     modify medical examination request
@@ -277,5 +283,29 @@ export const isAccepted = asyncHandler(async (req, res) => {
   return res.status(StatusCode.OK).json({
     message: accepted ? "تم قبول الكشف" : "تم رفض الكشف",
     data: resource.toAcceptStatusResource(id, accepted),
+  });
+});
+
+//@desc     convert reservation to transfer (Counter)
+//@route    POST /api/v1/Reservations/:id/transfer
+//@access   private (SUPER_ADMIN, COUNTER)
+export const convertToTransfer = asyncHandler(async (req, res) => {
+  const reservationId = req.params.emergencyUser_id || req.params.id;
+  const allowedFields = ["transfer_reason", "notes"];
+  const data = pick(req.body, allowedFields);
+  data.reservation_id = reservationId;
+
+  const result = await transferService.initiateTransfer(data);
+
+  const auditData = {
+    adminId: req.user.id,
+    method: "تحويل كشف طبي إلى قسم التحويلات الخارجية",
+    createdAt: new Date().toISOString(),
+  };
+  await auditLog(auditData);
+
+  return res.status(StatusCode.CREATED).json({
+    message: "تم تحويل الكشف بنجاح إلى قسم التحويلات",
+    data: result,
   });
 });

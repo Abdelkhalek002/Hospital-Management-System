@@ -1,76 +1,83 @@
 import asyncHandler from "express-async-handler";
-import db from "../../config/db.js";
-import bcrypt from "bcrypt";
-
 import * as service from "./transfer.service.js";
 import { StatusCode } from "../../utils/status-codes.js";
 import { auditLog } from "../../utils/audit-log.js";
 import { pick } from "../../utils/pick-from-body-request.js";
-import { roles } from "../../utils/roles.js";
 
-// transfer to external hospital
-export const transfer = asyncHandler(async (req, res) => {
-  // 1. pick valid data only from req.body
-  const allowedFields = [
-    "user_id",
-    "student_id",
-    "reservation_id",
-    "medical_exam_id",
-    "hospital_id",
-    "transfer_reason",
-    "notes",
-  ];
+import * as resource from "./transfer.resource.js";
+
+// Step 1 (Counter): Initiate transfer / convert reservation to transfer
+export const initiateTransfer = asyncHandler(async (req, res) => {
+  const reservationId = req.params.id || req.body.reservation_id;
+  const allowedFields = ["transfer_reason", "notes"];
   const data = pick(req.body, allowedFields);
+  data.reservation_id = reservationId;
 
-  // 2. do the transfer
-  const result = await service.transfer(data);
+  const result = await service.initiateTransfer(data);
 
-  // 3. record action
   const auditData = {
     adminId: req.user.id,
-    method: "تحويل طالب لمستشفي خارجية",
+    method: "تحويل كشف طبي إلى قسم التحويلات الخارجية",
     createdAt: new Date().toISOString(),
   };
   await auditLog(auditData);
 
-  // 4. send response
-  res.status(StatusCode.OK).json({ message: "تم التحويل بنجاح" });
-});
-
-// get all transferred students
-export const getTransferred = asyncHandler(async (req, res) => {
-  // 1. get page, limit, searchKey from req.query
-  const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
-  const limit = Math.min(parseInt(req.query.limit, 10) || 10, 100);
-  const searchKey = req.query.searchKey || "";
-
-  // 2. call the service
-  const result = await service.getTransferred({ page, limit, searchKey });
-  if (!result.totalCount) {
-    return res
-      .status(StatusCode.NOT_FOUND)
-      .json({ msg: "No examinations found" });
-  }
-
-  // 3. send response
-  return res.status(StatusCode.OK).json({
-    totalPages: result.totalPages,
-    currentPage: page,
-    data: result.data,
+  return res.status(StatusCode.CREATED).json({
+    message: "تم تحويل الكشف بنجاح إلى قسم التحويلات",
+    data: result,
   });
 });
 
-// update transfer
-export const updateTransfer = asyncHandler(async (req, res) => {
-  // 1. get data from request
+// Step 2 (Transfer Clerk): Assign external hospital and notify student
+export const assignHospital = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const allowedFields = ["transfer_reason", "hospital_id", "notes"];
+  const allowedFields = ["hospital_id", "notes"];
   const data = pick(req.body, allowedFields);
 
-  // 2. call service
+  const result = await service.assignHospital(id, data);
+
+  const auditData = {
+    adminId: req.user.id,
+    method: "تحديد مستشفى خارجية وإرسال تفاصيل التحويل",
+    createdAt: new Date().toISOString(),
+  };
+  await auditLog(auditData);
+
+  return res.status(StatusCode.OK).json({
+    message: "تم تحديد المستشفى الخارجية وإشعار الطالب بنجاح",
+    data: resource.toTransferResource(result, req),
+  });
+});
+
+// Get all transferred students (supports ?status=pending|completed, page, limit, searchKey)
+export const getTransferred = asyncHandler(async (req, res) => {
+  const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+  const limit = Math.min(parseInt(req.query.limit, 10) || 10, 100);
+  const searchKey = req.query.searchKey || "";
+  const status = req.query.status || null;
+  const result = await service.getTransferred({ page, limit, searchKey, status });
+  return res.status(StatusCode.OK).json({
+    data: resource.toTransfersListResource(result.data, req),
+  });
+});
+
+// Get single transfer by ID
+export const getTransferById = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const result = await service.getTransferById(id);
+  return res.status(StatusCode.OK).json({
+    data: resource.toTransferResource(result, req),
+  });
+});
+
+// Update transfer
+export const updateTransfer = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const allowedFields = ["transfer_reason", "hospital_id", "notes", "status"];
+  const data = pick(req.body, allowedFields);
+
   const result = await service.updateTransfer(id, data);
 
-  // 3. record action
   const auditData = {
     adminId: req.user.id,
     method: "تحديث طلب تحويل لمستشفي خارجية",
@@ -78,6 +85,5 @@ export const updateTransfer = asyncHandler(async (req, res) => {
   };
   await auditLog(auditData);
 
-  // 4. send response
-  res.status(StatusCode.OK).json({ message: "تم تحديث بيانات طلب التحويل" });
+  res.status(StatusCode.OK).json({ message: "تم تحديث بيانات طلب التحويل", data: result });
 });

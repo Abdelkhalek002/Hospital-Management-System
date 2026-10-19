@@ -15,6 +15,7 @@ import authRoute from "./modules/auth/auth.routes.js";
 import adminRoute from "./modules/admin/admin.routes.js";
 import userRoute from "./modules/user/user.routes.js";
 import systemDataRoutes from "./modules/system-data/system-data.routes.js";
+import transferRoute from "./modules/transfer/transfer.route.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -69,6 +70,7 @@ if (process.env.NODE_ENV === "development") {
 app.use("/api/v1/auth/", authRoute);
 app.use("/api/v1/admins/", adminRoute);
 app.use("/api/v1/reservations/", adminReservationRoute);
+app.use("/api/v1/transfers/", transferRoute);
 app.use("/api/v1/users/", userRoute);
 app.use("/api/v1/Myreservations/", userReservationRoute);
 app.use("/api/v1/", systemDataRoutes);

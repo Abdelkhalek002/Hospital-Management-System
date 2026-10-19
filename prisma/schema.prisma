@@ -192,16 +192,16 @@ model users {
 }
 
 model transfers {
-  id                 Int                @id @default(autoincrement())
+  id                 Int                 @id @default(autoincrement())
   reservation_id     Int
-  hospital_id        Int
-  transfer_reason    String             @db.VarChar(500)
-  notes              String?            @db.VarChar(500)
-  status             transfers_status   @default(pending)
-  created_at         DateTime           @default(now()) @db.Timestamp(0)
-  updated_at         DateTime           @default(now()) @db.Timestamp(0)
-  reservations       reservations       @relation(fields: [reservation_id], references: [id], onDelete: NoAction, map: "transfers_ibfk_1")
-  external_hospitals external_hospitals @relation(fields: [hospital_id], references: [id], onDelete: NoAction, map: "transfers_ibfk_2")
+  hospital_id        Int?
+  transfer_reason    String              @db.VarChar(500)
+  notes              String?             @db.VarChar(500)
+  status             transfers_status    @default(pending)
+  created_at         DateTime            @default(now()) @db.Timestamp(0)
+  updated_at         DateTime            @default(now()) @db.Timestamp(0)
+  reservations       reservations        @relation(fields: [reservation_id], references: [id], onDelete: NoAction, map: "transfers_ibfk_1")
+  external_hospitals external_hospitals? @relation(fields: [hospital_id], references: [id], onDelete: NoAction, map: "transfers_ibfk_2")
 
   @@index([hospital_id], map: "hospital_id")
   @@index([reservation_id], map: "reservation_id")
@@ -246,9 +246,10 @@ enum laboratory_test_result {
 }
 
 enum reservations_status {
-  ACCEPTED @map("مقبول")
-  PENDING  @map("تحت الانتظار")
-  REJECTED @map("مرفوض")
+  ACCEPTED    @map("مقبول")
+  PENDING     @map("تحت الانتظار")
+  REJECTED    @map("مرفوض")
+  TRANSFERRED @map("محول")
 }
 
 enum transfers_status {

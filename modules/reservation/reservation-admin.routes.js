@@ -33,6 +33,14 @@ router.route("/:id/status").put(
   reservationController.isAccepted,
 );
 
+// Convert to transfer route (Counter)
+router
+  .route("/:id/transfer")
+  .post(
+    hasPermission(permissions.TRANSFERS_WRITE),
+    reservationController.convertToTransfer,
+  );
+
 // Unified parameter route
 router
   .route("/:id")

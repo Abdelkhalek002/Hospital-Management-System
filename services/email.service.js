@@ -29,6 +29,7 @@ export class Email {
     this.url = url || process.env.CLIENT_URL || "http://localhost:3000";
     this.otp = otp;
     this.reason = extraData.reason || "";
+    this.extraData = extraData;
     this.from = `Helwan University Hospital <${process.env.EMAIL_FROM}>`;
   }
   newTransport() {
@@ -88,6 +89,7 @@ export class Email {
         otp: this.otp,
         reason: this.reason,
         subject,
+        ...this.extraData,
       },
     );
 
@@ -119,6 +121,9 @@ export class Email {
   }
   async sendDocumentRejected() {
     await this.send("document-rejected", "تنبيه بخصوص مستندات حسابك - مستشفى جامعة حلوان");
+  }
+  async sendTransferNotification() {
+    await this.send("transfer-notification", "تفاصيل تحويل طلب الكشف الطبي لمستشفى خارجية - مستشفى جامعة حلوان");
   }
 }
 
@@ -190,5 +195,16 @@ export const sendDocumentRejectionMail = async (user, reason) => {
   const profileUrl = `${process.env.CLIENT_URL || "http://localhost:3000"}/profile`;
   await new Email(user, profileUrl, null, { reason }).sendDocumentRejected();
 };
+
+// SEND TRANSFER NOTIFICATION MAIL
+export const sendTransferNotificationMail = async (user, transferDetails = {}) => {
+  const reservationsUrl = `${process.env.CLIENT_URL || "http://localhost:3000"}/my-reservations`;
+  await new Email(user, reservationsUrl, null, {
+    hospitalName: transferDetails.hospital_name || "مستشفى خارجية متخصصة",
+    transferReason: transferDetails.transfer_reason || "بناءً على التقييم الطبي للحالة",
+    notes: transferDetails.notes || "لا توجد ملاحظات إضافية",
+  }).sendTransferNotification();
+};
+
 
 
