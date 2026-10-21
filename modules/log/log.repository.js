@@ -41,7 +41,7 @@ class LogRepository extends Base {
     return result;
   }
 
-  async findLogs({ page = 1, limit = 10, adminId = null, action = null, status = null } = {}) {
+  async findLogs({ page = 1, limit = 10, adminId = null, action = null, status = null, from = null, to = null } = {}) {
     const safePage = Math.max(parseInt(page, 10) || 1, 1);
     const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 10, 1), 100);
     const offset = (safePage - 1) * safeLimit;
@@ -60,6 +60,14 @@ class LogRepository extends Base {
     if (status) {
       whereClauses.push("l.status = ?");
       params.push(status);
+    }
+    if (from) {
+      whereClauses.push("l.created_at >= ?");
+      params.push(from);
+    }
+    if (to) {
+      whereClauses.push("l.created_at <= ?");
+      params.push(to);
     }
 
     const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
@@ -100,6 +108,30 @@ class LogRepository extends Base {
     };
   }
 
+  async findById(id) {
+    const sql = `
+      SELECT 
+        l.id, 
+        l.admin_id, 
+        a.username AS admin_name, 
+        l.action, 
+        l.entity_type, 
+        l.entity_id, 
+        l.details, 
+        l.ip_address, 
+        l.user_agent, 
+        l.status, 
+        l.method, 
+        l.created_at 
+      FROM admin_log l 
+      LEFT JOIN admins a ON l.admin_id = a.id 
+      WHERE l.id = ? 
+      LIMIT 1
+    `;
+    const rows = await this.execute(sql, [id]);
+    return rows.length > 0 ? rows[0] : null;
+  }
+
   async findByAdminId(adminId) {
     const sql = `
       SELECT 
@@ -123,18 +155,61 @@ class LogRepository extends Base {
     return await this.execute(sql, [adminId]);
   }
 
-  async deleteAll() {
-    return await this.execute("DELETE FROM admin_log");
+  async findAllForExport({ adminId = null, action = null, status = null, from = null, to = null } = {}) {
+    const whereClauses = [];
+    const params = [];
+
+    if (adminId) {
+      whereClauses.push("l.admin_id = ?");
+      params.push(adminId);
+    }
+    if (action) {
+      whereClauses.push("l.action = ?");
+      params.push(action);
+    }
+    if (status) {
+      whereClauses.push("l.status = ?");
+      params.push(status);
+    }
+    if (from) {
+      whereClauses.push("l.created_at >= ?");
+      params.push(from);
+    }
+    if (to) {
+      whereClauses.push("l.created_at <= ?");
+      params.push(to);
+    }
+
+    const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
+
+    const sql = `
+      SELECT 
+        l.id, 
+        l.admin_id, 
+        a.username AS admin_name, 
+        l.action, 
+        l.entity_type, 
+        l.entity_id, 
+        l.details, 
+        l.ip_address, 
+        l.user_agent, 
+        l.status, 
+        l.method, 
+        l.created_at 
+      FROM admin_log l 
+      LEFT JOIN admins a ON l.admin_id = a.id 
+      ${whereSql}
+      ORDER BY l.id DESC 
+      LIMIT 5000
+    `;
+
+    return await this.execute(sql, params);
   }
 
-  async deleteByAdminId(adminId) {
-    return await this.execute("DELETE FROM admin_log WHERE admin_id = ?", [adminId]);
-  }
-
-  async existsByAdminId(adminId) {
-    const sql = "SELECT id FROM admin_log WHERE admin_id = ? LIMIT 1";
-    const result = await this.execute(sql, [adminId]);
-    return result && result.length > 0;
+  async deleteOlderThanDays(days) {
+    const sql = "DELETE FROM admin_log WHERE created_at < NOW() - INTERVAL ? DAY";
+    const result = await this.execute(sql, [days]);
+    return result.affectedRows || 0;
   }
 }
 

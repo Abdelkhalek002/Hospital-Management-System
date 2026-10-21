@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
 import dbPool from "./config/db.js";
-import { deActivateUser } from "./services/scheduler.service.js";
+import { scheduleAuditLogCleanup } from "./services/scheduler.service.js";
 
 dotenv.config();
 const { default: app } = await import("./app.js"); // es modules are hoisted (did this to solve .env load before app.js)
@@ -22,11 +22,11 @@ dbPool
 const port = process.env.PORT;
 
 const server = app.listen(port, () => {
-  console.log(`🚀 Server is running on port ${port}... `);
+  console.log(`Server is running on port ${port}... `);
 });
 
-// DEACTIVATE ACCOUNTS
-deActivateUser();
+// CRON JOBS
+scheduleAuditLogCleanup();
 
 // HANDLING REJECTIONS OUTSIDE EXPRESS
 process.on("unhandledRejection", (err) => {

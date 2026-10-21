@@ -242,8 +242,10 @@ Base API prefix: `/api/v1`
 
 | Method | Endpoint | Required Permission | Description |
 |---|---|---|---|
-| `GET` | `/` | `logs:read` | View activity audit logs (supports `?admin_id=`, `?action=`, `?status=`, `?page=`, `?limit=`) |
-| `DELETE` | `/` | `logs:delete` | Clear activity audit logs |
+| `GET` | `/` | `logs:read` | View activity audit logs (supports `?admin_id=`, `?action=`, `?status=`, `?from=`, `?to=`, `?page=`, `?limit=`) |
+| `GET` | `/actions` | `logs:read` | List available action types and labels for UI filter dropdowns |
+| `GET` | `/export` | `logs:read` | Export filtered audit logs as downloadable CSV |
+| `GET` | `/:id` | `logs:read` | View full details of a specific audit log record |
 
 ### Patient Transfers (`/api/v1/admins/transfers`)
 
