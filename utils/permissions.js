@@ -64,6 +64,7 @@ export const rolePermissions = Object.freeze({
 
   [roles.OBSERVER]: [
     permissions.STATS_READ,
+    permissions.ADMINS_READ,
     permissions.LOGS_READ,
     permissions.RESERVATIONS_READ,
     permissions.TRANSFERS_READ,
