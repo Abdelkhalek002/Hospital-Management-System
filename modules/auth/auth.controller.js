@@ -11,6 +11,8 @@ import ApiError from "../../utils/api-error.js";
 import { verifyToken } from "./jwt.service.js";
 import { matchesDomain } from "../../utils/custom-validators.js";
 import { rolePermissions } from "../../utils/permissions.js";
+import { recordAuditLog } from "../../utils/audit-log.js";
+import { AuditAction } from "../../utils/audit-actions.js";
 
 
 dotenv.config();
@@ -95,6 +97,29 @@ export const login = asyncHandler(async (req, res) => {
   }
 
   res.cookie("jwt", token, getCookieOptions(req));
+
+  if (user?.role && user?.role !== "USER") {
+    const ipAddress =
+      req?.headers?.["x-forwarded-for"]?.split(",")?.[0]?.trim() ||
+      req?.ip ||
+      req?.socket?.remoteAddress ||
+      null;
+    const userAgent = req?.headers?.["user-agent"]
+      ? String(req.headers["user-agent"]).substring(0, 255)
+      : null;
+
+    recordAuditLog({
+      adminId: user.id,
+      action: AuditAction.AUTH_ADMIN_LOGIN,
+      entityType: "admin",
+      entityId: user.id,
+      details: { email: user.email, role: user.role },
+      ipAddress,
+      userAgent,
+      method: "تسجيل دخول أدمن للنظام",
+    });
+  }
+
   return res.status(StatusCode.OK).json({
     success: true,
     token,

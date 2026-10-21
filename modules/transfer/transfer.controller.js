@@ -1,7 +1,8 @@
 import asyncHandler from "express-async-handler";
 import * as service from "./transfer.service.js";
 import { StatusCode } from "../../utils/status-codes.js";
-import { auditLog } from "../../utils/audit-log.js";
+import { logAction } from "../../utils/audit-log.js";
+import { AuditAction } from "../../utils/audit-actions.js";
 import { pick } from "../../utils/pick-from-body-request.js";
 
 import * as resource from "./transfer.resource.js";
@@ -15,12 +16,12 @@ export const initiateTransfer = asyncHandler(async (req, res) => {
 
   const result = await service.initiateTransfer(data);
 
-  const auditData = {
-    adminId: req.user.id,
-    method: "تحويل كشف طبي إلى قسم التحويلات الخارجية",
-    createdAt: new Date().toISOString(),
-  };
-  await auditLog(auditData);
+  logAction(req, {
+    action: AuditAction.TRANSFER_INITIATE,
+    entityType: "transfer",
+    entityId: result?.id || result?.insertId || reservationId,
+    details: { reservation_id: reservationId, transfer_reason: data.transfer_reason },
+  });
 
   return res.status(StatusCode.CREATED).json({
     message: "تم تحويل الكشف بنجاح إلى قسم التحويلات",
@@ -36,12 +37,12 @@ export const assignHospital = asyncHandler(async (req, res) => {
 
   const result = await service.assignHospital(id, data);
 
-  const auditData = {
-    adminId: req.user.id,
-    method: "تحديد مستشفى خارجية وإرسال تفاصيل التحويل",
-    createdAt: new Date().toISOString(),
-  };
-  await auditLog(auditData);
+  logAction(req, {
+    action: AuditAction.TRANSFER_ASSIGN_HOSPITAL,
+    entityType: "transfer",
+    entityId: id,
+    details: { hospital_id: data.hospital_id, notes: data.notes },
+  });
 
   return res.status(StatusCode.OK).json({
     message: "تم تحديد المستشفى الخارجية وإشعار الطالب بنجاح",
@@ -78,12 +79,12 @@ export const updateTransfer = asyncHandler(async (req, res) => {
 
   const result = await service.updateTransfer(id, data);
 
-  const auditData = {
-    adminId: req.user.id,
-    method: "تحديث طلب تحويل لمستشفي خارجية",
-    createdAt: new Date().toISOString(),
-  };
-  await auditLog(auditData);
+  logAction(req, {
+    action: AuditAction.TRANSFER_UPDATE,
+    entityType: "transfer",
+    entityId: id,
+    details: data,
+  });
 
   res.status(StatusCode.OK).json({ message: "تم تحديث بيانات طلب التحويل", data: result });
 });

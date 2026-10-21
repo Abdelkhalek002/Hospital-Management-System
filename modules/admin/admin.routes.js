@@ -40,22 +40,7 @@ router
   .route("/stats")
   .get(authMiddleware.hasPermission(permissions.STATS_READ), controller.getStats);
 
-// Logs Routes (specific endpoints before :id)
-router
-  .route("/logs")
-  .get(authMiddleware.hasPermission(permissions.LOGS_READ), controller.getLogs)
-  .delete(
-    authMiddleware.hasPermission(permissions.LOGS_DELETE),
-    controller.deleteLogs,
-  );
 
-router
-  .route("/:admin_id/logs")
-  .get(authMiddleware.hasPermission(permissions.LOGS_READ), controller.getLog)
-  .delete(
-    authMiddleware.hasPermission(permissions.LOGS_DELETE),
-    controller.deleteLog,
-  );
 
 // Parameterized :id routes (admins manage their own account, or Super Admin manages anyone)
 router

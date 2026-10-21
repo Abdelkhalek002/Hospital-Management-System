@@ -1,7 +1,8 @@
 // IMPORTING DEPENDENCIES
 import asyncHandler from "express-async-handler";
 import { StatusCode } from "../../utils/status-codes.js";
-import { auditLog } from "../../utils/audit-log.js";
+import { logAction } from "../../utils/audit-log.js";
+import { AuditAction } from "../../utils/audit-actions.js";
 import { pick } from "../../utils/pick-from-body-request.js";
 import * as service from "./reservation.service.js";
 import * as resource from "./reservation.resource.js";
@@ -273,12 +274,12 @@ export const isAccepted = asyncHandler(async (req, res) => {
 
   const accepted = await service.isAccepted(id, status);
 
-  const auditData = {
-    adminId: req.user.id,
-    method: accepted ? "قبول طلب كشف" : "رفض طلب كشف",
-    createdAt: new Date().toISOString(),
-  };
-  await auditLog(auditData);
+  logAction(req, {
+    action: accepted ? AuditAction.RESERVATION_ACCEPT : AuditAction.RESERVATION_REJECT,
+    entityType: "reservation",
+    entityId: id,
+    details: { status },
+  });
 
   return res.status(StatusCode.OK).json({
     message: accepted ? "تم قبول الكشف" : "تم رفض الكشف",
@@ -297,12 +298,12 @@ export const convertToTransfer = asyncHandler(async (req, res) => {
 
   const result = await transferService.initiateTransfer(data);
 
-  const auditData = {
-    adminId: req.user.id,
-    method: "تحويل كشف طبي إلى قسم التحويلات الخارجية",
-    createdAt: new Date().toISOString(),
-  };
-  await auditLog(auditData);
+  logAction(req, {
+    action: AuditAction.RESERVATION_TRANSFER,
+    entityType: "reservation",
+    entityId: reservationId,
+    details: { transfer_reason: data.transfer_reason },
+  });
 
   return res.status(StatusCode.CREATED).json({
     message: "تم تحويل الكشف بنجاح إلى قسم التحويلات",

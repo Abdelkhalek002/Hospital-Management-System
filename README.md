@@ -234,13 +234,16 @@ Base API prefix: `/api/v1`
 | `GET` | `/` | `admins:read` | List all staff admins with dynamic `profile_photo_url` |
 | `POST` | `/` | `admins:create` | Create new staff account with assigned role and photo |
 | `GET` | `/stats` | `stats:read` | View hospital metrics and reservation statistics |
-| `GET` | `/logs` | `logs:read` | View paginated administrative activity audit logs |
-| `DELETE` | `/logs` | `logs:delete` | Clear administrative audit logs |
 | `GET` | `/:id` | Owner / `SUPER_ADMIN` | View single staff account details |
 | `PUT`, `PATCH`| `/:id` | Owner / `SUPER_ADMIN` | Update staff details, replace or remove profile photo |
 | `DELETE` | `/:id` | `admins:delete` | Delete staff account and purge associated photo file |
-| `GET` | `/:admin_id/logs` | `logs:read` | View audit logs for a specific admin |
-| `DELETE` | `/:admin_id/logs` | `logs:delete` | Clear audit logs for a specific admin |
+
+### Audit Logs (`/api/v1/logs`)
+
+| Method | Endpoint | Required Permission | Description |
+|---|---|---|---|
+| `GET` | `/` | `logs:read` | View activity audit logs (supports `?admin_id=`, `?action=`, `?status=`, `?page=`, `?limit=`) |
+| `DELETE` | `/` | `logs:delete` | Clear activity audit logs |
 
 ### Patient Transfers (`/api/v1/admins/transfers`)
 

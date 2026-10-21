@@ -3,6 +3,8 @@ import * as service from "./user.service.js";
 import { StatusCode } from "../../utils/status-codes.js";
 import { pick } from "../../utils/pick-from-body-request.js";
 import ApiError from "../../utils/api-error.js";
+import { logAction } from "../../utils/audit-log.js";
+import { AuditAction } from "../../utils/audit-actions.js";
 import {
   toUserProfileResource,
   toAdminUserResource,
@@ -127,6 +129,14 @@ export const update = asyncHandler(async (req, res) => {
   const updatedUser = await service.setUserActiveStatus(id, isActive);
   const result = toAdminUserResource(updatedUser, req);
 
+  logAction(req, {
+    action: AuditAction.USER_UPDATE_STATUS,
+    entityType: "user",
+    entityId: id,
+    details: { isActive },
+    method: isActive ? "تفعيل حساب مستخدم" : "تعطيل حساب مستخدم",
+  });
+
   return res.status(StatusCode.OK).json({
     status: "success",
     message: isActive ? "تم تفعيل حساب المستخدم بنجاح" : "تم تعطيل حساب المستخدم بنجاح",
@@ -142,6 +152,14 @@ export const approveDocuments = asyncHandler(async (req, res) => {
   const updated = await service.approveDocuments(id, adminId);
   const result = toAdminUserResource(updated, req);
 
+  logAction(req, {
+    action: "USER.APPROVE_DOCUMENTS",
+    entityType: "user",
+    entityId: id,
+    details: { verification_status: "verified" },
+    method: "الموافقة على مستندات المستخدم وتفعيل حسابه",
+  });
+
   return res.status(StatusCode.OK).json({
     status: "success",
     message: "تمت مراجعة المستندات والموافقة عليها وتفعيل حساب المستخدم بنجاح",
@@ -155,6 +173,14 @@ export const rejectDocuments = asyncHandler(async (req, res) => {
   const { reason } = req.body;
   const updated = await service.rejectDocuments(id, { reason, adminId });
   const result = toAdminUserResource(updated, req);
+
+  logAction(req, {
+    action: "USER.REJECT_DOCUMENTS",
+    entityType: "user",
+    entityId: id,
+    details: { reason },
+    method: "رفض مستندات المستخدم",
+  });
 
   return res.status(StatusCode.OK).json({
     status: "success",

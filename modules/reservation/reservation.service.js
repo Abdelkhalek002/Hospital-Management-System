@@ -3,7 +3,8 @@ import { StatusCode } from "../../utils/status-codes.js";
 import Reservation from "./reservation.repository.js";
 import Base from "../../repositories/base.repository.js";
 import { isLimitReached } from "./reservation.validator.js";
-import { auditLog } from "../../utils/audit-log.js";
+import { recordAuditLog } from "../../utils/audit-log.js";
+import { AuditAction } from "../../utils/audit-actions.js";
 import { queryOne } from "../../config/db-helpers.js";
 
 export const formatCairoTime = (date) => {
@@ -211,10 +212,16 @@ export const createEmergencyReservation = async (data, user) => {
   const id = await new Reservation().create(reservationData);
   const adminId = user?.id || user?.user_id || user?.[0]?.superAdmin_id;
   if (adminId) {
-    await auditLog({
+    recordAuditLog({
       adminId,
-      method: "حجز كشف عاجل",
-      createdAt: new Date().toISOString(),
+      action: AuditAction.RESERVATION_EMERGENCY_CREATE,
+      entityType: "reservation",
+      entityId: id,
+      details: {
+        patient_name: reservationData.patient_name,
+        clinic_id: reservationData.clinic_id,
+        national_id: reservationData.national_id,
+      },
     });
   }
   return id;
@@ -242,10 +249,16 @@ export const updateEmergencyReservation = async (
 
   const adminId = user?.id || user?.user_id || user?.[0]?.superAdmin_id;
   if (adminId) {
-    await auditLog({
+    recordAuditLog({
       adminId,
-      method: "تعديل حجز كشف عاجل",
-      createdAt: new Date().toISOString(),
+      action: AuditAction.RESERVATION_EMERGENCY_UPDATE,
+      entityType: "reservation",
+      entityId: reservationId,
+      details: {
+        patient_name: data.Name || data.patient_name || data.patientName,
+        clinic_id: data.clinic_id,
+        national_id: data.national_id,
+      },
     });
   }
 };
@@ -293,10 +306,15 @@ export const deleteEmergencyReservation = async (reservationId, user) => {
   await new Reservation().delete(reservationId);
   const adminId = user?.id || user?.user_id || user?.[0]?.superAdmin_id;
   if (adminId) {
-    await auditLog({
+    recordAuditLog({
       adminId,
-      method: "حذف حجز كشف عاجل",
-      createdAt: new Date().toISOString(),
+      action: AuditAction.RESERVATION_EMERGENCY_DELETE,
+      entityType: "reservation",
+      entityId: reservationId,
+      details: {
+        patient_name: item.patient_name,
+        clinic_id: item.clinic_id,
+      },
     });
   }
 };

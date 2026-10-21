@@ -75,16 +75,6 @@ class Admin extends Base {
     const result = await query(sql, [id]);
     return result;
   }
-
-  async createLog(data) {
-    const sql = `INSERT INTO admin_log (admin_id, method, created_at) VALUES (?, ?, ?)`;
-    const result = await query(sql, [
-      data.adminId,
-      data.method,
-      data.createdAt,
-    ]);
-    return result;
-  }
 }
 
 export default Admin;

@@ -63,12 +63,10 @@ export const rolePermissions = Object.freeze({
   ],
 
   [roles.OBSERVER]: [
-    // permissions.ADMINS_READ,
-    // permissions.STATS_READ,
-    // permissions.LOGS_READ,
-    // permissions.USERS_READ,
-    // permissions.RESERVATIONS_READ,
-    // permissions.TRANSFERS_READ,
+    permissions.STATS_READ,
+    permissions.LOGS_READ,
+    permissions.RESERVATIONS_READ,
+    permissions.TRANSFERS_READ,
   ],
 });
 

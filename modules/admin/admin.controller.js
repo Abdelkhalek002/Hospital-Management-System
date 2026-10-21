@@ -2,13 +2,13 @@ import asyncHandler from "express-async-handler";
 import { StatusCode } from "../../utils/status-codes.js";
 import Base from "../../repositories/base.repository.js";
 import * as service from "./admin.service.js";
-import { auditLog } from "../../utils/audit-log.js";
+import { logAction } from "../../utils/audit-log.js";
+import { AuditAction } from "../../utils/audit-actions.js";
 import { pick } from "../../utils/pick-from-body-request.js";
 import {
   formatAdminPhotoUrl,
   toAdminResource,
   toAdminListResource,
-  toAdminLogListResource,
 } from "./admin.resource.js";
 
 // Re-export helper for backward compatibility
@@ -32,12 +32,17 @@ export const createOne = asyncHandler(async (req, res) => {
   const result = await service.createOne(data);
 
   // 3. record action
-  const auditData = {
-    adminId: req.user.id,
-    method: "اضافة ادمن جديد",
-    createdAt: new Date().toISOString(),
-  };
-  await auditLog(auditData);
+  logAction(req, {
+    action: AuditAction.ADMIN_CREATE,
+    entityType: "admin",
+    entityId: result.id,
+    details: {
+      username: result.username,
+      email: result.email,
+      role: result.role,
+      status: result.status,
+    },
+  });
 
   const formattedAdmin = toAdminResource(result, req);
 
@@ -69,12 +74,16 @@ export const updateOne = asyncHandler(async (req, res) => {
   const result = await service.updateOne(id, data);
 
   // 3. record action
-  const auditData = {
-    adminId: req.user.id,
-    method: "تعديل بيانات أدمن",
-    createdAt: new Date().toISOString(),
-  };
-  await auditLog(auditData);
+  logAction(req, {
+    action: AuditAction.ADMIN_UPDATE,
+    entityType: "admin",
+    entityId: id,
+    details: {
+      updatedFields: Object.keys(data).filter((k) => k !== "password"),
+      role: data.role,
+      status: data.status,
+    },
+  });
 
   const formattedAdmin = toAdminResource(result, req);
 
@@ -113,10 +122,10 @@ export const deleteOne = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const deletedAdmin = await service.deleteOne(id);
 
-  await auditLog({
-    adminId: req.user.id,
-    method: "حذف ادمن",
-    createdAt: new Date().toISOString(),
+  logAction(req, {
+    action: AuditAction.ADMIN_DELETE,
+    entityType: "admin",
+    entityId: id,
   });
 
   return res.status(StatusCode.OK).json({
@@ -125,36 +134,6 @@ export const deleteOne = asyncHandler(async (req, res) => {
   });
 });
 
-//--------------------------------LOGS-------------------------------------
-export const getLogs = asyncHandler(async (req, res) => {
-  const page = parseInt(req.query.page, 10) || 1;
-  const limit = parseInt(req.query.limit, 10) || 10;
-
-  const result = await service.getLogs({ page, limit });
-
-  return res.status(StatusCode.OK).json({
-    totalPages: result.totalPages,
-    currentPage: result.currentPage,
-    adminLogs: toAdminLogListResource(result.adminLogs),
-  });
-});
-
-export const getLog = asyncHandler(async (req, res) => {
-  const adminId = req.params.admin_id || req.params.id;
-  const result = await service.getLog(adminId);
-  return res.status(StatusCode.OK).json(toAdminLogListResource(result));
-});
-
-export const deleteLogs = asyncHandler(async (req, res) => {
-  await service.deleteLogs();
-  return res.status(StatusCode.OK).json({ message: "تم حذف العمليات المسجلة" });
-});
-
-export const deleteLog = asyncHandler(async (req, res) => {
-  const adminId = req.params.admin_id || req.params.id;
-  await service.deleteLog(adminId);
-  return res.status(StatusCode.OK).json({ message: "تم حذف العمليات المسجلة" });
-});
 
 //------------------------------STATS-----------------------------------------
 export const getStats = asyncHandler(async (req, res) => {
@@ -164,3 +143,5 @@ export const getStats = asyncHandler(async (req, res) => {
     data: result,
   });
 });
+
+

@@ -2,6 +2,8 @@ import asyncHandler from "express-async-handler";
 import * as systemDataService from "./system-data.service.js";
 import { SYSTEM_DATA_RESOURCES } from "./system-data.repository.js";
 import { StatusCode } from "../../utils/status-codes.js";
+import { logAction } from "../../utils/audit-log.js";
+import { AuditAction } from "../../utils/audit-actions.js";
 
 const extractName = (req, resourceKey) => {
   const config = SYSTEM_DATA_RESOURCES[resourceKey];
@@ -45,6 +47,14 @@ export const createItem = (resourceKey) =>
     const isActive = extractIsActive(req) ?? true;
     const data = await systemDataService.createOne(resourceKey, name, isActive);
 
+    logAction(req, {
+      action: AuditAction.SYSTEM_DATA_CREATE,
+      entityType: resourceKey,
+      entityId: data?.id || data?.insertId || null,
+      details: { name, isActive, resource: SYSTEM_DATA_RESOURCES[resourceKey]?.label },
+      method: `إضافة ${SYSTEM_DATA_RESOURCES[resourceKey]?.label || resourceKey} جديد`,
+    });
+
     return res.status(StatusCode.CREATED).json({
       status: "success",
       message: `تم إضافة ${SYSTEM_DATA_RESOURCES[resourceKey].label} بنجاح`,
@@ -84,6 +94,14 @@ export const updateItem = (resourceKey) =>
     const isActive = extractIsActive(req);
     const data = await systemDataService.updateOne(resourceKey, id, { name, isActive });
 
+    logAction(req, {
+      action: AuditAction.SYSTEM_DATA_UPDATE,
+      entityType: resourceKey,
+      entityId: id,
+      details: { name, isActive, resource: SYSTEM_DATA_RESOURCES[resourceKey]?.label },
+      method: `تعديل ${SYSTEM_DATA_RESOURCES[resourceKey]?.label || resourceKey}`,
+    });
+
     return res.status(StatusCode.OK).json({
       status: "success",
       message: `تم تعديل ${SYSTEM_DATA_RESOURCES[resourceKey].label} بنجاح`,
@@ -95,6 +113,14 @@ export const deleteItem = (resourceKey) =>
   asyncHandler(async (req, res) => {
     const id = extractId(req, resourceKey);
     const data = await systemDataService.deleteOne(resourceKey, id);
+
+    logAction(req, {
+      action: AuditAction.SYSTEM_DATA_DELETE,
+      entityType: resourceKey,
+      entityId: id,
+      details: { resource: SYSTEM_DATA_RESOURCES[resourceKey]?.label },
+      method: `حذف ${SYSTEM_DATA_RESOURCES[resourceKey]?.label || resourceKey}`,
+    });
 
     return res.status(StatusCode.OK).json({
       status: "success",

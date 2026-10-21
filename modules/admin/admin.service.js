@@ -1,9 +1,7 @@
 import path from "path";
 import { promises as fs } from "fs";
 import bcrypt from "bcrypt";
-import Base from "../../repositories/base.repository.js";
 import Admin from "./admin.repository.js";
-import * as emailService from "../../services/email.service.js";
 import ApiError from "../../utils/api-error.js";
 import { StatusCode } from "../../utils/status-codes.js";
 
@@ -84,7 +82,7 @@ export const updateOne = async (id, data) => {
   // 5. Clean up old photo file if photo is updated or removed
   if (newPhoto !== undefined && oldPhoto && oldPhoto !== newPhoto) {
     const oldFilePath = path.join("uploads", "admins", oldPhoto);
-    fs.unlink(oldFilePath).catch(() => {});
+    fs.unlink(oldFilePath).catch(() => { });
   }
 
   if (newPhoto !== undefined) {
@@ -116,6 +114,9 @@ export const getAll = async () => {
 export const deleteOne = async (id) => {
   const adminRepo = new Admin();
   const existing = await adminRepo.getOne(id);
+  if (existing && existing.role === "SUPER_ADMIN") {
+    throw new ApiError("لا يمكن حذف أو تعديل بيانات مدير النظام", StatusCode.BAD_REQUEST);
+  }
 
   if (!existing) {
     throw new ApiError("Admin does not exist", StatusCode.NOT_FOUND);
@@ -124,7 +125,7 @@ export const deleteOne = async (id) => {
   const photo = existing.profile_photo_path || existing.profile_photo;
   if (photo) {
     const oldFilePath = path.join("uploads", "admins", photo);
-    fs.unlink(oldFilePath).catch(() => {});
+    fs.unlink(oldFilePath).catch(() => { });
   }
 
   await adminRepo.deleteOne(id);
@@ -137,62 +138,4 @@ export const deleteOne = async (id) => {
   };
 };
 
-export const getLogs = async ({ page = 1, limit = 10 } = {}) => {
-  const safePage = Math.max(parseInt(page, 10) || 1, 1);
-  const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 10, 1), 100);
-  const offset = (safePage - 1) * safeLimit;
 
-  const countResult = await new Admin().execute(
-    "SELECT COUNT(*) AS count FROM admin_log",
-  );
-  const totalCount = countResult[0]?.count || 0;
-  const totalPages = Math.ceil(totalCount / safeLimit);
-
-  const logs = await new Admin().execute(
-    `SELECT l.id, l.admin_id, a.username AS admin_name, l.method, l.created_at 
-     FROM admin_log l 
-     LEFT JOIN admins a ON l.admin_id = a.id 
-     ORDER BY l.id DESC 
-     LIMIT ${safeLimit} OFFSET ${offset}`,
-  );
-
-  return {
-    totalPages,
-    currentPage: safePage,
-    adminLogs: logs,
-  };
-};
-
-export const getLog = async (adminId) => {
-  const logs = await new Admin().execute(
-    `SELECT l.id, l.admin_id, a.username AS admin_name, l.method, l.created_at 
-     FROM admin_log l 
-     LEFT JOIN admins a ON l.admin_id = a.id 
-     WHERE l.admin_id = ? 
-     ORDER BY l.id DESC`,
-    [adminId],
-  );
-  return logs;
-};
-
-export const deleteLogs = async () => {
-  await new Admin().execute("DELETE FROM admin_log");
-  return true;
-};
-
-export const deleteLog = async (adminId) => {
-  const existing = await new Admin().execute(
-    "SELECT id FROM admin_log WHERE admin_id = ? LIMIT 1",
-    [adminId],
-  );
-  if (!existing || existing.length === 0) {
-    throw new ApiError(
-      "العمليات الخاصة بهذا المستخدم غير موجودة",
-      StatusCode.NOT_FOUND,
-    );
-  }
-  await new Admin().execute("DELETE FROM admin_log WHERE admin_id = ?", [
-    adminId,
-  ]);
-  return true;
-};

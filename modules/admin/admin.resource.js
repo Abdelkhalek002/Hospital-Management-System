@@ -79,24 +79,4 @@ export const toAdminListResource = (items = [], req = null) => {
   return list.map((admin) => toAdminResource(admin, req));
 };
 
-/**
- * Transform admin log records into API resources.
- */
-export const toAdminLogResource = (log) => {
-  if (!log) return null;
-  const item = Array.isArray(log) ? log[0] : log;
-  if (!item) return null;
 
-  return {
-    id: item.id,
-    adminId: item.admin_id,
-    adminName: item.admin_name || item.username || null,
-    method: item.method,
-    createdAt: item.created_at,
-  };
-};
-
-export const toAdminLogListResource = (items = []) => {
-  const list = Array.isArray(items) ? items : [items];
-  return list.map((log) => toAdminLogResource(log));
-};
